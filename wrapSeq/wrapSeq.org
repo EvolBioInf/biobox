@@ -1,0 +1,199 @@
+#+begin_src latex
+  \section*{Introduction}
+  The lengths of data lines in FASTA files varies a lot. The program
+  \texttt{wrapSeq} allows wrapping them to a user-defined length.
+  \section*{Implementation}
+  The program outline contains hooks for imports, variables, functions,
+  and the logic of the main function.
+#+end_src
+#+begin_src go <<wrapSeq.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:wra}>>
+  )
+  //<<Variables, Ch.~\ref{ch:wra}>>
+  //<<Functions, Ch.~\ref{ch:wra}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:wra}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, parse the user options, and
+  iterate over the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:wra}>>=
+  //<<Set usage, Ch.~\ref{ch:wra}>>
+  //<<Parse options, Ch.~\ref{ch:wra}>>
+  //<<Parse input, Ch.~\ref{ch:wra}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage statement, an explanation of
+  the purpose of the program, and an example of its application.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:wra}>>=
+  u := "wrapSeq [-h] [options] [files]"
+  p := "Wrap lines of sequence data."
+  e := "wrapSeq -l 50 *.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:wra}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Next we parse the options an immediately check for \texttt{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:wra}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("wrapSeq")
+  }
+#+end_src
+#+begin_src latex
+  We declare \texttt{-v},
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:wra}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+#+end_src
+#+begin_src latex
+  and import \texttt{flag} and \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:wra}>>=
+  "flag"
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The command line arguments remaining after \texttt{flag.Parse} was
+  called, are file names. We pass them to be scanned with the line
+  length as argument. This is set via \texttt{-l}.
+#+end_src
+#+begin_src go <<Parse input, Ch.~\ref{ch:wra}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optL)
+#+end_src
+#+begin_src latex
+  We declare the line length, \texttt{-l}; values less than 1 signal
+  unbroken lines of data.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:wra}>>=
+  var optL = flag.Int("l", fasta.DefaultLineLength, "line length, " +
+	  "< 1 for unbroken lines")
+#+end_src
+#+begin_src latex
+  We import \texttt{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:wra}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  In the \texttt{scan} function we first retrieves the line length, then
+  parse the input one \texttt{Sequence} at a time, and finally print it
+  with the desired line length.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:wra}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  l := args[0].(int)
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  se := sc.Sequence()
+		  se.SetLineLength(l)
+		  fmt.Println(se)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io} and \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:wra}>>=
+  "io"
+  "fmt"
+#+end_src
+#+begin_src latex
+  \section*{Testing}
+  We set up the testing framework.
+#+end_src
+#+begin_src go <<wrapSeq_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:wra}>>
+  )
+
+  func TestWrapSeq(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:wra}>>
+  }
+#+end_src
+#+begin_src latex
+  The testing data is in \texttt{test.fasta}, which contains
+  two sequences length 100 in lines of 70 and 30 nucleotides each.
+#+end_src
+#+begin_src latex
+  First, run \texttt{wrapSeq} with default options. The result should be
+  identical to the input.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:wra}>>=
+  cmd := exec.Command("wrapSeq", "test.fasta")
+  g, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err := ioutil.ReadFile("test.fasta")
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:wra}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  Now we wrap into lines of 100 nucleotides.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:wra}>>=
+  cmd = exec.Command("wrapSeq", "-l", "100", "test.fasta")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res1.fasta")
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  We effectively repeat this by asking for unbroken lines.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:wra}>>=
+  cmd = exec.Command("wrapSeq", "-l", "0", "test.fasta")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res1.fasta")
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  Finally, we wrap into 50 bp lines.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:wra}>>=
+  cmd = exec.Command("wrapSeq", "-l", "50", "test.fasta")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res2.fasta")
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src

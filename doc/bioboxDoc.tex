@@ -1,0 +1,26 @@
+\documentclass[a4paper]{report}
+\usepackage{answers}
+\input{header}
+\begin{document}
+\pagestyle{noweb}
+
+\title{\texttt{biobox}: Tools for Molecular Biology\\
+\small\texttt{github.com/evolbioinf/biobox}}
+\author{Bernhard Haubold}
+\maketitle
+\tableofcontents
+
+\chapter{Program \texttt{cchar}: Count Characters}\label{ch:cch}
+\input{cchar}
+\chapter{Program \texttt{getSeq}: Get Sequence}\label{ch:get}
+\input{getSeq}
+\chapter{Package \texttt{util}: Utilities}\label{ch:uti}
+\input{util}
+\chapter{Program \texttt{wrapSeq}: Wrap Sequence}\label{ch:wra}
+\input{wrapSeq}
+
+%\section{List of code chunks}
+% \nowebchunks
+\bibliography{ref}
+\end{document}
+

@@ -1,0 +1,297 @@
+#+begin_src latex
+  \section*{Introduction}
+  Our aim is to count the residues in sequences. What we in fact do, is
+  to count the characters in sequences, without checking whether they
+  are residues or not.
+  \section*{Implementation}
+  The program outline contains hooks for imports, variables, functions,
+  and the meat of the main function.
+#+end_src
+#+begin_src go <<cchar.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:cch}>>
+  )
+
+  //<<Variables, Ch.~\ref{ch:cch}>>
+  //<<Functions, Ch.~\ref{ch:cch}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:cch}>>
+  }
+#+end_src
+#+begin_src latex
+  In the \texttt{main} function we first set the usage, then parse the
+  options set by the user, and finally the input.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:cch}>>=
+  //<<Set usage, Ch.~\ref{ch:cch}>>
+  //<<Parse options, Ch.~\ref{ch:cch}>>
+  //<<Parse input, Ch.~\ref{ch:cch}>>
+#+end_src
+#+begin_src latex
+  In addition to the usage, we describe the purpose and give an example
+  command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:cch}>>=
+  u := "cchar [-h] [options] [files]"
+  p := "Count characters in input."
+  e := "cchar -s *.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cch}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  The user can request that each sequence is counted separately,
+  \texttt{-s}. There is also the possibility to just print the version
+  and additional information about the program, \texttt{-v}.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:cch}>>=
+  var optS = flag.Bool("s", false, "count sequences separately")
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+#+end_src
+#+begin_src latex
+  This requires the \texttt{flag} package.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cch}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  After parsing the flags, the program might just print
+  its version.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:cch}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("cchar")
+  }
+#+end_src
+#+begin_src latex
+  We import the package \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cch}>>=
+  "github.com/evolbioinf/biobox/util"
+  "os"
+#+end_src
+#+begin_src latex
+  The values of \texttt{version} and \texttt{date} are injected at
+  compile-time. Here, we just declare them.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:cch}>>=
+  var version, date string
+#+end_src
+#+begin_src latex
+  The input files are parsed using \texttt{clio.ParseFiles}, which takes
+  as argument a slice of file names and a function it applies to each
+  file. This function takes as arguments the character counts, and an
+  indicator as to whether or not it is dealing with the first
+  sequence. At the end, \texttt{write} prints the counts.  Characters
+  are encoded as bytes that are eight bits long. So \texttt{counts} is a
+  slice of $2^8=256$ long integers.
+#+end_src
+#+begin_src go <<Parse input, Ch.~\ref{ch:cch}>>=
+  files := flag.Args()
+  counts := make([]int64, 256)
+  isFirstSequence := true
+  clio.ParseFiles(files, scan, counts, *optS, &isFirstSequence)
+  write(counts, *optS)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cch}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Before scanning a file, the arguments are retrieved. Then the data is
+  scanned line-wise. Each line is either a header or consists of
+  characters to be counted.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:cch}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:cch}>>
+	  scanner := fasta.NewScanner(r)
+	  for scanner.ScanLine() {
+		  if scanner.IsHeader() {
+			  //<<Deal with header, Ch.~\ref{ch:cch}>>
+		  } else {
+			  count(counts, scanner.Line())
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Import \texttt{io} and \texttt{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cch}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  As we saw above, \texttt{args} contains two arguments: the integer
+  slice of counts, and the pointer to a boolean indicating whether or
+  not we are dealing with the first sequence. We retrieve them by type
+  assertions~\cite[p. 205]{don16:go}.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:cch}>>=
+  counts := args[0].([]int64)
+  separate := args[1].(bool)
+  isFirstSequence := args[2].(*bool)
+#+end_src
+#+begin_src latex
+  The response to encountering a header depends on whether the user has
+  requested separate counts for each sequence. If not, we do nothing. If
+  yes, we print and reset counts whenever a header closes a sequence.
+#+end_src
+#+begin_src go <<Deal with header, Ch.~\ref{ch:cch}>>=
+  if separate {
+	  if *isFirstSequence {
+		  *isFirstSequence = false
+	  } else {
+		  write(counts, *optS)
+		  reset(counts)
+	  }
+	  fmt.Printf("%s: ", scanner.Line())
+  }
+#+end_src
+#+begin_src latex
+  The function \texttt{write} prints the total number of characters, and
+  their individual counts and frequencies.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:cch}>>=
+  func write(counts []int64, separate bool) {
+	  //<<Print total character count, Ch.~\ref{ch:cch}>>
+	  //<<Print individual counts, Ch.~\ref{ch:cch}>>
+  }
+#+end_src
+#+begin_src latex
+  We sum the individual character counts and print them either in ``separate''
+  or ``total'' mode.
+#+end_src
+#+begin_src go <<Print total character count, Ch.~\ref{ch:cch}>>=
+  var s int64
+  for _, v := range counts {
+	  s += v
+  }
+  if !separate {
+	  fmt.Printf("Total: ")
+  }
+  fmt.Printf("%d\n", s)
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cch}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  If any characters were found, we print the individual counts and
+  frequencies in a table formatted using a \texttt{tabwriter}.
+#+end_src
+#+begin_src go <<Print individual counts, Ch.~\ref{ch:cch}>>=
+  w := new(tabwriter.Writer)
+  w.Init(os.Stdout, 4, 0, 1, ' ', 0)
+  if s > 0 {
+	  fmt.Fprintf(w, "Character\tCount\tFraction\t\n")
+  }
+  for i, v := range counts {
+	  if v > 0 {
+		  fmt.Fprintf(w, "%c\t%d\t%g\t\n", i, v,
+			  float64(v)/float64(s))
+	  }
+  }
+  w.Flush()
+#+end_src
+#+begin_src latex
+  Import the \texttt{tabwriter} package.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cch}>>=
+  "text/tabwriter"
+#+end_src
+#+begin_src latex
+  We reset the \texttt{counts}.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:cch}>>=
+  func reset(counts []int64) {
+	  for i, _ := range counts {
+		  counts[i] = 0
+	  }
+  }
+#+end_src
+#+begin_src latex
+  When we at last count the characters, they serve as indexes into the
+  integer slice \texttt{counts}.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:cch}>>=
+  func count(counts []int64, data []byte) {
+	  for _, c := range data {
+		  counts[c]++
+	  }
+  }
+#+end_src
+#+begin_src latex
+  \section*{Testing}
+  We use the standard testing framework.
+#+end_src
+#+begin_src go <<cchar_test.go>>=
+  package main
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:cch}>>
+  )
+  func TestCchar(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:cch}>>
+  }
+#+end_src
+#+begin_src latex
+  Our test is carried out on the file \texttt{test.fasta}, which
+  contains two random sequences, each 100 nucleotides long. We first run
+  \texttt{cchar} with default options and compare the result with that
+  contained in the file \texttt{res1.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:cch}>>=
+  cmd := exec.Command("cchar", "test.fasta")
+  o, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  e, err := ioutil.ReadFile("res1.txt")
+  if err != nil {
+	  t.Error("couldn't open res1.txt")
+  }
+  if !bytes.Equal(o, e) {
+	  t.Errorf("wanted:\n%s\ngot:\n%s\n", string(e), string(o))
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:cch}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  There is only one option to test, \texttt{-s} for counting sequences
+  separately. This time, we compare the result to that contained in the
+  file \texttt{res2.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:cch}>>=
+  cmd = exec.Command("cchar", "-s", "test.fasta")
+  o, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  e, err = ioutil.ReadFile("res2.txt")
+  if err != nil {
+	  t.Error("couldn't open res2.txt")
+  }
+  if !bytes.Equal(o, e) {
+	  t.Errorf("wanted:\n%s\ngot:\n%s\n", string(e), string(o))
+  }
+#+end_src

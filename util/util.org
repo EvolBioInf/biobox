@@ -1,0 +1,54 @@
+#+begin_src latex
+  !Package \texttt{util} delivers data and functions used
+  !by many of the programs collected in the \texttt{biobox}.
+#+end_src
+#+begin_src go <<util.go>>=
+  package util
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:uti}>>
+  )
+  const (
+	  //<<Constants, Ch.~\ref{ch:uti}>>
+  )
+  //<<Variables, Ch.~\ref{ch:uti}>>
+  //<<Functions, Ch.~\ref{ch:uti}>>
+#+end_src
+#+begin_src latex
+  Each program provides the same information on author, email, and
+  license.
+#+end_src
+#+begin_src go <<Constants, Ch.~\ref{ch:uti}>>=
+  author = "Bernhard Haubold"
+  email = "haubold@evolbio.mpg.de"
+  license = "Gnu General Public License, " +
+	  "https://www.gnu.org/licenses/gpl.html"
+#+end_src
+#+begin_src latex
+  !\texttt{PrintInfo} prints a program's name, version, and compilation
+  !date. It also prints the author, email address, and license of the
+  !\texttt{biobox} package. Then it exits.
+  To achieve this, we wrap the generic
+  function for printing program information from package \texttt{clio}.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func PrintInfo(name string) {
+	  clio.PrintInfo(name, version, date, author, email, license)
+	  os.Exit(0)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{clio} and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:uti}>>=
+  "github.com/evolbioinf/clio"
+  "os"
+#+end_src
+#+begin_src latex
+  The values of \texttt{Version} and \texttt{Date} are injected at
+  compile-time. Here we just declare them.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:uti}>>=
+  var version string
+  var date string
+#+end_src

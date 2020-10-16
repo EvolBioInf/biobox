@@ -1,0 +1,253 @@
+#+begin_src latex
+  \section*{Introduction}
+  The program \texttt{getSeq} gets sequences from a data stream whose
+  headers match a regular expression.
+  \section*{Implementation}
+  The program outline contains hooks for imports, variables, functions,
+  and the guts of the main function.
+#+end_src
+#+begin_src go <<getSeq.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:get}>>
+  )
+  //<<Variables, Ch.~\ref{ch:get}>>
+  //<<Functions, Ch.~\ref{ch:get}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:get}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set a usage message and parse the options set
+  by the user. We then compile the regular expression and use it to
+  get the matching sequences.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:get}>>=
+  //<<Set usage, Ch.~\ref{ch:get}>>
+  //<<Parse options, Ch.~\ref{ch:get}>>
+  //<<Compile regex, Ch.~\ref{ch:get}>>
+  //<<Get matching sequences, Ch.~\ref{ch:get}>>
+#+end_src
+#+begin_src latex
+  The usage message consists of the usage proper, an explanation of the
+  program's purpose, and an example of its application.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:get}>>=
+  u := "getSeq [-h] [options] [files]"
+  p := "Extract sequences with headers matching a regex."
+  e := "getSeq \"coli*\" *.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:get}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  The regular expression identifying the sequence is passed via
+  \texttt{-s}. In response to \texttt{-c}, the program prints the
+  \emph{complement}, that is, all sequences that are not matching.
+  Apart from that, there is the usual \texttt{-v} option.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:get}>>=
+  var optS = flag.String("s", ".", "sequence identified by regex")
+  var optC = flag.Bool("c", false, "get complement")
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:get}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  After parsing the options, we test for \texttt{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:get}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("getSeq")
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{util},
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:get}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  and compile the regular expression.
+#+end_src
+#+begin_src go <<Compile regex, Ch.~\ref{ch:get}>>=
+  r, err := regexp.Compile(*optS)
+  if err != nil {
+	  log.Fatalf("Could not compile %q.\n", *optS)
+  }
+#+end_src
+#+begin_src latex
+  We import the packages \texttt{regexp} and \texttt{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:get}>>=
+  "regexp"
+  "log"
+#+end_src
+#+begin_src latex
+  To get the matching sequences, the input files are parsed with the
+  function \texttt{scan}, which takes the regex and the complement
+  marker as input.
+#+end_src
+#+begin_src go <<Get matching sequences, Ch.~\ref{ch:get}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, r, *optC)
+#+end_src
+#+begin_src latex
+  Before a file is scanned, we retrieve the arguments just passed. Then
+  we go through it line by line and open or close the printing channel.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:get}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:get}>>
+	  var open bool
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanLine() {
+		  l := sc.Line()
+		  //<<Deal with header, Ch.~\ref{ch:get}>>
+		  if open { fmt.Println(string(l)) }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Import \texttt{io}, \texttt{fasta}, and \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:get}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+  "fmt"
+#+end_src
+#+begin_src latex
+  There are two arguments to retrieve, the regular expression and the
+  complement indicator.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:get}>>=
+  re := args[0].(*regexp.Regexp)
+  optC := args[1].(bool)
+#+end_src
+#+begin_src latex
+  When a header is found, there are four possible combinations of
+  finding a match and being asked for the complement:
+  \begin{center}
+    \begin{tabular}{lll}
+	\hline
+	match & complement & print\\\hline
+	yes & yes & no\\
+	yes & no & yes\\
+	no & yes & yes\\
+	no & no & no\\\hline
+    \end{tabular}
+  \end{center}
+#+end_src
+#+begin_src go <<Deal with header, Ch.~\ref{ch:get}>>=
+  if sc.IsHeader() {
+	  m := re.Find(l[1:])
+	  if m != nil && optC { open = false 
+	  } else if m != nil && !optC { open = true 
+	  } else if m == nil && optC { open = true 
+	  } else {open = false}
+  }
+#+end_src
+#+begin_src latex
+  This completes \texttt{getSeq}, time to test it.
+  \section*{Testing}
+  We set up the testing framework.
+#+end_src
+#+begin_src go <<getSeq_test.go>>=
+  package main
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:get}>>
+  )
+  func TestGetSeq(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:get}>>
+  }
+#+end_src
+#+begin_src latex
+  We test on the file \texttt{test.fasta}.  It contains the ten
+  sequences, Seq1, Seq2,..., Seq10. We begin by matching ``Seq1''.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:get}>>=
+  cmd := exec.Command("getSeq", "-s", "Seq1", "test.fasta")
+  o, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:get}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  This should retrieve two sequences, Seq1 and Seq10, which are
+  contained in \texttt{res1.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:get}>>=
+  e, err := ioutil.ReadFile("res1.txt")
+  if !bytes.Equal(o, e) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", e, o)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{ioutil} and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:get}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  Now we retrieve ``Seq1'' alone. It is contained in \texttt{res2.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:get}>>=
+  cmd = exec.Command("getSeq", "-s", "1$", "test.fasta")
+  o, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  e, err = ioutil.ReadFile("res2.txt")
+  if !bytes.Equal(o, e) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", e, o)
+  }
+#+end_src
+#+begin_src latex
+  Retrieve Seq1, Seq2, and Seq3 using a character set. The expected
+  result is in \texttt{res3.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:get}>>=
+  cmd = exec.Command("getSeq", "-s", "[123]$", "test.fasta")
+  o, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  e, err = ioutil.ReadFile("res3.txt")
+  if !bytes.Equal(o, e) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", e, o)
+  }
+#+end_src
+#+begin_src latex
+  Finally, we test the complement option.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:get}>>=
+  cmd = exec.Command("getSeq", "-s", "[123]$", "-c",
+	  "test.fasta")
+  o, err = cmd.Output()
+  if err != nil {
+	  t.Errof("couldn't run %q\n", cmd)
+  }
+  e, err = ioutil.ReadFile("res4.txt")
+  if !bytes.Equal(o, e) {
+	  t.Errof("want:\n%s\nget:\n%s\n", e, o)
+  }
+#+end_src

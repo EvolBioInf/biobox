@@ -1,2 +1,15 @@
-cchar*
-tmp
+cchar/*.go
+doc/bioboxDoc.aux
+doc/bioboxDoc.bbl
+doc/bioboxDoc.blg
+doc/bioboxDoc.dvi
+doc/bioboxDoc.log
+doc/bioboxDoc.pdf
+doc/bioboxDoc.toc
+doc/cres.tex
+doc/getSeq.tex
+doc/util.tex
+doc/wrapSeq.tex
+getSeq/*.go
+util/*.go
+wrapSeq/*.go

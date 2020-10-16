@@ -1,12 +1,16 @@
 export VERSION = $(shell bash ./scripts/version.sh) # The single, trailing blank is essential
 export DATE    = $(shell bash ./scripts/date.sh) #    The single, trailing blank is essential
 
-all : cchar
-
-cchar: cchar.go
-	go build -ldflags "-X main.VERSION=$(VERSION) main.DATE=$(DATE)" cchar.go
-cchar.go: biobox.org
-	bash scripts/org2nw biobox.org | notangle -Rcchar.go > cchar.go
+all:
+	make -C util
+	make -C cchar
+	make -C getSeq
+.PHONY: doc
+doc:
+	make -C doc
 
 clean:
-	rm -f cchar *.go
+	make clean -C cchar
+	make clean -C getSeq
+	make clean -C doc
+	make clean -C util
