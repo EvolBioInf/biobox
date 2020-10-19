@@ -1,4 +1,5 @@
 */*.go
+bin/*
 cchar/cchar
 doc/bioboxDoc.aux
 doc/bioboxDoc.bbl
@@ -11,6 +12,8 @@ doc/cres.tex
 doc/getSeq.tex
 doc/util.tex
 doc/wrapSeq.tex
+doc/cchar.tex
+doc/var.tex
 getSeq/getSeq
 var/var
 wrapSeq/wrapSeq
