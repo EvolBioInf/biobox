@@ -244,10 +244,10 @@
 	  "test.fasta")
   o, err = cmd.Output()
   if err != nil {
-	  t.Errof("couldn't run %q\n", cmd)
+	  t.Errorf("couldn't run %q\n", cmd)
   }
   e, err = ioutil.ReadFile("res4.txt")
   if !bytes.Equal(o, e) {
-	  t.Errof("want:\n%s\nget:\n%s\n", e, o)
+	  t.Errorf("want:\n%s\nget:\n%s\n", e, o)
   }
 #+end_src
