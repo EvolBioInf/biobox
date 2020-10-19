@@ -1,0 +1,236 @@
+#+begin_src latex
+  \section*{Introduction}
+  Given a set of numbers, the program \texttt{var} computes their mean,
+  variance, and standard deviation. The variance is calculated using the
+  numerically stable two-pass method. The numbers are read from a single
+  column, one number per line.
+  \section*{Implementation}
+  The program template contains the usual hooks for imports, variables,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<var.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:var}>>
+  )
+  //<<Variables, Ch.~\ref{ch:var}>>
+  //<<Functions, Ch.~\ref{ch:var}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:var}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, parse the user options, and
+  iterate over the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:var}>>=
+  //<<Set usage, Ch.~\ref{ch:var}>>
+  //<<Parse options, Ch.~\ref{ch:var}>>
+  //<<Parse input, Ch.~\ref{ch:var}>>
+#+end_src
+#+begin_src latex
+  The usage begins with the actual usage statement, followed by an
+  explanation of what the program does, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:var}>>=
+  u := "var [-h] [options] [files]"
+  p := "Compute the mean and variance of a set of numbers."
+  e := "var *.txt"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:var}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  The flags are parsed and \texttt{PrintInfo} is called, if requested.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:var}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("var")
+  }
+#+end_src
+#+begin_src latex
+  We import the packages \texttt{flag} and \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:var}>>=
+  "flag"
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The variable \verb+*optV+ corresponds to option \texttt{-v}.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:var}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+#+end_src
+#+begin_src latex
+  By calling \texttt{flag.Parse()}, we consume the options. All
+  remaining argument on the command line are file names. We pass them to
+  the function \texttt{clio.ParseFiles}. In addition to the file names,
+  this takes as argument the function each file is scanned with,
+  \texttt{scan}. Results are reported per file, hence pass a copy of the
+  file names to \texttt{scan}.
+#+end_src
+#+begin_src go <<Parse input, Ch.~\ref{ch:var}>>=
+  files := flag.Args()
+  var fn = make([]string, len(files))
+  copy(fn, files)
+  clio.ParseFiles(files, scan, fn)
+#+end_src
+#+begin_src latex
+  In \texttt{scan} the data is first collected, then analyzed, and
+  finally the results are printed.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:var}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Collect data, Ch.~\ref{ch:var}>>
+	  //<<Analyze data, Ch.~\ref{ch:var}>>
+	  //<<Print results, Ch.~\ref{ch:var}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:var}>>=
+  "io"
+#+end_src
+#+begin_src go <<Collect data, Ch.~\ref{ch:var}>>=
+  sc := bufio.NewScanner(r)
+  var data []float64
+  for sc.Scan() {
+	  str := string(sc.Bytes())
+	  x, err := strconv.ParseFloat(str, 64)
+	  if err != nil {
+		  log.Fatalf("couldn't parse %q\n", str)
+	  }
+	  data = append(data, x)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{bufio}, \texttt{strconv}, and \texttt{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:var}>>=
+  "bufio"
+  "strconv"
+  "log"
+#+end_src
+#+begin_src latex
+  The data is analyzed in two passes.
+#+end_src
+#+begin_src go <<Analyze data, Ch.~\ref{ch:var}>>=
+  //<<First pass, Ch.~\ref{ch:var}>>
+  //<<Second pass, Ch.~\ref{ch:var}>>
+#+end_src
+#+begin_src latex
+  The average is computed in the first pass.
+#+end_src
+#+begin_src go <<First pass, Ch.~\ref{ch:var}>>=
+  var ave float64
+  for _, v := range data {
+	  ave += v
+  }
+  n := len(data)
+  ave /= float64(n)
+#+end_src
+#+begin_src latex
+  The variance and standard deviation are computed in the second pass.
+#+end_src
+#+begin_src go <<Second pass, Ch.~\ref{ch:var}>>=
+  var variance float64
+  for _, v := range data {
+	  d := ave - v
+	  variance += d * d
+  }
+  variance /= float64(n - 1)
+  sdev := math.Sqrt(variance)
+#+end_src
+#+begin_src latex
+  We import \texttt{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:var}>>=
+  "math"
+#+end_src
+#+begin_src latex
+  We print the result using a \texttt{tabwriter} to align the
+  columns. We also echo the file name, which is the last, and in our
+  case only, entry in \texttt{args}.
+#+end_src
+#+begin_src go <<Print results, Ch.~\ref{ch:var}>>=
+  fn := args[0].([]string)
+  args[0] = fn[1:]
+  w := new(tabwriter.Writer)
+  w.Init(os.Stdout, 4, 0, 1, ' ', 0)
+  fmt.Fprintf(w, "# File\tAvg\tVar\tSD\tn\n")
+  fmt.Fprintf(w, "%s\t%.6g\t%.6g\t%.6g\t%d\n",
+	  fn[0], ave, variance, sdev, n)
+  w.Flush()
+#+end_src
+#+begin_src latex
+  We import \texttt{tabwriter}, \texttt{os}, and \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:var}>>=
+  "text/tabwriter"
+  "os"
+  "fmt"
+#+end_src
+#+begin_src latex
+  We're done writing \texttt{var}, let's test it.
+  \section*{Testing}
+  We use the testing framework provided by Go.
+#+end_src
+#+begin_src go <<var_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:var}>>
+  )
+
+  func TestVar(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:var}>>
+  }
+#+end_src
+#+begin_src latex
+  We begin by applying \texttt{var} to \texttt{data1.txt}. The output we
+  get is compared to the output we want, which is contained in
+  \texttt{res1.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:var}>>=
+  cmd := exec.Command("var", "data1.txt")
+  g, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err := ioutil.ReadFile("res1.txt")
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:var}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  In the second and last test we iterate across the two input files
+  \texttt{data[12].txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:var}>>=
+  cmd = exec.Command("var", "data1.txt", "data2.txt")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res2.txt")
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want\n%ss\nget:\n%s\n", w, g)
+  }
+#+end_src

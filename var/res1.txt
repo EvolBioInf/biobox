@@ -1,0 +1,2 @@
+# File    Avg     Var       SD       n
+data1.txt 0.49593 0.0896069 0.299344 50
