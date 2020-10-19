@@ -1,12 +1,12 @@
 #+begin_src latex
   \section*{Introduction}
-  Given a set of numbers, the program \texttt{var} computes their mean,
-  variance, and standard deviation. The variance is calculated using the
-  numerically stable two-pass method. The numbers are read from a single
+  Given a set of numbers, \texttt{var} computes their mean, variance,
+  and standard deviation. The variance is calculated using the
+  numerically stable two-pass method. Input is read from a single
   column, one number per line.
   \section*{Implementation}
-  The program template contains the usual hooks for imports, variables,
-  functions, and the logic of the main function.
+  The outline contains hooks for imports, variables, functions, and the
+  logic of the main function.
 #+end_src
 #+begin_src go <<var.go>>=
   package main
@@ -27,7 +27,7 @@
 #+begin_src go <<Main function, Ch.~\ref{ch:var}>>=
   //<<Set usage, Ch.~\ref{ch:var}>>
   //<<Parse options, Ch.~\ref{ch:var}>>
-  //<<Parse input, Ch.~\ref{ch:var}>>
+  //<<Iterate over files, Ch.~\ref{ch:var}>>
 #+end_src
 #+begin_src latex
   The usage begins with the actual usage statement, followed by an
@@ -70,13 +70,13 @@
 #+end_src
 #+begin_src latex
   By calling \texttt{flag.Parse()}, we consume the options. All
-  remaining argument on the command line are file names. We pass them to
-  the function \texttt{clio.ParseFiles}. In addition to the file names,
-  this takes as argument the function each file is scanned with,
-  \texttt{scan}. Results are reported per file, hence pass a copy of the
-  file names to \texttt{scan}.
+  remaining arguments on the command line are file names. We pass them
+  to the function \texttt{clio.ParseFiles}. In addition to the file
+  names, this takes as argument the function for scanning each file,
+  \texttt{scan}. Results are reported per file, hence we pass a copy of
+  the file names to \texttt{scan}.
 #+end_src
-#+begin_src go <<Parse input, Ch.~\ref{ch:var}>>=
+#+begin_src go <<Iterate over files, Ch.~\ref{ch:var}>>=
   files := flag.Args()
   var fn = make([]string, len(files))
   copy(fn, files)
@@ -156,7 +156,7 @@
   "math"
 #+end_src
 #+begin_src latex
-  We print the result using a \texttt{tabwriter} to align the
+  We print the results using a \texttt{tabwriter} to align the
   columns. We also echo the file name, which is the last, and in our
   case only, entry in \texttt{args}.
 #+end_src
@@ -181,7 +181,7 @@
 #+begin_src latex
   We're done writing \texttt{var}, let's test it.
   \section*{Testing}
-  We use the testing framework provided by Go.
+  We use the standard testing framework.
 #+end_src
 #+begin_src go <<var_test.go>>=
   package main
@@ -197,8 +197,7 @@
 #+end_src
 #+begin_src latex
   We begin by applying \texttt{var} to \texttt{data1.txt}. The output we
-  get is compared to the output we want, which is contained in
-  \texttt{res1.txt}.
+  get is compared to the output we want in \texttt{res1.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:var}>>=
   cmd := exec.Command("var", "data1.txt")
