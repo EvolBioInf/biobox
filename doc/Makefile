@@ -1,4 +1,4 @@
-all: bioboxDoc.tex cchar.tex getSeq.tex util.tex var.tex wrapSeq.tex
+all: bioboxDoc.tex cchar.tex getSeq.tex ranseq.tex util.tex var.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
@@ -9,6 +9,8 @@ cchar.tex: ../cchar/cchar.org
 	bash ../scripts/org2nw ../cchar/cchar.org   | noweave -n -x | sed 's/_/\\_/g' > cchar.tex
 getSeq.tex: ../getSeq/getSeq.org
 	bash ../scripts/org2nw ../getSeq/getSeq.org | noweave -n -x | sed 's/_/\\_/g' > getSeq.tex	
+ranseq.tex: ../ranseq/ranseq.org
+	bash ../scripts/org2nw ../ranseq/ranseq.org | noweave -n -x | sed 's/_/\\_/g' > ranseq.tex	
 util.tex: ../util/util.org
 	bash ../scripts/org2nw ../util/util.org | awk -f ../scripts/preWeave.awk | noweave -n -x > util.tex
 var.tex: ../var/var.org

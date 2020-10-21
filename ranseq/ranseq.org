@@ -1,0 +1,248 @@
+#+begin_src latex
+  \section*{Introduction}
+  We often need a bit of random DNA sequence as input to other
+  programs. The program \texttt{ranseq} generates such random
+  sequences. The user can set their length, number, and G/C content.
+
+  \section*{Implementation}
+  The outline provides hooks for imports, variables, and the logic of
+  the main function.
+#+end_src
+#+begin_src go <<ranseq.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:ran}>>
+  )
+
+  //<<Variables, Ch.~\ref{ch:ran}>>
+
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:ran}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, parse the user options, and
+  generate the sequences.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:ran}>>=
+  //<<Set usage, Ch.~\ref{ch:ran}>>
+  //<<Parse options, Ch.~\ref{ch:ran}>>
+  //<<Generate sequences, Ch.~\ref{ch:ran}>>
+#+end_src
+#+begin_src latex
+  When setting the usage, we state the usage proper and give description
+  of the program plus an example.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:ran}>>=
+  u := "ranseq [-h] [options]"
+  d := "Generate random sequence."
+  e := "ranseq -l 1000"
+  clio.Usage(u, d, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ran}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We parse the options and check immediately whether the user requested
+  the program version.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:ran}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("ranseq")
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{flag} and \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ran}>>=
+  "flag"
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  We also declare the options. Apart from \texttt{-v}, there is the
+  sequence length, \texttt{-l}, the number of sequences, \texttt{-n},
+  the G/C content, \texttt{-g}, and the seed for the random number
+  generator, \texttt{-s}. By default the seed is zero, which prompts the
+  program to generate it internally. This is expected to be the default
+  usage, but occasionally someone might like to exactly reproduce a
+  ``random'' sequence.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:ran}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+  var optL = flag.Int("l", 100, "sequence length")
+  var optN = flag.Int("n", 1,   "number of sequences")
+  var optG = flag.Float64("g", 0.5, "G/C content")
+  var optS = flag.Int("s", 0, "seed for random number generator; " +
+	  "default: internal")
+#+end_src
+#+begin_src latex
+  To generate the requested sequences, we first initialize the random
+  number generator, \texttt{r}, and declare a byte array for a random
+  sequence, \texttt{s}, and a single byte for a random nucleotide,
+  \texttt{c}.
+#+end_src
+#+begin_src go <<Generate sequences, Ch.~\ref{ch:ran}>>=
+  var r *rand.Rand
+  //<<Prepare random number generator, Ch.~\ref{ch:ran}>>
+  var s []byte
+  var c byte
+  for i := 0; i < *optN; i++ {
+	  //<<Generate one sequence, Ch.~\ref{ch:ran}>>
+  }
+#+end_src
+#+begin_src latex
+  We import the package \texttt{math/rand}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ran}>>=
+  "math/rand"
+#+end_src
+#+begin_src latex
+  The random number generator is either seeded with the number passed
+  via the option \texttt{-s}, or with the current UNIX time.
+#+end_src
+#+begin_src go <<Prepare random number generator, Ch.~\ref{ch:ran}>>=
+  if *optS != 0 {
+	  r = rand.New(rand.NewSource(int64(*optS)))
+  } else {
+	  t := time.Now().UnixNano()
+	  r = rand.New(rand.NewSource(t))
+  }
+#+end_src
+#+begin_src latex 
+  We import the package \texttt{time}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ran}>>=
+  "time"
+#+end_src
+#+begin_src latex
+  When generating a new sequence, we first erase the old one by
+  reslicing, and generate a header, \texttt{Rand1}, \texttt{Rand2}, and
+  so on. Then we pick as many random nucleotides as set via
+  \texttt{-l}. After that loop, we construct a new sequence from the
+  header and nucleotide slice and print it.
+#+end_src
+#+begin_src go <<Generate one sequence, Ch.~\ref{ch:ran}>>=
+  s = s[:0]
+  h := "Rand" + strconv.Itoa(i+1)
+  for j := 0; j < *optL; j++ {
+	  //<<Pick random nucleotide, Ch.~\ref{ch:ran}>>
+	  s = append(s, c)
+  }
+  seq := fasta.NewSequence(h, s)
+  fmt.Println(seq)
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}, \texttt{fasta}, and \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ran}>>=
+  "strconv"
+  "github.com/evolbioinf/fasta"
+  "fmt"
+#+end_src
+#+begin_src latex
+  A single random nucleotide is picked by first deciding whether it's a
+  \texttt{G}/\texttt{C} or an \texttt{A}/\texttt{T}, depending on the
+  G/C content set by the user. Within these two categories, the chance
+  of picking either nucleotide is the same.
+#+end_src
+#+begin_src go <<Pick random nucleotide, Ch.~\ref{ch:ran}>>=
+  if r.Float64() < *optG {
+	  if r.Float64() < 0.5 { c = 'G'
+	  } else { c = 'C'
+	  }
+  } else {
+	  if r.Float64() < 0.5 { c = 'A'
+	  } else { c = 'T'
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We're done writing \texttt{ranseq}, so let's test it.
+  \section*{Testing}
+  Our outline contains hooks for imports and the actual testing.
+#+end_src
+#+begin_src go <<ranseq_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:ran}>>
+  )
+
+  func TestRanseq(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:ran}>>
+  }
+#+end_src
+#+begin_src latex
+  We run \texttt{ranseq} with a fixed seed and compare the result we get
+  with the result we want stored in \texttt{res1.fasta}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:ran}>>=
+  cmd := exec.Command("ranseq", "-s", "13")
+  g, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err := ioutil.ReadFile("res1.fasta")
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:ran}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  We repeat the test without setting the seed. This time the result
+  should \emph{differ} from that in \texttt{res1.fasta}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:ran}>>=
+  cmd = exec.Command("ranseq")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res1.fasta")
+  if bytes.Equal(g, w) {
+	  t.Errorf("don't want:\n%s\nbut do get\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  We continue testing the seed fixed and generate two sequences this
+  time.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:ran}>>=
+  cmd = exec.Command("ranseq", "-s", "13", "-n", "2")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res2.fasta")
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  As a final test, we change the GC-content.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:ran}>>=
+  cmd = exec.Command("ranseq", "-s", "13", "-g", "0.3")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res3.fasta")
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget\n%s\n", w, g)
+  }
+#+end_src

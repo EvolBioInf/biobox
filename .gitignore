@@ -1,6 +1,5 @@
 */*.go
 bin/*
-cchar/cchar
 doc/bioboxDoc.aux
 doc/bioboxDoc.bbl
 doc/bioboxDoc.blg
@@ -8,12 +7,17 @@ doc/bioboxDoc.dvi
 doc/bioboxDoc.log
 doc/bioboxDoc.pdf
 doc/bioboxDoc.toc
-doc/cres.tex
-doc/getSeq.tex
-doc/util.tex
-doc/wrapSeq.tex
 doc/cchar.tex
+doc/getSeq.tex
+doc/ranseq.tex
+doc/util.tex
 doc/var.tex
+doc/wrapSeq.tex
+
+# Programs
+cchar/cchar
 getSeq/getSeq
+ranseq/ranseq
 var/var
 wrapSeq/wrapSeq
+
