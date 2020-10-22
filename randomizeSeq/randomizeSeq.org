@@ -1,0 +1,165 @@
+#+begin_src latex
+  \section*{Introduction}
+  We often compare the properties of some sequence with those of its
+  shuffled version. The program \texttt{randomizeSeq} carries out this
+  shuffling. Its outline contains hooks for imports, variable,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<randomizeSeq.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:rs}>>
+  )
+  //<<Variables, Ch.~\ref{ch:rs}>>
+  //<<Functions, Ch.~\ref{ch:rs}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:rs}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, and parse the options and the
+  input.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:rs}>>=
+  //<<Set usage, Ch.~\ref{ch:rs}>>
+  //<<Parse options, Ch.~\ref{ch:rs}>>
+  //<<Parse input, Ch.~\ref{ch:rs}>>
+#+end_src
+#+begin_src latex
+  The usage has three parts, the actual usage statement, a description,
+  and an example.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:rs}>>=
+  u := "randomizeSeq [-h] [options] [files]"
+  p := "Shuffle sequences."
+  e := "randomizeSeq *.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rs}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We parse the options and check whether the version is to be printed.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:rs}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("randomizeSeq")
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{flag} and \texttt{util},
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rs}>>=
+  "flag"
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  and declare the options. Apart from version (\texttt{-v}), the user
+  can seed the random number generator (\texttt{-s}). By default, the
+  seed is generated internally.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:rs}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+  var optS = flag.Int("s", 0, "seed for random number generator; " +
+	  "default: internal")
+#+end_src
+#+begin_src latex
+  The input is parsed with the function \texttt{ParseFiles}. It takes as
+  arguments the names of the files to be parsed, a function applied to
+  each file, and its argument, a pointer to the random number generator.
+#+end_src
+#+begin_src go <<Parse input, Ch.~\ref{ch:rs}>>=
+  var rn *rand.Rand
+  if *optS != 0 {
+	  rn = rand.New(rand.NewSource(int64(*optS)))
+  } else {
+	  t := time.Now().UnixNano()
+	  rn = rand.New(rand.NewSource(t))
+  }
+  files := flag.Args()
+  clio.ParseFiles(files, scan, rn)
+#+end_src
+#+begin_src latex
+  We import \texttt{rand} and \texttt{time}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rs}>>=
+  "math/rand"
+  "time"
+#+end_src
+#+begin_src latex
+  In the function \texttt{scan} we retrieve the random number generator,
+  and print a shuffled version of each \texttt{Sequence} in the input.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:rs}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  rn := args[0].(*rand.Rand)
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  s1 := sc.Sequence()
+		  s2 := fasta.NewSequence(s1.Header() +
+			  " - SHUFFLED", s1.Data())
+		  s2.Shuffle(rn)
+		  fmt.Println(s2)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io}, \texttt{fasta}, and \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rs}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+  "fmt"
+#+end_src
+#+begin_src latex
+  This concludes \texttt{randomizeSeq}, testing time.
+  \section*{Testing}
+  We begin with an outline containing hooks for imports and the testing
+  logic.
+#+end_src
+#+begin_src go <<randomizeSeq_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:rs}>>
+  )
+
+  func TestRandomizeSeq (t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:rs}>>
+  }
+#+end_src
+#+begin_src latex
+  If we run \texttt{randomizeSeq} with a given seed, we can pre-compute
+  its result, \texttt{test.fasta} becomes \texttt{shuf.fasta}. So we can
+  compare what we get when we shuffle \texttt{test.fasta} with what we
+  want.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:rs}>>=
+  cmd := exec.Command("randomizeSeq", "-s", "13", "test.fasta")
+  g, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err := ioutil.ReadFile("shuf.fasta")
+  if err != nil {
+	  t.Errorf("couldn't open file %q\n", "shuf.fasta")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:rs}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src

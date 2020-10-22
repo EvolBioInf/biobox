@@ -7,6 +7,8 @@ all:
 	cp cchar/cchar bin
 	make -C getSeq
 	cp getSeq/getSeq bin
+	make -C randomizeSeq
+	cp randomizeSeq/randomizeSeq bin
 	make -C ranseq
 	cp ranseq/ranseq bin
 	make -C wrapSeq
@@ -20,6 +22,7 @@ clean:
 	make clean -C cchar
 	make clean -C getSeq
 	make clean -C doc
+	make clean -C randomizeSeq
 	make clean -C ranseq
 	make clean -C util
 	make clean -C wrapSeq
@@ -27,6 +30,7 @@ clean:
 test:
 	make test -C cchar
 	make test -C getSeq
+	make test -C randomizeSeq
 	make test -C ranseq
 	make test -C wrapSeq
 	make test -C var
