@@ -94,18 +94,19 @@
 #+end_src
 #+begin_src latex
   In the function \texttt{scan} we retrieve the random number generator,
-  and print a shuffled version of each \texttt{Sequence} in the input.
+  and print a shuffled version of each \texttt{Sequence} in the
+  input. We append \texttt{SHUFFLED} to the header to notify the user
+  the sequence has changed.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:rs}>>=
   func scan(r io.Reader, args ...interface{}) {
 	  rn := args[0].(*rand.Rand)
 	  sc := fasta.NewScanner(r)
 	  for sc.ScanSequence() {
-		  s1 := sc.Sequence()
-		  s2 := fasta.NewSequence(s1.Header() +
-			  " - SHUFFLED", s1.Data())
-		  s2.Shuffle(rn)
-		  fmt.Println(s2)
+		  seq := sc.Sequence()
+		  seq.Shuffle(rn)
+		  seq.AppendToHeader(" - SHUFFLED")
+		  fmt.Println(seq)
 	  }
   }
 #+end_src
