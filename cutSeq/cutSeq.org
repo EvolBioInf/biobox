@@ -1,0 +1,355 @@
+#+begin_src latex
+  \section*{Introduction}
+  The program \texttt{cutSeq} cuts one or more regions from the
+  sequences in the input. Positions are one-based and start/end
+  coordinates are inclusive. It is also possible to join the regions.
+
+  The program outline contains hooks for imports, types, variables,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<cutSeq.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:cut}>>
+  )
+  //<<Types, Ch.~\ref{ch:cut}>>
+  //<<Variables, Ch.~\ref{ch:cut}>>
+  //<<Functions, Ch.~\ref{ch:cut}>>
+
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:cut}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, the usage is set, and the options and input
+  files are parsed.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:cut}>>=
+  //<<Set usage, Ch.~\ref{ch:cut}>>
+  //<<Parse options, Ch.~\ref{ch:cut}>>
+  //<<Parse input, Ch.~\ref{ch:cut}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts: The usage proper, the program's
+  purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:cut}>>=
+  u := "cutSeq [-h] [options] [files]"
+  p := "Cut revions from sequence."
+  e := "cutSeq -r 10-20,25-50 *.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  After parsing the options, we check whether the version is to be
+  printed.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:cut}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("cutSeq")
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{flag} and \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
+  "flag"
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  Apart from the version flag, \texttt{-v}, we also declare a flag for
+  regions to cut, \texttt{-r}, for a file with regions, \texttt{-f}, and
+  for joining the regions, \texttt{-j}.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:cut}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+  var optR = flag.String("r", "", "regions")
+  var optF = flag.String("f", "", "file with regions; " +
+	  "one white-space delimited start/end pair per line")
+  var optJ = flag.Bool("j", false, "join regions")
+#+end_src
+#+begin_src latex
+  We continue parsing the options by reading the regions supplied either
+  on the command line or in a file into a slice.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:cut}>>=
+  var regions []region
+  if *optR != "" {
+	  //<<Parse regions from command line, Ch.~\ref{ch:cut}>>
+  } else if *optF != "" {
+	  //<<Parse regions from file, Ch.~\ref{ch:cut}>>
+  } else {
+	  fmt.Fprintf(os.Stderr,
+		  "Please provide a region to cut either via -r or -f.")
+	  os.Exit(0)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt} and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
+  "fmt"
+  "os"
+#+end_src
+#+begin_src latex
+  An individual region is a structure that holds a pair of start and end
+  positions.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:cut}>>=
+  type region struct {
+	  start, end int
+  }
+#+end_src
+#+begin_src latex
+  On the command line the regions are separated by commas, and the
+  positions by hyphens.
+#+end_src
+#+begin_src go <<Parse regions from command line, Ch.~\ref{ch:cut}>>=
+  re := strings.Split(*optR, ",")
+  for _, x := range re {
+	  y := strings.Split(x, "-")
+	  r := *new(region)
+	  r.start, _ = strconv.Atoi(y[0])
+	  r.end, _ = strconv.Atoi(y[1])
+	  regions = append(regions, r)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strings} and \texttt{strconv}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
+  "strings"
+  "strconv"
+#+end_src
+#+begin_src latex
+  When parsing a file, we open it, scan it, and close it again.
+#+end_src
+#+begin_src go <<Parse regions from file, Ch.~\ref{ch:cut}>>=
+  //<<Open file, Ch.~\ref{ch:cut}>>
+  //<<Scan file, Ch.~\ref{ch:cut}>>
+  //<<Close file, Ch.~\ref{ch:cut}>>
+#+end_src
+#+begin_src latex
+  If we cant open the input file, we abort.
+#+end_src
+#+begin_src go <<Open file, Ch.~\ref{ch:cut}>>=
+  file, err := os.Open(*optF)
+  if err != nil {
+	  log.Fatalf("couldn't open %q\n", *optF)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
+  "log"
+#+end_src
+#+begin_src latex
+  The file of regions is scanned using a \texttt{Scanner}.
+#+end_src
+#+begin_src go <<Scan file, Ch.~\ref{ch:cut}>>=
+  sc := bufio.NewScanner(file)
+  for sc.Scan() {
+	  f := strings.Fields(sc.Text())
+	  r := *new(region)
+	  s, _ := strconv.Atoi(f[0])
+	  e, _ := strconv.Atoi(f[1])
+	  r.start = s
+	  r.end = e
+	  regions = append(regions, r)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{bufio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
+  "bufio"
+#+end_src
+#+begin_src latex
+  After we are done with the file of regions, we close it.
+#+end_src
+#+begin_src go <<Close file, Ch.~\ref{ch:cut}>>=
+  file.Close()
+#+end_src
+#+begin_src latex
+  We now scan each input file using the function \texttt{scan}, which
+  takes as arguments the regions and the indicator of whether or not the
+  regions are to be joined.
+#+end_src
+#+begin_src go <<Parse input, Ch.~\ref{ch:cut}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, regions, *optJ)
+#+end_src
+#+begin_src latex
+  In function \texttt{scan}, we first retrieve the arguments we just
+  passed, then scan the sequences.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:cut}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:cut}>>
+	  //<<Scan sequences, Ch.~\ref{ch:cut}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  The arguments are retrieved by type assertion.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:cut}>>=
+  regions := args[0].([]region)
+  optJ := args[1].(bool)
+#+end_src
+#+begin_src latex
+  The sequences are scanned using a dedicated \texttt{Scanner}, and the
+  cut regions are either printed separately or joined together.
+#+end_src
+#+begin_src go <<Scan sequences, Ch.~\ref{ch:cut}>>=
+  sc := fasta.NewScanner(r)
+  for sc.ScanSequence() {
+	  seq := sc.Sequence()
+	  if optJ && len(regions) > 1 {
+		  //<<Print joined regions, Ch.~\ref{ch:cut}>>
+	  } else {
+		  //<<Print separate regions, Ch.~\ref{ch:cut}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  When joining, we store the bits of sequence in a byte slice and
+  prepare a header that documents which regions were stuck together.
+#+end_src
+#+begin_src go <<Print joined regions, Ch.~\ref{ch:cut}>>=
+  var d []byte
+  h := seq.Header() + " join("
+  //<<Construct joined header and sequence, Ch.~\ref{ch:cut}>>
+  h = h + ")"
+  ns := fasta.NewSequence(h, d)
+  fmt.Println(ns)
+#+end_src
+#+begin_src latex
+  The joined header and sequence is constructed in one pass over the
+  slice of regions.
+#+end_src
+#+begin_src go <<Construct joined header and sequence, Ch.~\ref{ch:cut}>>=
+  for i, r := range regions {
+	  s := r.start
+	  e := r.end
+	  if i > 0 {
+		  h = h + ","
+	  }
+	  h = h + strconv.Itoa(s) + ".." + strconv.Itoa(e)
+	  d = append(d, seq.Data()[s-1:e]...)
+  }
+#+end_src
+#+begin_src latex
+  Printing the cut-out regions separately, is simpler, we just iterate
+  over the slice of regions.
+#+end_src
+#+begin_src go <<Print separate regions, Ch.~\ref{ch:cut}>>=
+  for _, r := range regions {
+	  h := seq.Header() + " "
+	  s := r.start
+	  e := r.end
+	  h = h + strconv.Itoa(s) + ".." + strconv.Itoa(e)
+	  ns := fasta.NewSequence(h, seq.Data()[s-1:e])
+	  fmt.Println(ns)
+  }
+#+end_src
+#+begin_src latex
+  We're done with \texttt{cutSeq}, the rest is testing.
+  \section*{Testing}
+  The testing outline has hooks for imports and the actual testing function.
+#+end_src
+#+begin_src go <<cutSeq_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:cut}>>
+  )
+
+  func TestCutSeq(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:cut}>>
+  }
+#+end_src
+#+begin_src latex
+  We first cut positions 10-20 from \texttt{test.fasta} and compare what
+  we get with what we want, contained in \texttt{res1.fasta}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
+  cmd := exec.Command("cutSeq", "-r", "10-20", "test.fasta")
+  g, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err := ioutil.ReadFile("res1.fasta")
+  if err != nil {
+	  t.Errorf("couldn't open res1.fasta")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+		
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:cut}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  Next, we cut two regions, 10--20 and 25--50.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
+  cmd = exec.Command("cutSeq", "-r", "10-20,25-50", "test.fasta")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res2.fasta")
+  if err != nil {
+	  t.Errorf("couldn't open res2.fasta")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+		
+#+end_src
+#+begin_src latex
+  Finally, we join the two regions.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
+  cmd = exec.Command("cutSeq", "-j", "-r", "10-20,25-50", "test.fasta")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res3.fasta")
+  if err != nil {
+	  t.Errorf("couldn't open res3.fasta")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+		
+#+end_src

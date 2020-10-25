@@ -1,4 +1,4 @@
-all: bioboxDoc.tex cchar.tex getSeq.tex ranseq.tex randomizeSeq revComp.tex util.tex var.tex wrapSeq.tex
+all: bioboxDoc.tex cchar.tex cutSeq.tex getSeq.tex ranseq.tex randomizeSeq revComp.tex util.tex var.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
@@ -7,6 +7,8 @@ all: bioboxDoc.tex cchar.tex getSeq.tex ranseq.tex randomizeSeq revComp.tex util
 	dvipdf bioboxDoc
 cchar.tex: ../cchar/cchar.org
 	bash ../scripts/org2nw ../cchar/cchar.org   | noweave -n -x | sed 's/_/\\_/g' > cchar.tex
+cutSeq.tex: ../cutSeq/cutSeq.org
+	bash ../scripts/org2nw ../cutSeq/cutSeq.org   | noweave -n -x | sed 's/_/\\_/g' > cutSeq.tex
 getSeq.tex: ../getSeq/getSeq.org
 	bash ../scripts/org2nw ../getSeq/getSeq.org | noweave -n -x | sed 's/_/\\_/g' > getSeq.tex
 randomizeSeq: ../randomizeSeq/randomizeSeq.org
@@ -22,4 +24,4 @@ var.tex: ../var/var.org
 wrapSeq.tex: ../wrapSeq/wrapSeq.org
 	bash ../scripts/org2nw ../wrapSeq/wrapSeq.org | noweave -n -x | sed 's/_/\\_/g' > wrapSeq.tex
 clean:
-	rm -f cchar.tex getSeq.tex util.tex var.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 
+	rm -f cchar.tex cutSeq.tex getSeq.tex util.tex var.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 

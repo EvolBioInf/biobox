@@ -5,6 +5,8 @@ all:
 	make -C util
 	make -C cchar
 	cp cchar/cchar bin
+	make -C cutSeq
+	cp cutSeq/cutSeq bin
 	make -C getSeq
 	cp getSeq/getSeq bin
 	make -C randomizeSeq
@@ -22,6 +24,7 @@ doc:
 	make -C doc
 clean:
 	make clean -C cchar
+	make clean -C cutSeq
 	make clean -C getSeq
 	make clean -C doc
 	make clean -C randomizeSeq
@@ -32,6 +35,7 @@ clean:
 	make clean -C var
 test:
 	make test -C cchar
+	make tets -C cutSeq
 	make test -C getSeq
 	make test -C randomizeSeq
 	make test -C ranseq

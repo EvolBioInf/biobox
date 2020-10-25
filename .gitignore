@@ -8,6 +8,7 @@ doc/bioboxDoc.log
 doc/bioboxDoc.pdf
 doc/bioboxDoc.toc
 doc/cchar.tex
+doc/cutSeq.tex
 doc/getSeq.tex
 doc/randomizeSeq.tex
 doc/ranseq.tex
@@ -18,6 +19,7 @@ doc/wrapSeq.tex
 
 # Programs
 cchar/cchar
+cutSeq/cutSeq
 getSeq/getSeq
 randomizeSeq/randomizeSeq
 ranseq/ranseq
