@@ -1,0 +1,176 @@
+#+begin_src latex
+  DNA sequences are double stranded. The reverse strand is inferred from
+  the forward strand by what's known as ``reverse
+  complementation''. This is implemented in the 
+  program \texttt{revComp}. Its outline provides hooks for imports,
+  variables, functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<revComp.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:rev}>>
+  )
+  //<<Variables, Ch.~\ref{ch:rev}>>
+  //<<Functions, Ch.~\ref{ch:rev}>>
+
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:rev}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, scan the options, and scan
+  the input.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:rev}>>=
+  //<<Set usage, Ch.~\ref{ch:rev}>>
+  //<<Parse options, Ch.~\ref{ch:rev}>>
+  //<<Parse input, Ch.~\ref{ch:rev}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the usage proper, a description of
+  \texttt{revComp}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:rev}>>=
+  u := "revComp [-h] [options] [files]"
+  d := "Reverse-complement DNA sequences."
+  e := "revComp *.fasta"
+  clio.Usage(u, d, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rev}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We parse the options and check whether the user requested the version.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:rev}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("revComp")
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{flag} and \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rev}>>=
+  "flag"
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  We declare the options for version, \texttt{-v}, and for printing just the
+  reverse, \texttt{-r}.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:rev}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+  var optR = flag.Bool("r", false, "reverse only")
+#+end_src
+#+begin_src latex
+  When scanning the input files, we pass the reverse and complement
+  options.
+#+end_src
+#+begin_src go <<Parse input, Ch.~\ref{ch:rev}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optR)
+#+end_src
+#+begin_src latex
+  In function \texttt{scan} we retrieve the option just passed by
+  type assertion, then reverse or reverse-complement the sequence, and
+  finally print it.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:rev}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  optR := args[0].(bool)
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  seq := sc.Sequence()
+		  //<<Reverse or reverse-complement? Ch.~\ref{ch:rev}>>
+		  fmt.Println(seq)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io}, \texttt{fasta}, and \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rev}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+  "fmt"
+#+end_src
+#+begin_src latex
+  We decide whether to just reverse the sequence or compute the full
+  reverse complement. In each case we add the corresponding information
+  to the header.
+#+end_src
+#+begin_src go <<Reverse or reverse-complement? Ch.~\ref{ch:rev}>>=
+  if optR {
+	  seq.Reverse()
+	  seq.AppendToHeader(" - REVERSE")
+  } else {
+	  seq.ReverseComplement()
+	  seq.AppendToHeader(" - REVERSE_COMPLEMENT")
+  }
+#+end_src
+#+begin_src latex
+  We're done with \texttt{revComp}, so let's test it.
+  The outline for testing contains hooks for imports and the function to
+  be tested.
+#+end_src
+#+begin_src go <<revComp_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:rev}>>
+  )
+
+  func TestRevComp(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:rev}>>
+  }
+#+end_src
+#+begin_src latex
+  We apply \texttt{revComp} to \texttt{test.fasta} and compare what we
+  get to what we want, which is stored in \texttt{res11.fasta}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:rev}>>=
+  cmd := exec.Command("revComp", "test.fasta")
+  g, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("coutdn't run %q\n", cmd)
+  }
+  w, err := ioutil.ReadFile("res1.fasta")
+  if err != nil {
+	  t.Error("couldn't open res1.fasta")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:rev}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  We repeat the test, only this time just compute the reverse.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:rev}>>=
+  cmd = exec.Command("revComp", "-r", "test.fasta")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res2.fasta")
+  if err != nil {
+	  t.Error("couldnt' open res2.fasta")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src

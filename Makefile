@@ -11,6 +11,8 @@ all:
 	cp randomizeSeq/randomizeSeq bin
 	make -C ranseq
 	cp ranseq/ranseq bin
+	make -C revComp
+	cp revComp/revComp bin
 	make -C wrapSeq
 	cp wrapSeq/wrapSeq bin
 	make -C var
@@ -24,6 +26,7 @@ clean:
 	make clean -C doc
 	make clean -C randomizeSeq
 	make clean -C ranseq
+	make clean -C revComp
 	make clean -C util
 	make clean -C wrapSeq
 	make clean -C var
@@ -32,5 +35,6 @@ test:
 	make test -C getSeq
 	make test -C randomizeSeq
 	make test -C ranseq
+	make test -C revComp
 	make test -C wrapSeq
 	make test -C var

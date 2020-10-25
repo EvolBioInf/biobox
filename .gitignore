@@ -11,6 +11,7 @@ doc/cchar.tex
 doc/getSeq.tex
 doc/randomizeSeq.tex
 doc/ranseq.tex
+doc/revComp.tex
 doc/util.tex
 doc/var.tex
 doc/wrapSeq.tex
@@ -20,6 +21,7 @@ cchar/cchar
 getSeq/getSeq
 randomizeSeq/randomizeSeq
 ranseq/ranseq
+revComp/revComp
 var/var
 wrapSeq/wrapSeq
 

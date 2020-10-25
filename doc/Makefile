@@ -1,4 +1,4 @@
-all: bioboxDoc.tex cchar.tex getSeq.tex ranseq.tex randomizeSeq util.tex var.tex wrapSeq.tex
+all: bioboxDoc.tex cchar.tex getSeq.tex ranseq.tex randomizeSeq revComp.tex util.tex var.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
@@ -13,6 +13,8 @@ randomizeSeq: ../randomizeSeq/randomizeSeq.org
 	bash ../scripts/org2nw ../randomizeSeq/randomizeSeq.org | noweave -n -x | sed 's/_/\\_/g' > randomizeSeq.tex
 ranseq.tex: ../ranseq/ranseq.org
 	bash ../scripts/org2nw ../ranseq/ranseq.org | noweave -n -x | sed 's/_/\\_/g' > ranseq.tex	
+revComp.tex: ../revComp/revComp.org
+	bash ../scripts/org2nw ../revComp/revComp.org | noweave -n -x | sed 's/_/\\_/g' > revComp.tex	
 util.tex: ../util/util.org
 	bash ../scripts/org2nw ../util/util.org | awk -f ../scripts/preWeave.awk | noweave -n -x > util.tex
 var.tex: ../var/var.org
