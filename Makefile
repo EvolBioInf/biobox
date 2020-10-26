@@ -15,6 +15,8 @@ all:
 	cp ranseq/ranseq bin
 	make -C revComp
 	cp revComp/revComp bin
+	make -C watterson
+	cp watterson/watterson bin
 	make -C wrapSeq
 	cp wrapSeq/wrapSeq bin
 	make -C var
@@ -31,6 +33,7 @@ clean:
 	make clean -C ranseq
 	make clean -C revComp
 	make clean -C util
+	make clean -C watterson
 	make clean -C wrapSeq
 	make clean -C var
 test:
@@ -40,5 +43,6 @@ test:
 	make test -C randomizeSeq
 	make test -C ranseq
 	make test -C revComp
+	make test -C watterson
 	make test -C wrapSeq
 	make test -C var

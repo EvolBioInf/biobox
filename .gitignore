@@ -15,6 +15,7 @@ doc/ranseq.tex
 doc/revComp.tex
 doc/util.tex
 doc/var.tex
+doc/watterson.tex
 doc/wrapSeq.tex
 
 # Programs
@@ -25,5 +26,6 @@ randomizeSeq/randomizeSeq
 ranseq/ranseq
 revComp/revComp
 var/var
+watterson/watterson
 wrapSeq/wrapSeq
 

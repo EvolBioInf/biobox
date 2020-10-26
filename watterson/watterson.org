@@ -1,0 +1,220 @@
+#+begin_src latex
+  \section*{Introduction}
+  The expected number of segregating sites, $S$, observed in a sample of
+  aligned DNA sequences is a simple function of the sample size, $n$,
+  \begin{equation}\label{eq:wat}
+    S = \theta\sum_{i=1}^{n-1}\frac{1}{i},
+  \end{equation}
+  where $\theta=4N_{\rm e}\mu$, $N_{\rm e}$ the ``effective''
+  population size, and $\mu$ the mutation rate. Equation~\ref{eq:wat}
+  was published in 1975 by G. A. Watterson~\cite{wat75:num}, hence the
+  name of my program.
+
+  There is also an approximate version of Watterson's equation~\cite{hau02:cal},
+  \begin{equation}\label{eq:app}
+    S \approx\theta\left(\gamma+\frac{1-\gamma}{n-1}+\log(n-1)\right),
+  \end{equation}
+  where $\gamma\approx 0.58$ is the Euler-Mascheroni constant. We
+  implement both the exact and the approximate equation.
+
+  \section*{Implementation}
+  The program outline contains hooks for imports, constants, variables, and the
+  logic of the main function.
+#+end_src
+#+begin_src go <<watterson.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:wat}>>
+  )
+  const (
+	  //<<Constants, Ch.~\ref{ch:wat}>>
+  )
+  //<<Variables, Ch.~\ref{ch:wat}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:wat}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, parse the options, and compute $S$.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:wat}>>=
+  //<<Set usage, Ch.~\ref{ch:wat}>>
+  //<<Parse options, Ch.~\ref{ch:wat}>>
+  //<<Compute $S$, Ch.~\ref{ch:wat}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts: The usage message itself, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:wat}>>=
+  u := "watterson [-h] [options}"
+  p := "Compute Watterson's estimator of the number " +
+	  "of segregating sites."
+  e := "watterson -n 10 -t 20"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:wat}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Before parsing the options, we declare them: There is the sample size
+  (\texttt{-n}), $\theta$ (\texttt{-t}), and the possibility to use the
+  approximation (\texttt{-a}). Finally, the user can request the
+  program's version (\texttt{-v}).
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:wat}>>=
+  var optN = flag.Int("n", 0, "sample size")
+  var optT = flag.Float64("t", 0, "theta = 4Nu")
+  var optA = flag.Bool("a", false, "use approximation")
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag},
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:wat}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  and parse the options. If $n < 2$ or $\theta=0$, we prompt the user
+  for sensible values.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:wat}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("watterson")
+  }
+  if *optN < 2 || *optT == 0 {
+	  fmt.Fprintf(os.Stderr, "Please enter a sample size > 1, " +
+		  "and a theta > 0\n")
+	  os.Exit(0)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}, \texttt{util}, \texttt{fmt}, and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:wat}>>=
+  "flag"
+  "github.com/evolbioinf/biobox/util"
+  "fmt"
+  "os"
+#+end_src
+#+begin_src latex
+  $S$ is computed either with the exact formula, or with the
+  approximation.
+#+end_src
+#+begin_src go <<Compute $S$, Ch.~\ref{ch:wat}>>=
+  var S float64
+  t := *optT
+  n := *optN
+  if *optA {
+	  //<<Approximate $S$, Ch.~\ref{ch:wat}>>
+  } else {
+	  //<<Exact $S$, Ch.~\ref{ch:wat}>>
+  }
+  fmt.Printf("S = %.8g\n", S)
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:wat}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  The approximate formula is based on the Euler-Mascheroni constant,
+  $\gamma$, which we take from the ``Online Encyclopedia of Integer
+  Sequences''.
+#+end_src
+#+begin_src go <<Constants, Ch.~\ref{ch:wat}>>=
+  EulerMascheroni = 0.57721566490153286060651209008240243104215933594
+#+end_src
+#+begin_src latex
+  The actual computation is a transcription of equation~(\ref{eq:app}).
+#+end_src
+#+begin_src go <<Approximate $S$, Ch.~\ref{ch:wat}>>=
+  g := EulerMascheroni
+  S = t * (g + (1-g)/float64(n-1) + math.Log(float64(n-1)))
+#+end_src
+#+begin_src latex
+  We import \texttt{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:wat}>>=
+  "math"
+#+end_src
+#+begin_src latex
+  Similarly, for the exact computation we transcribe
+  equation~(\ref{eq:wat}).
+#+end_src
+#+begin_src go <<Exact $S$, Ch.~\ref{ch:wat}>>=
+  var h float64
+  for i := 1; i < n; i++ {
+    h += 1/float64(i)
+  }
+  S = t * h
+#+end_src
+#+begin_src latex
+  The implementation is finished, the rest's the test.
+  \section*{Testing}
+  The testing framework contains hooks for imports and the actual
+  testing logic.
+#+end_src
+#+begin_src go <<watterson_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:wat}>>
+  )
+
+  func TestWatterson(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:wat}>>
+  }
+#+end_src
+#+begin_src latex
+  We begins with $n=10$ and $\theta=20$, and compare what we get with
+  what we want, which is stored in \texttt{res1.txt}
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:wat}>>=
+  cmd := exec.Command("watterson", "-n", "10", "-t", "20")
+  g, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err := ioutil.ReadFile("res1.txt")
+  if err != nil {
+	  t.Errorf("couldnt' open res1.txt")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", g, w)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:wat}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  We also use the approximate formula and compare what we get with what
+  we want in \texttt{res2.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:wat}>>=
+  cmd = exec.Command("watterson", "-n", "10", "-t", "20", "-a")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res2.txt")
+  if err != nil {
+	  t.Errorf("couldnt' open res2.txt")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", g, w)
+  }
+#+end_src
