@@ -1,9 +1,11 @@
 #+begin_src latex
   \section*{Introduction}
-  We often compare the properties of some sequence with those of its
+  We often compare the properties of a given sequence with those of its
   shuffled version. The program \texttt{randomizeSeq} carries out this
-  shuffling. Its outline contains hooks for imports, variable,
-  functions, and the logic of the main function.
+  shuffling.
+  \section*{Implementation}
+  The program outline contains hooks for imports, variable, functions,
+  and the logic of the main function.
 #+end_src
 #+begin_src go <<randomizeSeq.go>>=
   package main
@@ -71,8 +73,9 @@
 #+end_src
 #+begin_src latex
   The input is parsed with the function \texttt{ParseFiles}. It takes as
-  arguments the names of the files to be parsed, a function applied to
-  each file, and its argument, a pointer to the random number generator.
+  arguments the names of the files to be parsed, the function
+  \texttt{scan} applied to each file, and its argument, a pointer to the
+  random number generator.
 #+end_src
 #+begin_src go <<Parse input, Ch.~\ref{ch:rs}>>=
   var rn *rand.Rand
@@ -94,9 +97,8 @@
 #+end_src
 #+begin_src latex
   In the function \texttt{scan} we retrieve the random number generator,
-  and print a shuffled version of each \texttt{Sequence} in the
-  input. We append \texttt{SHUFFLED} to the header to notify the user
-  the sequence has changed.
+  and print a shuffled version of each sequence. We append
+  \texttt{SHUFFLED} to the header to notify the user.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:rs}>>=
   func scan(r io.Reader, args ...interface{}) {
@@ -119,7 +121,8 @@
   "fmt"
 #+end_src
 #+begin_src latex
-  This concludes \texttt{randomizeSeq}, testing time.
+  This concludes our implementation \texttt{randomizeSeq}, time to test
+  it.
   \section*{Testing}
   We begin with an outline containing hooks for imports and the testing
   logic.
@@ -138,9 +141,9 @@
 #+end_src
 #+begin_src latex
   If we run \texttt{randomizeSeq} with a given seed, we can pre-compute
-  its result, \texttt{test.fasta} becomes \texttt{shuf.fasta}. So we can
-  compare what we get when we shuffle \texttt{test.fasta} with what we
-  want.
+  its result, and thus know that \texttt{test.fasta} becomes
+  \texttt{shuf.fasta}. So we can compare what we get when we shuffle
+  \texttt{test.fasta} with what we want.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:rs}>>=
   cmd := exec.Command("randomizeSeq", "-s", "13", "test.fasta")
