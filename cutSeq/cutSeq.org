@@ -1,9 +1,10 @@
 #+begin_src latex
   \section*{Introduction}
   The program \texttt{cutSeq} cuts one or more regions from the
-  sequences in the input. Positions are one-based and start/end
-  coordinates are inclusive. It is also possible to join the regions.
+  sequences in the input. The regions' start and end positions are
+  one-based and inclusive. The user can opt to join the regions.
 
+  \section*{Implementation}
   The program outline contains hooks for imports, types, variables,
   functions, and the logic of the main function.
 #+end_src
@@ -36,7 +37,7 @@
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:cut}>>=
   u := "cutSeq [-h] [options] [files]"
-  p := "Cut revions from sequence."
+  p := "Cut regions from sequence."
   e := "cutSeq -r 10-20,25-50 *.fasta"
   clio.Usage(u, p, e)
 #+end_src
@@ -77,8 +78,8 @@
   var optJ = flag.Bool("j", false, "join regions")
 #+end_src
 #+begin_src latex
-  We continue parsing the options by reading the regions supplied either
-  on the command line or in a file into a slice.
+  We continue parsing the options by reading the regions either from the
+  command line or from a file into a slice.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:cut}>>=
   var regions []region
@@ -88,7 +89,8 @@
 	  //<<Parse regions from file, Ch.~\ref{ch:cut}>>
   } else {
 	  fmt.Fprintf(os.Stderr,
-		  "Please provide a region to cut either via -r or -f.")
+		  "Please provide a region to cut " +
+			  "either via -r or -f.")
 	  os.Exit(0)
   }
 #+end_src
@@ -100,7 +102,7 @@
   "os"
 #+end_src
 #+begin_src latex
-  An individual region is a structure that holds a pair of start and end
+  An individual region is a structure to store a pair of start and end
   positions.
 #+end_src
 #+begin_src go <<Types, Ch.~\ref{ch:cut}>>=
@@ -109,8 +111,8 @@
   }
 #+end_src
 #+begin_src latex
-  On the command line the regions are separated by commas, and the
-  positions by hyphens.
+  On the command line, regions are separated by commas, and positions by
+  hyphens.
 #+end_src
 #+begin_src go <<Parse regions from command line, Ch.~\ref{ch:cut}>>=
   re := strings.Split(*optR, ",")
@@ -138,7 +140,7 @@
   //<<Close file, Ch.~\ref{ch:cut}>>
 #+end_src
 #+begin_src latex
-  If we cant open the input file, we abort.
+  If we can't open the input file, we abort.
 #+end_src
 #+begin_src go <<Open file, Ch.~\ref{ch:cut}>>=
   file, err := os.Open(*optF)
@@ -233,8 +235,8 @@
   "github.com/evolbioinf/fasta"
 #+end_src
 #+begin_src latex
-  When joining, we store the bits of sequence in a byte slice and
-  prepare a header that documents which regions were stuck together.
+  When joining, we store the regions in a byte slice and prepare a
+  header that lists their coordinates.
 #+end_src
 #+begin_src go <<Print joined regions, Ch.~\ref{ch:cut}>>=
   var d []byte
@@ -260,7 +262,7 @@
   }
 #+end_src
 #+begin_src latex
-  Printing the cut-out regions separately, is simpler, we just iterate
+  Printing the cut-out regions separately is simpler, we just iterate
   over the slice of regions.
 #+end_src
 #+begin_src go <<Print separate regions, Ch.~\ref{ch:cut}>>=
@@ -333,10 +335,9 @@
   if !bytes.Equal(g, w) {
 	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
   }
-		
 #+end_src
 #+begin_src latex
-  Finally, we join the two regions.
+  And join them.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
   cmd = exec.Command("cutSeq", "-j", "-r", "10-20,25-50", "test.fasta")
@@ -351,5 +352,56 @@
   if !bytes.Equal(g, w) {
 	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
   }
-		
+#+end_src
+#+begin_src latex
+  Now we repeat these three tests with coordinates read from
+  file. First, a single pair of coordinates.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
+  cmd = exec.Command("cutSeq", "-f", "coord1.txt", "test.fasta")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res1.fasta")
+  if err != nil {
+	  t.Errorf("couldn't open res1.fasta")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  Followed by two regions printed separately.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
+  cmd = exec.Command("cutSeq", "-f", "coord2.txt", "test.fasta")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res2.fasta")
+  if err != nil {
+	  t.Errorf("couldn't open res2.fasta")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
+#+end_src
+#+begin_src latex
+  And finally, the two regions joined.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
+  cmd = exec.Command("cutSeq", "-j", "-f", "coord2.txt", "test.fasta")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  w, err = ioutil.ReadFile("res3.fasta")
+  if err != nil {
+	  t.Errorf("couldn't open res3.fasta")
+  }
+  if !bytes.Equal(g, w) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", w, g)
+  }
 #+end_src
