@@ -1,0 +1,327 @@
+#+begin_src latex
+  \section*{Introduction}
+  Given two sequences of a single nucleotide, $S_1=\texttt{A}$ and
+  $S_2=\texttt{T}$, there are three possible alignments:
+  \begin{center}
+    \begin{tabular}{ccc}
+      \begin{tabular}{c}
+	\verb+-+\\
+	\verb+T+
+    \end{tabular}
+    &
+      \begin{tabular}{c}
+	\verb+A+\\
+	\verb+-+
+    \end{tabular}
+    &
+      \begin{tabular}{c}
+	\verb+A+\\
+	\verb+T+
+    \end{tabular}
+    \end{tabular}
+  \end{center}
+  Since every alignment of two sequences ends in one of these three
+  configurations---gap/residue, residue/gap, or residue/residue---the
+  number of possible global alignments of two sequences of lengths $m$
+  and $n$ can be expressed recursively as the sum of three
+  terms~\cite[p.32f]{hau17:bio}: The number of global alignments between
+  sequences of lengths $m-1$ and $n$, between sequences of lengths $m$
+  and $n-1$, and between sequences of lengths $m-1$, $n-1$:
+  \begin{equation}\label{eq:numAl}
+    f(m,n)=f(m-1,n)+f(m,n-1)+f(m-1,n-1)
+  \end{equation}
+  Perhaps confusingly, the same function, $f$, appears on the left and
+  the right of this equation. Such self-referential equations are called
+  \emph{recursions}. To prevent them from going on for ever, they need a
+  stopping criterion. In our case, whenever one of the sequences has
+  length zero, that is, consists only of gaps, there is only one
+  possible alignment,
+  \begin{equation}\label{eq:numAlBound}
+  f(m,0)=f(0,n)=f(0,0)=1.
+  \end{equation}
+  This is the stopping criterion, or boundary condition, for our
+  recursion.
+
+  There are two ways to compute $f(m,n)$, top down by direct recursion,
+  and bottom up by working from the boundary conditions and saving the
+  intermediate results. Say, we wish to compute $f(2,3)$; we begin by
+  writing down a matrix of $(m+1)\times(n+1)$ cells:
+  \begin{center}
+    \begin{tabular}{c|cccc}
+      & 0 & 1 & 2 & 3\\\hline
+    0 &  &  &  &\\ 
+    1 &  &  &  & \\
+    2 &  &  &  & \\
+    \end{tabular}
+  \end{center}
+  We initialize the matrix according to the boundary condition by
+  filling the first row and column with 1:
+  \begin{center}
+    \begin{tabular}{c|cccc}
+      & 0 & 1 & 2 & 3\\\hline
+    0 & 1 & 1 & 1 & 1\\ 
+    1 & 1 &  &  & \\
+    2 & 1 &  &  & \\
+    \end{tabular}
+  \end{center}
+  Then we fill-in the remaining blanks by summing their three neighbors:
+  \begin{center}
+    \begin{tabular}{c|cccc}
+      & 0 & 1 & 2 & 3\\\hline
+    0 & 1 & 1 & 1 & 1\\ 
+    1 & 1 & 3 & 5 & 7\\
+    2 & 1 & 5 & 13 & 25\\
+    \end{tabular}
+  \end{center}
+  The number of global alignments between two sequences of lengths 2 and
+  3 is the entry in the bottom right-hand corner, 25.  The program
+  \texttt{numAl} implements this bottom-up method as its default. The
+  run-time of the top-down method is proportional to its result, which
+  quickly becomes very large with longer sequences. We include it to
+  demonstrate the value of the bottom-up approach when solving
+  recursions.
+
+  \section*{Implementation}
+  The program layout contains hooks for imports, variables, functions,
+  and the logic of the main function.
+#+end_src
+#+begin_src go <<numAl.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:num}>>
+  )
+  //<<Variables, Ch.~\ref{ch:num}>>
+  //<<Functions, Ch.~\ref{ch:num}>>
+
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:num}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, parse the options, and compute
+  the number of alignments.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:num}>>=
+  //<<Set usage, Ch.~\ref{ch:num}>>
+  //<<Parse options, Ch.~\ref{ch:num}>>
+  //<<Compute number of alignments, Ch.~\ref{ch:num}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the usage message itself, a statement of the
+  program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:num}>>=
+  u := "numAl [-h] [options] m n"
+  p := "Compute the number of possible global alignments " +
+	  "between two sequences of lengths m and n"
+  e := "numAl 5 10"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import the package \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:num}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  As to options, there is the standard version switch, \texttt{-v}. In
+  addition, the user can request top-down computation instead of
+  bottom-up (\texttt{-t}).
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:num}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+  var optT = flag.Bool("t", false, "top-down; default: bottom-up")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:num}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the flags, check for version printing, extract the sequence
+  lengths, and warn the user if one or both of them are missing.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:num}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("numAl")
+  }
+  args := flag.Args()
+  if len(args) < 2 {
+	  fmt.Fprintf(os.Stderr, "please provide two " +
+		  "sequence lengths\n")
+	  os.Exit(0)
+  }
+  //<<Convert lengths, Ch.~\ref{ch:num}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}, \texttt{fmt}, and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:num}>>=
+  "github.com/evolbioinf/biobox/util"
+  "fmt"
+  "os"
+#+end_src
+#+begin_src latex
+  Conversion of the arguments is accompanied by error checking.
+#+end_src
+#+begin_src go <<Convert lengths, Ch.~\ref{ch:num}>>=
+  m, err := strconv.Atoi(args[0])
+  if err != nil {
+	  fmt.Fprintf(os.Stderr, "couldn't convert %q\n", args[0])
+	  os.Exit(0)
+  }
+  n, err := strconv.Atoi(args[1])
+  if err != nil {
+	  fmt.Fprintf(os.Stderr, "couldn't convert %q\n", args[1])
+	  os.Exit(0)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:num}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  The actual computation depends on whether top-down or bottom-up is
+  requested. We time this part of the program to show what a difference
+  algorithms can make.
+#+end_src
+#+begin_src go <<Compute number of alignments, Ch.~\ref{ch:num}>>=
+  var du time.Duration
+  var na float64
+  start := time.Now()
+  if *optT {
+	  na = topDown(m, n)
+  } else {
+	  na = bottomUp(m, n)
+  }
+  end := time.Now()
+  du = end.Sub(start)
+  fmt.Printf("f(%d, %d) = %g (%g s)\n", m, n, na, du.Seconds())
+#+end_src
+#+begin_src latex
+  We import \texttt{time}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:num}>>=
+  "time"
+#+end_src
+#+begin_src latex
+  For the top-down approach we simply rephrase
+  equations~(\ref{eq:numAl}) and (\ref{eq:numAlBound}).
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:num}>>=
+  func topDown(m, n int) float64 {
+	  if m > 0 && n > 0 {
+		  r := topDown(m-1, n) + topDown(m, n-1) + topDown(m-1, n-1)
+		  return r
+	  } else {
+		  return 1.0
+	  }
+  }
+#+end_src
+#+begin_src latex
+  In the bottom-up calculation, we first construct a matrix, initialize
+  it, and fill it in. The entry in the bottom might-hand corner is the
+  result returned.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:num}>>=
+  func bottomUp(m, n int) float64 {
+	  //<<Construct matrix, Ch.~\ref{ch:num}>>
+	  //<<Initialize matrix, Ch.~\ref{ch:num}>>
+	  //<<Fill-in matrix, Ch.~\ref{ch:num}>>
+	  return mat[m][n]
+  }
+#+end_src
+#+begin_src latex
+  The matrix is constructed as a slice of slices.
+#+end_src
+#+begin_src go <<Construct matrix, Ch.~\ref{ch:num}>>=
+  mat := make([][]float64, m+1)
+  for i := 0; i <= m; i++ {
+	  mat[i] = make([]float64, n+1)
+  }
+#+end_src
+#+begin_src latex
+  We fill the first row and column with 1's.
+#+end_src
+#+begin_src go <<Initialize matrix, Ch.~\ref{ch:num}>>=
+  for i := 0; i <= m; i++ {
+	  mat[i][0] = 1
+  }
+  for i := 1; i <= n; i++ {
+	  mat[0][i] = 1
+  }
+#+end_src
+#+begin_src latex
+  We fill-in the rest of the matrix.
+#+end_src
+#+begin_src go <<Fill-in matrix, Ch.~\ref{ch:num}>>=
+  for i := 1; i <= m; i++ {
+	  for j := 1; j <= n; j++ {
+		  mat[i][j] = mat[i-1][j] +
+			  mat[i][j-1] +
+			  mat[i-1][j-1]
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We're done writing \texttt{numAl}, here comes the test.
+  \section*{Testing}
+  The testing outline contains hooks for imports and the testing logic
+  itself.
+#+end_src
+#+begin_src go <<numAl_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:num}>>
+  )
+
+  func TestNumAl(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:num}>>
+  }
+#+end_src
+#+begin_src latex
+  We begin by computing the number of alignments between two sequences
+  length 10. Since the run time is bound to vary, we ignore it in our
+  comparison between what we get and what we want.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:num}>>=
+  cmd := exec.Command("numAl", "10", "10")
+  g, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  get := string(bytes.Split(g, []byte(" "))[3])
+  want := "8.097453e+06"
+  if get != want {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec} and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:num}>>=
+  "os/exec"
+  "bytes"
+#+end_src
+#+begin_src latex
+  We repeat the test top-down.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:num}>>=
+  cmd = exec.Command("numAl", "-t", "10", "10")
+  g, err = cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  get = string(bytes.Split(g, []byte(" "))[3])
+  if get != want {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src

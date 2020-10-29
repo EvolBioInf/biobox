@@ -10,6 +10,7 @@ doc/bioboxDoc.toc
 doc/cchar.tex
 doc/cutSeq.tex
 doc/getSeq.tex
+doc/numAl.tex
 doc/randomizeSeq.tex
 doc/ranseq.tex
 doc/revComp.tex
@@ -22,6 +23,7 @@ doc/wrapSeq.tex
 cchar/cchar
 cutSeq/cutSeq
 getSeq/getSeq
+numAl/numAl
 randomizeSeq/randomizeSeq
 ranseq/ranseq
 revComp/revComp

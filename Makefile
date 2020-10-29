@@ -9,6 +9,8 @@ all:
 	cp cutSeq/cutSeq bin
 	make -C getSeq
 	cp getSeq/getSeq bin
+	make -C numAl
+	cp numAl/numAl bin
 	make -C randomizeSeq
 	cp randomizeSeq/randomizeSeq bin
 	make -C ranseq
@@ -29,6 +31,7 @@ clean:
 	make clean -C cutSeq
 	make clean -C getSeq
 	make clean -C doc
+	make clean -C numAl
 	make clean -C randomizeSeq
 	make clean -C ranseq
 	make clean -C revComp
@@ -38,8 +41,9 @@ clean:
 	make clean -C var
 test:
 	make test -C cchar
-	make tets -C cutSeq
+	make test -C cutSeq
 	make test -C getSeq
+	make test -C numAl
 	make test -C randomizeSeq
 	make test -C ranseq
 	make test -C revComp
