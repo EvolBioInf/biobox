@@ -1,0 +1,14 @@
+Query   s1 (7 residues) 
+Subject s2 (8 residues) 
+Score   19 
+
+
+Query   1 MKFL 4 
+          ||:|   
+Subject 1 MKYL 4 
+
+
+Query   5 AL-F 7 
+           | |   
+Subject 5 ILLF 8 
+//
