@@ -3,6 +3,8 @@ export DATE    = $(shell bash ./scripts/date.sh) #    The single, trailing blank
 
 all:
 	make -C util
+	make -C al
+	cp al/al bin
 	make -C cchar
 	cp cchar/cchar bin
 	make -C cutSeq
@@ -27,6 +29,7 @@ all:
 doc:
 	make -C doc
 clean:
+	make clean -C al
 	make clean -C cchar
 	make clean -C cutSeq
 	make clean -C getSeq
@@ -40,6 +43,7 @@ clean:
 	make clean -C wrapSeq
 	make clean -C var
 test:
+	make test -C al
 	make test -C cchar
 	make test -C cutSeq
 	make test -C getSeq
@@ -47,6 +51,7 @@ test:
 	make test -C randomizeSeq
 	make test -C ranseq
 	make test -C revComp
+	make test -C util
+	make test -C var
 	make test -C watterson
 	make test -C wrapSeq
-	make test -C var

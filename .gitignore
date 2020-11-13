@@ -7,6 +7,7 @@ doc/bioboxDoc.dvi
 doc/bioboxDoc.log
 doc/bioboxDoc.pdf
 doc/bioboxDoc.toc
+doc/al.tex
 doc/cchar.tex
 doc/cutSeq.tex
 doc/getSeq.tex
@@ -20,6 +21,7 @@ doc/watterson.tex
 doc/wrapSeq.tex
 
 # Programs
+al/al
 cchar/cchar
 cutSeq/cutSeq
 getSeq/getSeq

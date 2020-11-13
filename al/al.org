@@ -1,0 +1,873 @@
+#+begin_src latex
+  \section*{Introduction}
+  The program \texttt{al} aligns two sequences, a query and a
+  subject. It computes a local alignment by default
+  (Figure~\ref{fig:alTypes}A), but the user can request a global
+  (Figure~\ref{fig:alTypes}B) or an overlap (Figure~\ref{fig:alTypes}C)
+  alignment. Gaps are scored with affine costs, that is, gap opening is
+  distinguished from gap extension.
+  \begin{figure}
+    \begin{center}
+      \begin{psmatrix}[rowsep=0.2cm]
+	\textbf{A} & \textbf{B} & \textbf{C}\\
+	\input{lal} & \input{gal} & \input{oal}
+      \end{psmatrix}
+    \end{center}
+    \caption{The three types of alignment, local (\textbf{A}), global
+      (\textbf{B}), and overlap (\textbf{C}). Homology in
+      black.}\label{fig:alTypes}
+  \end{figure}
+
+  Regardless of its type, an alignment is computed in three steps,
+  initialization, table computation, and trace
+  back~\cite[p. 243f]{gus97:alg}:
+
+  \paragraph{Initialization}
+  For global alignment, the initialization is
+  \begin{eqnarray*}
+    V(0,0) & = & 0\\
+    V(i,0) & = & E(i,0) = g_{\rm o} + ig_{\rm e}; i > 0\\
+    V(0,j) & = & F(0,j) = g_{\rm o} + jg_{\rm e}; j > 0,
+  \end{eqnarray*}
+  where $g_{\rm o}$ is the score for gap opening, and $g_{\rm e}$ for
+  gap extension. For overlap and local alignment
+  \begin{eqnarray*}
+    V(i,0) = V(0,j) = 0
+  \end{eqnarray*}
+  \paragraph{Table computation}
+  The rest of the dynamic programming table is filled using
+  \begin{eqnarray}\label{eq:dp}
+    V(i,j) & = & \mbox{max}(E(i,j),F(i,j),G(i,j)),\\
+    G(i,j) & = & V(i-1,j-1)+\mbox{score}(S_1[i],S_2[j]),\\
+    E(i,j) & = & \mbox{max}(E(i,j-1),V(i,j-1)+g_{\rm o})+g_{\rm e},\\
+    F(i,j) & = & \mbox{max}(F(i-1,j),V(i-1,j)+g_{\rm o})+g_{\rm e}.
+  \end{eqnarray}
+  For local alignment, the maximization for $V(i,j)$ includes zero:
+  \[
+  V(i,j)=\mbox{max}(E(i,j),F(i,j),G(i,j),0).
+  \]
+  \paragraph{Trace back}
+  For global alignment, the trace-back starts in the lower right-hand
+  corner of the dynamic programming matrix, $P$, that is in cell
+  $P(m,n)$, where $n$ is the length of the query and $m$ the length of
+  the subject. As shown in Figure~\ref{fig:dpm}, the query is written
+  along the horizontal axis of $P$, the subject along the vertical axis.
+
+  \begin{figure}
+    \begin{center}
+      \begin{pspicture} (0,0)(4,3.5)
+	\psline(0,0)(4,0)(4,3)(0,3)(0,0)
+	\rput[bl](0,3.1){\texttt{-ACCGTACC...}}
+	\rput[bl](0.2,3.4){$\mbox{query}\rightarrow$}
+	\rput[br](-0.1,0.9){\rotatebox{-90}{\texttt{-ACCCTACC...}}}
+	\rput[br](-0.5,1.5){\rotatebox{-90}{$\mbox{subject}\rightarrow$}}
+	\rput[br](4,0){\fbox{\pnode{p40}}}
+	\rput[br](1.3,2.4){\rnode{ge}{$P(0,0)$}}
+	\rput[tl](0,3){\fbox{\pnode{p03}}}
+	\rput[br](3.7,0.2){$P(m,n)$}
+      \end{pspicture}
+    \end{center}
+    \caption{Setting up the dynamic programming matrix, $P$; the \emph{query} is $n$
+      residues long, the \emph{subject} $m$.}\label{fig:dpm}
+  \end{figure}
+
+  For overlap alignment, trace back starts at the maximum entry of the
+  last row, $P(m,.)$, or column, $P(.,n)$, and ends upon reaching the
+  top row $P(0,.)$, or first column $P(.,0)$. For local alignment, it
+  starts at the maximum entry of the entire matrix and ends at zero.
+
+  Pairs of residues are either scored as match/mismatch, or from an
+  explicit score matrix, for example the BLOSUM62 matrix in
+  Figure~\ref{fig:scoreMat}. 
+
+  \section*{Implementation}
+  The program outline contains hooks for imports, types, variables,
+  methods, functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<al.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:al}>>
+  )
+  //<<Types, Ch.~\ref{ch:al}>>
+  //<<Variables, Ch.~\ref{ch:al}>>
+  //<<Methods, Ch.~\ref{ch:al}>>
+  //<<Functions, Ch.~\ref{ch:al}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:al}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, parse the options, and compute
+  one or more alignments.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:al}>>=
+  //<<Set usage, Ch.~\ref{ch:al}>>
+  //<<Parse options, Ch.~\ref{ch:al}>>
+  //<<Compute alignments, Ch.~\ref{ch:al}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the usage proper, an explanation of the
+  program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:al}>>=
+  u := "al [-h] [options] query.fasta [subject files]"
+  p := "Align two sequences."
+  e := "al query.fasta subject.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the standard \emph{version} option, we declare options for
+  the algorithm used, the scoring of pairs of residues and gaps, the
+  number of local alignments, and the line length in the printout.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:al}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+  var optG = flag.Bool("g", false, "global; default: local")
+  var optO = flag.Bool("o", false, "overlap; default: local")
+  var optI = flag.Float64("i", -3, "mismatch")
+  var optA = flag.Float64("a",  1, "match")
+  var optM = flag.String("m", "", "file containing score matrix")
+  var optP = flag.Float64("p", -5, "gap opening")
+  var optE = flag.Float64("e", -2, "gap extension")
+  var optN = flag.Int("n", 1, "number of local alignments")
+  var optL = flag.Int("l", fasta.DefaultLineLength, "line length")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag} and \texttt{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "flag"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  When parsing the options, we check for version printing, then get the
+  query and subject files, and finally the score matrix.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:al}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("al")
+  }
+  //<<Get query and subject files, Ch.~\ref{ch:al}>>
+  //<<Get score matrix, Ch.~\ref{ch:al}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  When analyzing the input files, we make sure that the user has
+  actually given a query file.
+#+end_src
+#+begin_src go <<Get query and subject files, Ch.~\ref{ch:al}>>=
+  files := flag.Args()
+  if len(files) < 1 {
+	  fmt.Fprintf(os.Stderr, "please give the name " +
+		  "of a query file\n")
+	  os.Exit(0)
+  }
+  query := files[0]
+  subject := files[1:]
+#+end_src
+#+begin_src latex
+  Import \texttt{fmt} and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "fmt"
+  "os"
+#+end_src
+#+begin_src latex
+  The score matrix is either constructed from the match and mismatch
+  scores, or read from a file.
+#+end_src
+#+begin_src go <<Get score matrix, Ch.~\ref{ch:al}>>=
+  var mat *util.ScoreMatrix
+  if *optM == "" {
+	  mat = util.NewScoreMatrix(*optA, *optI)
+  } else {
+	  f, err := os.Open(*optM)
+	  if err != nil {
+		  log.Fatalf("couldn't open score matrix %q\n",
+			  *optM)
+	  } 
+	  mat = util.ReadScoreMatrix(f)
+	  f.Close()
+  }
+#+end_src
+#+begin_src latex
+  When computing the alignments, we iterate over the query sequences and
+  pass each one to the \texttt{scan} function, together with the names
+  of the subject files and the substitution matrix.
+#+end_src
+#+begin_src go <<Compute alignments, Ch.~\ref{ch:al}>>=
+  q, err := os.Open(query)
+  if err != nil {
+	  log.Fatalf("couldn't open %q\n", query)
+  }
+  sc := fasta.NewScanner(q)
+  for sc.ScanSequence() {
+	  seq := sc.Sequence()
+	  clio.ParseFiles(subject, scan, seq, mat)
+  }
+#+end_src
+#+begin_src latex 
+  We import \texttt{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "log"
+#+end_src
+#+begin_src latex
+  In the function \texttt{scan}, the arguments just passed are retrieved
+  again and we iterate over the subject sequences.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:al}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:al}>>
+	  //<<Iterate over subject sequences, Ch.~\ref{ch:al}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  The arguments are retrieved via type assertions, or as global
+  variables.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:al}>>=
+  s1 := args[0].(*fasta.Sequence)
+  mat := args[1].(*util.ScoreMatrix)
+  isGlobal := *optG
+  isOverlap := *optO
+  gapO := *optP
+  gapE := *optE
+  numAl := *optN
+  ll := *optL
+#+end_src
+#+begin_src latex
+  Then we iterate across the subject sequences and align each one with
+  the query. Regardless of the alignment type computed, thy all take as
+  input a dynamic programming matrix of the same shape and two byte
+  slices for storing the aligned sequences during trace back.
+#+end_src
+#+begin_src go <<Iterate over subject sequences, Ch.~\ref{ch:al}>>=
+  n := len(s1.Data())
+  a1 := make([]byte, 0)
+  a2 := make([]byte, 0)
+  s := fasta.NewScanner(r)
+  for s.ScanSequence() {
+	  a1 = a1[:0]
+	  a2 = a2[:0]
+	  s2 := s.Sequence()
+	  m := len(s2.Data())
+	  p := programmingMatrix(m, n)
+	  //<<Choose alignment type, Ch.~\ref{ch:al}>>
+  }
+#+end_src
+#+begin_src latex
+  There are three types of alignment to choose from, global, overlap,
+  and local (Figure~\ref{fig:al}).
+#+end_src
+#+begin_src go <<Choose alignment type, Ch.~\ref{ch:al}>>=
+  if isGlobal {
+	  //<<Global alignment, Ch.~\ref{ch:al}>>
+  } else if isOverlap {
+	  //<<Overlap alignment, Ch.~\ref{ch:al}>>
+  } else {
+	  //<<Local alignment, Ch.~\ref{ch:al}>>
+  }
+#+end_src
+#+begin_src latex
+  \subsection*{Global}
+  We first implement global alignment in three steps operating on the
+  dynamic programming matrix, initialization, filling in, and trace
+  back. To orient ourselves, look again at Figure~\ref{fig:dpm}. The
+  first sequence is implicitly written along the x-dimension, the second
+  sequence along the y-dimension (Figure~\ref{fig:dpm}). Once the
+  alignment matrix is filled, we have determined the score.
+#+end_src
+#+begin_src go <<Global alignment, Ch.~\ref{ch:al}>>=
+  //<<Initialize global, Ch.~\ref{ch:al}>>
+  //<<Fill global, Ch.~\ref{ch:al}>>
+  score := p[m][n].v
+  //<<Trace back global, Ch.~\ref{ch:al}>>
+  //<<Construct and print global, Ch.~\ref{ch:al}>>
+#+end_src
+#+begin_src latex
+  Notice the gap preceding the two sequences in the dynamic programming
+  matrix (Figure~\ref{fig:dpm}), so we need a matrix with
+  $(m+1)\times(n+1)$ entries.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:al}>>=
+  func programmingMatrix(m, n int) [][]cell {
+	  pm := make([][]cell, m + 1)
+	  for i, _ := range pm {
+		  pm[i] = make([]cell, n + 1)
+	  }
+	  return pm
+  }
+#+end_src
+#+begin_src latex
+  A cell holds fields for carrying out the dynamic programming algorithm
+  that correspond to matrices $V, E, F$, and $G$ in
+  equation~(\ref{eq:dp}). In addition, it contains a switch to record
+  that a cell was visited during trace back. We will use this later
+  during the trace back for local alignment.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:al}>>=
+  type cell struct {
+	  e, f, g, v float64
+	  visited bool
+  }
+#+end_src
+#+begin_src latex
+  We initialize according to the recursions in the Introduction.
+#+end_src
+#+begin_src go <<Initialize global, Ch.~\ref{ch:al}>>=
+  p[0][0].v = 0
+  for i := 1; i <= m; i++ {
+	  x := gapO + float64(i) * gapE
+	  p[i][0].v = x
+	  p[i][0].e = x
+  }
+  for j := 1; j <= n; j++ {
+	  x := gapO + float64(j) * gapE
+	  p[0][j].v = x
+	  p[0][j].f = x
+  }
+#+end_src
+#+begin_src latex
+  The matrix is filled by visiting each entry.
+#+end_src
+#+begin_src go <<Fill global, Ch.~\ref{ch:al}>>=
+  d1 := s1.Data()
+  d2 := s2.Data()
+  for i := 1; i <= m; i++ {
+	  for j := 1; j <= n; j++ {
+		  //<<Determine global entry, Ch.~\ref{ch:al}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We determine a matrix entry by copying the recursions of the
+  Introduction.
+#+end_src
+#+begin_src go <<Determine global entry, Ch.~\ref{ch:al}>>=
+  p[i][j].e = math.Max(p[i][j-1].e, p[i][j-1].v + gapO) + gapE
+  p[i][j].f = math.Max(p[i-1][j].f, p[i-1][j].v + gapO) + gapE
+  p[i][j].g = p[i-1][j-1].v + mat.Score(d1[j-1], d2[i-1])
+  p[i][j].v = math.Max(math.Max(p[i][j].e, p[i][j].f), p[i][j].g)
+#+end_src
+#+begin_src latex
+  We import \texttt{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "math"
+#+end_src
+#+begin_src latex
+  The starting and end points of a trace back depend on the alignment
+  type. The rest is always the same. Global trace back begins begins in
+  the bottom right hand corner of the dynamic programming matrix
+  (Figure~\ref{fig:dpm}). From there it proceeds until the cell in the
+  top left hand corner is reached.
+#+end_src
+
+#+begin_src go <<Trace back global, Ch.~\ref{ch:al}>>=
+  i := m
+  j := n
+  for i > 0 || j > 0 {
+	  //<<Trace back, Ch.~\ref{ch:al}>>
+  }
+#+end_src
+#+begin_src latex
+  During each step of the trace back we move either horizontally,
+  vertically, or diagonally, depending on which of the three neighboring
+  cells contributed to the final entry in the current cell. If
+  $V(i,j)=E(i,j)$, we move horizontally, if $V(i,j)=F(i,j)$ vertically,
+  and if $V(i,j)=G(i,j)$ diagonally.
+#+end_src
+#+begin_src go <<Trace back, Ch.~\ref{ch:al}>>=
+  if p[i][j].v == p[i][j].e {
+	  //<<Move horizontally, Ch.~\ref{ch:al}>>
+  } else if p[i][j].v == p[i][j].f {
+	  //<<Move vertically, Ch.~\ref{ch:al}>>
+  } else {
+	  //<<Move diagonally, Ch.~\ref{ch:al}>>
+  }
+#+end_src
+#+begin_src latex 
+  Moving horizontally implies
+  adding a residue to the first sequence and a gap to the second and
+  decrementing the column index, $j$.
+#+end_src
+#+begin_src go <<Move horizontally, Ch.~\ref{ch:al}>>=
+	  a1 = append(a1, d1[j-1])
+	  a2 = append(a2, '-')
+	  j--
+#+end_src
+#+begin_src latex
+  Similarly, moving vertically implies
+  adding a gap to the first sequence and a residue to the second, and
+  decrementing the row index, $i$.
+#+end_src
+#+begin_src go <<Move vertically, Ch.~\ref{ch:al}>>=
+	  a1 = append(a1, '-')
+	  a2 = append(a2, d2[i-1])
+	  i--
+#+end_src
+#+begin_src latex
+  When moving
+  diagonally, we add a residue to both sequences and decrement $i$ and $j$.
+#+end_src
+#+begin_src go  <<Move diagonally, Ch.~\ref{ch:al}>>=
+	  a1 = append(a1, d1[j-1])
+	  a2 = append(a2, d2[i-1])
+	  i--
+	  j--
+#+end_src
+#+begin_src latex
+  We can now construct and print the final alignment. Its score and
+  starting positions depend on the fact that we are dealing with a
+  global alignment. The score has already been determined, the starting
+  positions are zero. But the rest of the output procedure is
+  independent of the type of alignment we are dealing with.
+#+end_src
+#+begin_src go <<Construct and print global, Ch.~\ref{ch:al}>>=
+  start1 := 0
+  start2 := 0
+  //<<Output alignment, Ch.~\ref{ch:al}>>
+#+end_src
+
+#+begin_src go <<Output alignment, Ch.~\ref{ch:al}>>=
+seq1 := fasta.NewSequence(s1.Header(), a1)
+seq2 := fasta.NewSequence(s2.Header(), a2)
+seq1.Reverse()
+seq2.Reverse()
+al := util.NewAlignment(seq1, seq2, mat,
+	n-1, m-1, start1, start2, score)
+al.SetLineLength(ll)
+fmt.Println(al)
+#+end_src
+
+#+begin_src go <<Functions, Ch.~\ref{ch:al}>>=
+#+end_src
+
+#+begin_src latex
+  \subsection*{Overlap}
+  In outline, overlap alignment looks similar to global alignment. In
+  fact, its table filling procedure is actually identical, and so is the
+  output procedure. The essence of overlap alignment is that end-gaps
+  are free, so the first column and the first row are initialized to
+  0. The compiler takes care of this for us.
+#+end_src
+#+begin_src go <<Overlap alignment, Ch.~\ref{ch:al}>>=
+  //<<Fill global, Ch.~\ref{ch:al}>>
+  //<<Trace back overlap, Ch.~\ref{ch:al}>>
+  //<<Construct and print global, Ch.~\ref{ch:al}>>
+#+end_src
+#+begin_src latex
+  The trace back starts at $P(i,j)$, where $i$ and $j$ remain to be
+  determined, and proceeds to the first row or column.
+#+end_src
+#+begin_src go <<Trace back overlap, Ch.~\ref{ch:al}>>=
+  //<<Find overlap starting point, Ch.~\ref{ch:al}>>
+  //<<First round of end gaps, Ch.~\ref{ch:al}>>
+  for i > 0 && j > 0 {
+	  //<<Trace back, Ch.~\ref{ch:al}>>
+  }
+  //<<Second round of end gaps, Ch.~\ref{ch:al}>>
+#+end_src
+#+begin_src latex
+  The starting point of the overlap alignment is the maximum entry in
+  the last row or column.
+#+end_src
+#+begin_src go <<Find overlap starting point, Ch.~\ref{ch:al}>>=
+  //<<Scan last row, Ch.~\ref{ch:al}>>
+  //<<Scan last column, Ch.~\ref{ch:al}>>
+#+end_src
+#+begin_src latex
+  When scanning the last row, we set the maximum entry to negative
+  infinity and determine the column-coordinate, $j$, of the starting
+  point. Its row coordinate is initialized to the last row, $i=m$.
+#+end_src
+#+begin_src go <<Scan last row, Ch.~\ref{ch:al}>>=
+  max := math.Inf(-1)
+  j := 0
+  i := m
+  for k := 0; k < n; k++ {
+	  if max < p[i][k].v {
+		  max = p[i][k].v
+		  j = k
+	  }
+  }
+#+end_src
+#+begin_src latex
+  If we find a greater entry in the last column, $i$ is set to its row
+  and $j$ to the last column, $j=n$. We have now also found the score.
+#+end_src
+#+begin_src go <<Scan last column, Ch.~\ref{ch:al}>>=
+  for k := 0; k <= m; k++ {
+	  if max < p[k][n].v {
+		  max = p[k][n].v
+		  i = k
+		  j = n
+	  }
+  }
+  score := p[i][j].v
+#+end_src
+#+begin_src latex
+  The first round of end gaps is added either to $S_1$, if the maximum
+  was found in the last column, or to $S_2$, if it was found in the last
+  row.
+#+end_src
+#+begin_src go <<First round of end gaps, Ch.~\ref{ch:al}>>=
+  for k := m; k > i; k-- {
+	  a1 = append(a1, '-')
+	  a2 = append(a2, d2[k-1])
+  }
+  for k := n; k > j; k-- {
+	  a1 = append(a1, d1[k-1])
+	  a2 = append(a2, '-')
+  }
+#+end_src
+#+begin_src latex
+  The second round of end gaps is added either to $S_1$, if the trace
+  back ended in the first column, or to $S_2$, if it ended in the first
+  row.
+#+end_src
+#+begin_src go <<Second round of end gaps, Ch.~\ref{ch:al}>>=
+  for k := i; k > 0; k-- {
+	  a1 = append(a1, '-')
+	  a2 = append(a2, d2[k-1])
+  }
+  for k := j; k > 0; k-- {
+	  a1 = append(a1, d1[k-1])
+	  a2 = append(a2, '-')
+  }
+#+end_src
+
+#+begin_src latex
+  \subsection*{Local}
+  By default, \texttt{al} computes local alignments, as this is the most
+  general of the three alignment types. Nevertheless, we implement it
+  last, because it is slightly more complex than its global and overlap
+  siblings. In particular, the user can extract more than one local
+  alignment from the dynamic programming matrix. As we shall see, this
+  complicates things a bit. But to begin with we have the reassuringly
+  simple outline of filling the alignment matrix followed by finding the
+  alignments.
+#+end_src
+#+begin_src go <<Local alignment, Ch.~\ref{ch:al}>>=
+  //<<Fill local, Ch.~\ref{ch:al}>>
+  //<<Find alignments, Ch.~\ref{ch:al}>>
+#+end_src
+#+begin_src latex
+  We fill the dynamic programming matrix for local alignment.
+#+end_src
+#+begin_src go <<Fill local, Ch.~\ref{ch:al}>>=
+  d1 := s1.Data()
+  d2 := s2.Data()
+  for i := 1; i <= m; i++ {
+	  for j := 1; j <= n; j++ {
+		  //<<Determine local entry, Ch.~\ref{ch:al}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  As explained in the Introduction, an entry in a local alignment
+  matrix, $V(i,j)$, is formed as the maximum of $E(i,j)$, $F(i,j)$,
+  $G(i,j)$, and zero. Since global alignment maximizes over the first
+  three of these terms, we can use it here.
+#+end_src
+#+begin_src go <<Determine local entry, Ch.~\ref{ch:al}>>=
+  //<<Determine global entry, Ch.~\ref{ch:al}>>
+  if p[i][j].v < 0 {
+	  p[i][j].v = 0
+  }
+#+end_src
+#+begin_src latex
+  The user requests \texttt{numAl} alignments. Each of these has a
+  starting coordinate and a path. This path must not intersect the path
+  of any other alignment. If more than one alignment is requested, it is
+  therefore usually necessary to test many starting points before one is
+  found that leads to a pristine path. It is even theoretically
+  possible, though unlikely in practice, that the matrix runs out of
+  starting positions before all alignments requested have been found. If
+  that happens, a message is printed to the standard error stream.
+#+end_src
+#+begin_src go <<Find alignments, Ch.~\ref{ch:al}>>=
+  coords := coordinates(p, numAl)
+  count := 0
+  for _, c := range coords {
+	  i := c.i
+	  j := c.j
+	  //<<Trace back local, Ch.~\ref{ch:al}>>
+	  //<<Found alignment? Ch.~\ref{ch:al}>>
+  }
+  if count < numAl {
+	  fmt.Fprintf(os.Stderr, "could only find %d " +
+		  "alignments\n", count)
+  }
+#+end_src
+#+begin_src latex
+  The function \texttt{coordinates} returns a slice of matrix
+  coordinates, each consisting of a pair $(i,j)$. If just one alignment
+  is sought, the slice contains only the coordinates of the cell with
+  the maximum entry. If more than one alignment is requested, the slice
+  contains the coordinates of all cells. Since we are looking for the
+  \emph{best} alignments, the coordinates are sorted by their score,
+  starting with the greatest.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:al}>>=
+  func coordinates(p [][]cell, numAl int) []coordinate {
+	  var c []coordinate
+	  m := len(p)
+	  n := len(p[0])
+	  if numAl == 1 {
+		  //<<Find maximum coordinate, Ch.~\ref{ch:al}>>
+	  } else {
+		  //<<Copy coordinates, Ch.~\ref{ch:al}>>
+		  //<<Sort coordinates, Ch.~\ref{ch:al}>>
+	  }
+	  return c
+  }
+#+end_src
+#+begin_src latex
+  A \texttt{coordinate} holds the row and column indexes, and the score
+  of the entry it refers to.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:al}>>=
+  type coordinate struct {
+	  i, j int
+	  s float64
+  }
+#+end_src
+#+begin_src latex
+  The maximum coordinate is found in one traversal of the dynamic
+  programming matrix.
+#+end_src
+#+begin_src go <<Find maximum coordinate, Ch.~\ref{ch:al}>>=
+  c = make([]coordinate, 1)
+  c[0].s = math.Inf(-1)
+  for i := 0; i < m; i++ {
+	  for j := 0; j < n; j++ {
+		  if c[0].s < p[i][j].v {
+			  c[0].i = i
+			  c[0].j = j
+			  c[0].s = p[i][j].v
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  If more than a single local alignment is requested, all coordinates
+  are copied by looping over the entries in the dynamic programming
+  matrix.
+#+end_src
+#+begin_src go <<Copy coordinates, Ch.~\ref{ch:al}>>=
+  c = make([]coordinate, m * n)
+  l := 0
+  for i := 0; i < m; i++ {
+	  for j := 0; j < n; j++ {
+		  c[l].i = i
+		  c[l].j = j
+		  c[l].s = p[i][j].v
+		  l++
+	  }
+  }
+#+end_src
+#+begin_src latex
+  To sort the coordinates by score, we define the type
+  \texttt{coordinatesSlice},
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:al}>>=
+type coordinatesSlice []coordinate
+#+end_src
+#+begin_src latex
+  and implement the three methods of the \texttt{Sort} interface.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:al}>>=
+  func (c coordinatesSlice) Len() int {
+	  return len(c)
+  }
+  func (c coordinatesSlice) Less(i, j int) bool {
+	  return c[j].s < c[i].s
+  }
+  func (c coordinatesSlice) Swap(i, j int) {
+	  c[i], c[j] = c[j], c[i]
+  }
+#+end_src
+#+begin_src latex
+  Now we can cast the coordinates to the new type and then sort them.
+#+end_src
+#+begin_src go <<Sort coordinates, Ch.~\ref{ch:al}>>=
+  cs := coordinatesSlice(c)
+  sort.Sort(cs)
+#+end_src
+#+begin_src latex
+  We import \texttt{sort}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "sort"
+#+end_src
+#+begin_src latex
+  To trace back, we walk from one of the coordinates we just generated,
+  until we reach a zero cell.
+#+end_src
+#+begin_src go <<Trace back local, Ch.~\ref{ch:al}>>=
+  score := p[i][j].v
+  found := true
+  for p[i][j].v > 0 {
+	  //<<Visit cell, Ch.~\ref{ch:al}>>
+  }
+#+end_src
+#+begin_src latex
+  Each cell is marked as visited before taking a step back. If we arrive
+  at a cell previously visited, paths collide, the alignments
+  constructed so far are reset, and the trace back is abandoned.
+#+end_src
+#+begin_src go <<Visit cell, Ch.~\ref{ch:al}>>=
+  p[i][j].visited = true
+  //<<Trace back, Ch.~\ref{ch:al}>>
+  if p[i][j].visited {
+	  a1 = a1[:0]
+	  a2 = a2[:0]
+	  found = false
+	  break
+  }
+#+end_src
+#+begin_src latex
+  If, on the other hand, an alignment was found, it is printed and
+  counted. If the requested number of alignments has been reached, we
+  break out of the loop.
+#+end_src
+#+begin_src go <<Found alignment? Ch.~\ref{ch:al}>>=
+  if found {
+	  start1 := j
+	  start2 := i
+	  //<<Output alignment, Ch.~\ref{ch:al}>>
+	  count++
+	  if count == numAl {
+		  break
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The implementation of \texttt{al} is finished, time to test it.
+  \section*{Testing}
+  The testing outline contains hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<al_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:al}>>
+  )
+
+  func TestAl(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:al}>>
+  }
+#+end_src
+#+begin_src latex
+  We go through the alignment types, beginning with global. First two
+  short peptides are aligned and we compare what we get with what we
+  want in \texttt{res1.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
+  cmd := exec.Command("al", "-g", "-m", "BLOSUM62", "s1.fasta",
+	  "s2.fasta")
+  get, err := cmd.Output()
+  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
+  want, err := ioutil.ReadFile("res1.txt")
+  if err != nil { t.Errorf("couldn't open res1.txt\n") }
+  if !bytes.Equal(get, want) { 
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get) 
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:al}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  In the next test, the alcohol dehydrogenase loci of two
+  \emph{Drosophila} species, \emph{D. melanogaster} and
+  \emph{D. guanche}, are aligned. The two sequences are 4.8 kb and 4.4
+  kb long, which results in a fairly substantial computation, but
+  \texttt{al} is reasonably quick. The expected result is in
+  \texttt{res2.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
+  cmd = exec.Command("al", "-g", "dmAdhAdhdup.fasta",
+	  "dgAdhAdhdup.fasta")
+  get, err = cmd.Output()
+  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
+  want, err = ioutil.ReadFile("res2.txt")
+  if err != nil { t.Errorf("couldn't open res2.txt") }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  We align the two sequences using overlap alignment. That makes little
+  biological sense for these particular sequences, and the result is
+  zero overlap, but its still a useful test. The result we want is
+  stored in \texttt{res3.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
+  cmd = exec.Command("al", "-o", "dmAdhAdhdup.fasta",
+	  "dgAdhAdhdup.fasta")
+  get, err = cmd.Output()
+  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
+  want, err = ioutil.ReadFile("res3.txt")
+  if err != nil { t.Errorf("couldn't open res3.txt") }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  Local alignment is the default mode.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
+  cmd = exec.Command("al", "dmAdhAdhdup.fasta", "dgAdhAdhdup.fasta")
+  get, err = cmd.Output()
+  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
+  want, err = ioutil.ReadFile("res4.txt")
+  if err != nil { t.Errorf("couldn't open res4.txt") }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  As a last test, we compute the three best local alignments between
+  the two alcohol dehydrogenases genes; \texttt{res5.txt} is wanted.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
+  cmd = exec.Command("al", "-n", "3", "dmAdhAdhdup.fasta",
+	  "dgAdhAdhdup.fasta")
+  get, err = cmd.Output()
+  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
+  want, err = ioutil.ReadFile("res5.txt")
+  if err != nil { t.Errorf("couldn't open res5.txt") }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+
+#+end_src
