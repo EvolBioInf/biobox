@@ -4,7 +4,7 @@ doc/bioboxDoc.aux
 doc/bioboxDoc.bbl
 doc/bioboxDoc.blg
 doc/bioboxDoc.dvi
-doc/bioboxDoc.log
+doc/*.log
 doc/bioboxDoc.pdf
 doc/bioboxDoc.toc
 doc/al.tex
