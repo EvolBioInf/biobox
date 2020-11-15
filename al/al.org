@@ -42,12 +42,12 @@
     E(i,j) & = & \mbox{max}(E(i,j-1),V(i,j-1)+g_{\rm o})+g_{\rm e},\\
     F(i,j) & = & \mbox{max}(F(i-1,j),V(i-1,j)+g_{\rm o})+g_{\rm e}.
   \end{eqnarray}
-  For local alignment, the maximization for $V(i,j)$ includes zero:
+  For local alignment, the maximum for $V(i,j)$ also includes zero:
   \[
   V(i,j)=\mbox{max}(E(i,j),F(i,j),G(i,j),0).
   \]
   \paragraph{Trace back}
-  For global alignment, the trace-back starts in the lower right-hand
+  For global alignment, the trace back starts in the lower right-hand
   corner of the dynamic programming matrix, $P$, that is in cell
   $P(m,n)$, where $n$ is the length of the query and $m$ the length of
   the subject. As shown in Figure~\ref{fig:dpm}, the query is written
@@ -150,7 +150,7 @@
 #+end_src
 #+begin_src latex
   When parsing the options, we check for version printing, then get the
-  query and subject files, and finally the score matrix.
+  files for the query, the subject, and the score matrix.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:al}>>=
   flag.Parse()
@@ -167,7 +167,7 @@
   "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
-  When analyzing the input files, we make sure that the user has
+  When accessing the input files, we make sure that the user has
   actually given a query file.
 #+end_src
 #+begin_src go <<Get query and subject files, Ch.~\ref{ch:al}>>=
@@ -248,7 +248,7 @@
   variables.
 #+end_src
 #+begin_src go <<Retrieve arguments, Ch.~\ref{ch:al}>>=
-  s1 := args[0].(*fasta.Sequence)
+  query := args[0].(*fasta.Sequence)
   mat := args[1].(*util.ScoreMatrix)
   isGlobal := *optG
   isOverlap := *optO
@@ -259,27 +259,27 @@
 #+end_src
 #+begin_src latex
   Then we iterate across the subject sequences and align each one with
-  the query. Regardless of the alignment type computed, thy all take as
-  input a dynamic programming matrix of the same shape and two byte
-  slices for storing the aligned sequences during trace back.
+  the query. Regardless of the alignment type, thy all take as input a
+  dynamic programming matrix and two byte slices for storing the aligned
+  sequences during trace back.
 #+end_src
 #+begin_src go <<Iterate over subject sequences, Ch.~\ref{ch:al}>>=
-  n := len(s1.Data())
-  a1 := make([]byte, 0)
-  a2 := make([]byte, 0)
+  n := len(query.Data())
+  qal := make([]byte, 0)
+  sal := make([]byte, 0)
   s := fasta.NewScanner(r)
   for s.ScanSequence() {
-	  a1 = a1[:0]
-	  a2 = a2[:0]
-	  s2 := s.Sequence()
-	  m := len(s2.Data())
+	  qal = qal[:0]
+	  sal = sal[:0]
+	  subject := s.Sequence()
+	  m := len(subject.Data())
 	  p := programmingMatrix(m, n)
 	  //<<Choose alignment type, Ch.~\ref{ch:al}>>
   }
 #+end_src
 #+begin_src latex
-  There are three types of alignment to choose from, global, overlap,
-  and local (Figure~\ref{fig:al}).
+  We go through the three types of alignment to choose from, global,
+  overlap, and local (Figure~\ref{fig:al}).
 #+end_src
 #+begin_src go <<Choose alignment type, Ch.~\ref{ch:al}>>=
   if isGlobal {
@@ -295,9 +295,9 @@
   We first implement global alignment in three steps operating on the
   dynamic programming matrix, initialization, filling in, and trace
   back. To orient ourselves, look again at Figure~\ref{fig:dpm}. The
-  first sequence is implicitly written along the x-dimension, the second
-  sequence along the y-dimension (Figure~\ref{fig:dpm}). Once the
-  alignment matrix is filled, we have determined the score.
+  query is implicitly written along the horizontal dimension, the second
+  sequence along the vertical dimension (Figure~\ref{fig:dpm}). Once the
+  alignment matrix is filled, we have determined the alignment's score.
 #+end_src
 #+begin_src go <<Global alignment, Ch.~\ref{ch:al}>>=
   //<<Initialize global, Ch.~\ref{ch:al}>>
@@ -323,9 +323,9 @@
 #+begin_src latex
   A cell holds fields for carrying out the dynamic programming algorithm
   that correspond to matrices $V, E, F$, and $G$ in
-  equation~(\ref{eq:dp}). In addition, it contains a switch to record
-  that a cell was visited during trace back. We will use this later
-  during the trace back for local alignment.
+  equation~(\ref{eq:dp}). In addition, a cell contains a switch to
+  record that was visited during trace back. We use this later during
+  the trace back for local alignment.
 #+end_src
 #+begin_src go <<Types, Ch.~\ref{ch:al}>>=
   type cell struct {
@@ -350,25 +350,23 @@
   }
 #+end_src
 #+begin_src latex
-  The matrix is filled by visiting each entry.
+  Each matrix entry is filled in the same way.
 #+end_src
 #+begin_src go <<Fill global, Ch.~\ref{ch:al}>>=
-  d1 := s1.Data()
-  d2 := s2.Data()
   for i := 1; i <= m; i++ {
 	  for j := 1; j <= n; j++ {
-		  //<<Determine global entry, Ch.~\ref{ch:al}>>
+		  //<<Fill in cell, Ch.~\ref{ch:al}>>
 	  }
   }
 #+end_src
 #+begin_src latex
-  We determine a matrix entry by copying the recursions of the
-  Introduction.
+  We determine a the cell entries by applying the recursions shown in
+  the Introduction.
 #+end_src
-#+begin_src go <<Determine global entry, Ch.~\ref{ch:al}>>=
+#+begin_src go <<Fill in cell, Ch.~\ref{ch:al}>>=
   p[i][j].e = math.Max(p[i][j-1].e, p[i][j-1].v + gapO) + gapE
   p[i][j].f = math.Max(p[i-1][j].f, p[i-1][j].v + gapO) + gapE
-  p[i][j].g = p[i-1][j-1].v + mat.Score(d1[j-1], d2[i-1])
+  p[i][j].g = p[i-1][j-1].v + mat.Score(query.Data()[j-1], subject.Data()[i-1])
   p[i][j].v = math.Max(math.Max(p[i][j].e, p[i][j].f), p[i][j].g)
 #+end_src
 #+begin_src latex
@@ -414,8 +412,8 @@
   decrementing the column index, $j$.
 #+end_src
 #+begin_src go <<Move horizontally, Ch.~\ref{ch:al}>>=
-	  a1 = append(a1, d1[j-1])
-	  a2 = append(a2, '-')
+	  qal = append(qal, query.Data()[j-1])
+	  sal = append(sal, '-')
 	  j--
 #+end_src
 #+begin_src latex
@@ -424,8 +422,8 @@
   decrementing the row index, $i$.
 #+end_src
 #+begin_src go <<Move vertically, Ch.~\ref{ch:al}>>=
-	  a1 = append(a1, '-')
-	  a2 = append(a2, d2[i-1])
+	  qal = append(qal, '-')
+	  sal = append(sal, subject.Data()[i-1])
 	  i--
 #+end_src
 #+begin_src latex
@@ -433,8 +431,8 @@
   diagonally, we add a residue to both sequences and decrement $i$ and $j$.
 #+end_src
 #+begin_src go  <<Move diagonally, Ch.~\ref{ch:al}>>=
-	  a1 = append(a1, d1[j-1])
-	  a2 = append(a2, d2[i-1])
+	  qal = append(qal, query.Data()[j-1])
+	  sal = append(sal, subject.Data()[i-1])
 	  i--
 	  j--
 #+end_src
@@ -446,18 +444,18 @@
   independent of the type of alignment we are dealing with.
 #+end_src
 #+begin_src go <<Construct and print global, Ch.~\ref{ch:al}>>=
-  start1 := 0
-  start2 := 0
+  qs := 0
+  ss := 0
   //<<Output alignment, Ch.~\ref{ch:al}>>
 #+end_src
 
 #+begin_src go <<Output alignment, Ch.~\ref{ch:al}>>=
-seq1 := fasta.NewSequence(s1.Header(), a1)
-seq2 := fasta.NewSequence(s2.Header(), a2)
+seq1 := fasta.NewSequence(query.Header(), qal)
+seq2 := fasta.NewSequence(subject.Header(), sal)
 seq1.Reverse()
 seq2.Reverse()
 al := util.NewAlignment(seq1, seq2, mat,
-	n-1, m-1, start1, start2, score)
+	n-1, m-1, qs, ss, score)
 al.SetLineLength(ll)
 fmt.Println(al)
 #+end_src
@@ -535,12 +533,12 @@ fmt.Println(al)
 #+end_src
 #+begin_src go <<First round of end gaps, Ch.~\ref{ch:al}>>=
   for k := m; k > i; k-- {
-	  a1 = append(a1, '-')
-	  a2 = append(a2, d2[k-1])
+	  qal = append(qal, '-')
+	  sal = append(sal, subject.Data()[k-1])
   }
   for k := n; k > j; k-- {
-	  a1 = append(a1, d1[k-1])
-	  a2 = append(a2, '-')
+	  qal = append(qal, query.Data()[k-1])
+	  sal = append(sal, '-')
   }
 #+end_src
 #+begin_src latex
@@ -550,12 +548,12 @@ fmt.Println(al)
 #+end_src
 #+begin_src go <<Second round of end gaps, Ch.~\ref{ch:al}>>=
   for k := i; k > 0; k-- {
-	  a1 = append(a1, '-')
-	  a2 = append(a2, d2[k-1])
+	  qal = append(qal, '-')
+	  sal = append(sal, subject.Data()[k-1])
   }
   for k := j; k > 0; k-- {
-	  a1 = append(a1, d1[k-1])
-	  a2 = append(a2, '-')
+	  qal = append(qal, query.Data()[k-1])
+	  sal = append(sal, '-')
   }
 #+end_src
 
@@ -578,8 +576,6 @@ fmt.Println(al)
   We fill the dynamic programming matrix for local alignment.
 #+end_src
 #+begin_src go <<Fill local, Ch.~\ref{ch:al}>>=
-  d1 := s1.Data()
-  d2 := s2.Data()
   for i := 1; i <= m; i++ {
 	  for j := 1; j <= n; j++ {
 		  //<<Determine local entry, Ch.~\ref{ch:al}>>
@@ -593,7 +589,7 @@ fmt.Println(al)
   three of these terms, we can use it here.
 #+end_src
 #+begin_src go <<Determine local entry, Ch.~\ref{ch:al}>>=
-  //<<Determine global entry, Ch.~\ref{ch:al}>>
+  //<<Fill in cell, Ch.~\ref{ch:al}>>
   if p[i][j].v < 0 {
 	  p[i][j].v = 0
   }
@@ -743,8 +739,8 @@ type coordinatesSlice []coordinate
   p[i][j].visited = true
   //<<Trace back, Ch.~\ref{ch:al}>>
   if p[i][j].visited {
-	  a1 = a1[:0]
-	  a2 = a2[:0]
+	  qal = qal[:0]
+	  sal = sal[:0]
 	  found = false
 	  break
   }
@@ -756,8 +752,8 @@ type coordinatesSlice []coordinate
 #+end_src
 #+begin_src go <<Found alignment? Ch.~\ref{ch:al}>>=
   if found {
-	  start1 := j
-	  start2 := i
+	  qs := j
+	  ss := i
 	  //<<Output alignment, Ch.~\ref{ch:al}>>
 	  count++
 	  if count == numAl {
