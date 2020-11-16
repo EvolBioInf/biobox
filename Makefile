@@ -11,6 +11,8 @@ all:
 	cp cutSeq/cutSeq bin
 	make -C getSeq
 	cp getSeq/getSeq bin
+	make -C naiveMatcher
+	cp naiveMatcher/naiveMatcher bin
 	make -C numAl
 	cp numAl/numAl bin
 	make -C randomizeSeq
@@ -34,6 +36,7 @@ clean:
 	make clean -C cutSeq
 	make clean -C getSeq
 	make clean -C doc
+	make clean -C naiveMatcher
 	make clean -C numAl
 	make clean -C randomizeSeq
 	make clean -C ranseq
@@ -47,6 +50,7 @@ test:
 	make test -C cchar
 	make test -C cutSeq
 	make test -C getSeq
+	make test -C naiveMatcher
 	make test -C numAl
 	make test -C randomizeSeq
 	make test -C ranseq

@@ -11,6 +11,7 @@ doc/al.tex
 doc/cchar.tex
 doc/cutSeq.tex
 doc/getSeq.tex
+doc/naiveMatcher.tex
 doc/numAl.tex
 doc/randomizeSeq.tex
 doc/ranseq.tex
@@ -25,6 +26,7 @@ al/al
 cchar/cchar
 cutSeq/cutSeq
 getSeq/getSeq
+naiveMatcher/naiveMatcher
 numAl/numAl
 randomizeSeq/randomizeSeq
 ranseq/ranseq

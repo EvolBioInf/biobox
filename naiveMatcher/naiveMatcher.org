@@ -1,0 +1,261 @@
+#+begin_src latex
+  \section*{Introduction}
+  The na\"ive method for finding a pattern, $p$, in a text, $t$, is to
+  write two nested loops. The outer iterates over $t$, the inner over
+  $p$. If the inner finishes, $p$ has been found. The program
+  \texttt{naiveMatcher} implements this algorithm.
+  \section*{Implementation}
+  The outline of \texttt{naiveMatcher} contains
+  hooks for imports, variables, functions, and the main function.
+#+end_src
+#+begin_src go <<naiveMatcher.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:nm}>>
+  )
+  //<<Variables, Ch.~\ref{ch:nm}>>
+  //<<Functions, Ch.~\ref{ch:nm}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:nm}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, parse the options, and scan
+  the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:nm}>>=
+  //<<Set usage, Ch.~\ref{ch:nm}>>
+  //<<Parse options, Ch.~\ref{ch:nm}>>
+  //<<Scan input files, Ch.~\ref{ch:nm}>>
+#+end_src
+#+begin_src latex
+  The usage consists of a usage message, an explanation of the program's
+  purpose, and an example usage.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:nm}>>=
+  u := "naiveMatcher [-h] [options] pattern [file(s)]"
+  p := "Demonstrate naive matching algorithm."
+  e := "naiveMatcher ATTGC foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nm}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare two options, \texttt{-v} to print the program
+  version, and \texttt{-p} to enter a file of patterns.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:nm}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+  var optP = flag.String("p", "", "file of patterns")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}>
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nm}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  When parsing the options, we check for \texttt{-v}, and get the
+  pattern or pattern file and the input files.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:nm}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("naiveMatcher")
+  }
+  //<<Get pattern or pattern file, Ch.~\ref{ch:nm}>>
+  //<<Get input files, Ch.~\ref{ch:nm}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nm}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The pattern is the first entry in the argument slice, unless a pattern
+  file was given.
+#+end_src
+#+begin_src go <<Get pattern or pattern file, Ch.~\ref{ch:nm}>>=
+  p = ""
+  a := flag.Args()
+  if *optP == "" {
+	  if len(a) < 1 {
+		  fmt.Fprintf(os.Stderr, "please enter a pattern " +
+			  "or a pattern file via -p\n")
+		  os.Exit(0)
+	  }
+	  p = a[0]
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt} and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nm}>>=
+  "fmt"
+  "os"
+#+end_src
+#+begin_src latex
+  The input files are the remaining elements in the argument slice.
+#+end_src
+#+begin_src go <<Get input files, Ch.~\ref{ch:nm}>>=
+  var f []string
+  if p == "" {
+	  f = a[0:]
+  } else {
+	  f = a[1:]
+  }
+#+end_src
+#+begin_src latex
+  The pattern is searched in all input files using the function
+  \texttt{scan}, which takes as argument the pattern, $p$, and the name
+  of the pattern file.
+#+end_src
+#+begin_src go <<Scan input files, Ch.~\ref{ch:nm}>>=
+  clio.ParseFiles(f, scan, p, *optP)
+#+end_src
+#+begin_src latex
+  In \texttt{scan}, we first retrieve the arguments of \texttt{scan},
+  then get one or more patterns, iterate over the text sequences, and
+  search for the pattern(s) in them.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:nm}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:nm}>>
+	  //<<Get patterns, Ch.~\ref{ch:nm}>>
+	  textSc := fasta.NewScanner(r)
+	  for textSc.ScanSequence() {
+		  t := textSc.Sequence().Data()
+		  th := textSc.Sequence().Header()
+		  //<<Iterate over patterns, Ch.~\ref{ch:nm}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io} and \texttt{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nm}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  The arguments consist of a pattern read from the command line and a
+  pattern file.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:nm}>>=
+  pc := args[0].(string)
+  pfn := args[1].(string)
+#+end_src
+#+begin_src latex
+  Patterns are read either from the command line or from the pattern
+  file.
+#+end_src
+#+begin_src go <<Get patterns, Ch.~\ref{ch:nm}>>=
+  ps := make([]fasta.Sequence, 0)
+  if pc != "" {
+	  ps = append(ps, *fasta.NewSequence(pc, []byte(pc)))
+  } else {
+	  pf, err := os.Open(pfn)
+	  if err != nil { fmt.Errorf("couldn't open %q\n", pfn) }
+	  sc := fasta.NewScanner(pf)
+	  for sc.ScanSequence() {
+		  ps = append(ps, *sc.Sequence())
+	  }
+	  pf.Close()
+  }
+#+end_src
+#+begin_src latex
+  Given a text, we iterate over the patterns, write a comment line
+  identifying both, followed by the positions of the pattern in the
+  text.
+#+end_src
+#+begin_src go <<Iterate over patterns, Ch.~\ref{ch:nm}>>=
+  for _, pattern := range ps {
+	  p := pattern.Data()
+	  fmt.Printf("# %s / %s\n", pattern.Header(), th)
+	  //<<Search for pattern, Ch.~\ref{ch:nm}>>
+  }
+#+end_src
+#+begin_src latex
+  The pattern search consists of a nested loop. Whenever a pattern is
+  found, its starting position is printed. Positions are one-based.
+#+end_src
+#+begin_src go <<Search for pattern, Ch.~\ref{ch:nm}>>=
+  j := 0
+  m := len(t) - len(p) + 1
+  n := len(p)
+  for i := 0; i < m; i++ {
+	  for j = 0; j < n; j++ {
+		  if t[i+j] != p[j] { break }
+	  }
+	  if j == len(p) {
+		  fmt.Println(i+1)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The \texttt{naiveMatcher} is written, time to test it.
+
+  \section*{Testing}
+  The testing outline contains hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<naiveMatcher_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:nm}>>
+  )
+
+  func TestNaiveMatcher(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:nm}>>
+  }
+#+end_src
+#+begin_src latex
+  We search in the alcohol dehydrogenase locus of two
+  \texttt{Drosophila} species, \texttt{D. melanogaster} and
+  \texttt{D. guanche}. In the first test, the pattern \texttt{ATTA} is
+  passed on the command line. The result we want is contained in
+  \texttt{r1.txt}, which we compare to what we get.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:nm}>>=
+  cmd := exec.Command("naiveMatcher", "ATTA",
+	  "dmAdhAdhdup.fasta", "dgAdhAdhdup.fasta")
+  get, err := cmd.Output()
+  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
+  want, err := ioutil.ReadFile("r1.txt")
+  if err != nil { t.Errorf("couldn't open r1.txt\n") }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:nm}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+#+begin_src latex
+  In the second and final test, two patterns, \texttt{ATTA} and
+  \texttt{ATTT} are passed via \texttt{p.fasta}. The result we want is
+  in \texttt{r2.txt}
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:nm}>>=
+  cmd = exec.Command("naiveMatcher", "-p", "p.fasta",
+	  "dmAdhAdhdup.fasta", "dgAdhAdhdup.fasta")
+  get, err = cmd.Output()
+  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
+  want, err = ioutil.ReadFile("r2.txt")
+  if err != nil { t.Errorf("couldn't open r1.txt\n") }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
