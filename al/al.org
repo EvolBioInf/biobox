@@ -862,7 +862,8 @@ type coordinatesSlice []coordinate
   }
 #+end_src
 #+begin_src latex
-  Local alignment is the default mode.
+  As a last test, we compute the best local alignment, which is the
+  default mode; this time we want \texttt{res4.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
   cmd = exec.Command("al", "dmAdhAdhdup.fasta", "dgAdhAdhdup.fasta")
@@ -873,20 +874,4 @@ type coordinatesSlice []coordinate
   if !bytes.Equal(get, want) {
 	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
   }
-#+end_src
-#+begin_src latex
-  As a last test, we compute the three best local alignments between
-  the two alcohol dehydrogenases genes; \texttt{res5.txt} is wanted.
-#+end_src
-#+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
-  cmd = exec.Command("al", "-n", "3", "dmAdhAdhdup.fasta",
-	  "dgAdhAdhdup.fasta")
-  get, err = cmd.Output()
-  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
-  want, err = ioutil.ReadFile("res5.txt")
-  if err != nil { t.Errorf("couldn't open res5.txt") }
-  if !bytes.Equal(get, want) {
-	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
-  }
-
 #+end_src
