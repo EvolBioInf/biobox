@@ -9,6 +9,8 @@ all:
 	cp cchar/cchar bin
 	make -C cutSeq
 	cp cutSeq/cutSeq bin
+	make -C dnaDist
+	cp dnaDist/dnaDist bin
 	make -C getSeq
 	cp getSeq/getSeq bin
 	make -C naiveMatcher
@@ -34,6 +36,7 @@ clean:
 	make clean -C al
 	make clean -C cchar
 	make clean -C cutSeq
+	make clean -C dnaDist
 	make clean -C getSeq
 	make clean -C doc
 	make clean -C naiveMatcher
@@ -49,6 +52,7 @@ test:
 	make test -C al
 	make test -C cchar
 	make test -C cutSeq
+	make test -C dnaDist
 	make test -C getSeq
 	make test -C naiveMatcher
 	make test -C numAl
