@@ -544,8 +544,95 @@ st2 := a.start2
   }
 #+end_src
 #+begin_src latex
+  \section*{Structure \texttt{TransitionTab}}
+  !A \texttt{transitionTab} indicates whether or not a pair of
+  !nucleotides represents a transition. Nucleotides come in two types,
+  !the purines, \texttt{A} and \texttt{G}, and the pyrimidines,
+  !\texttt{C} and \texttt{T}. Mutations within a chemical class are
+  !called transitions, as opposed to transversions, mutations between
+  !the classes.
+
+  The structure holds a two-dimensional table of booleans. Nucleotides
+  come as bytes and the are used as indexes into the table. The
+  nucleotide alphabet starts at an \emph{offset} from the ASCII
+  alphabet and is $n$ characters long.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:uti}>>=
+  type TransitionTab struct {
+	  offset, n byte
+	  ts [][]bool
+  }
+#+end_src
+#+begin_src latex
+  \subsection*{Function \texttt{NewTransitionTab}}
+  !\texttt{NewTransitionTab} constructs and initializes a new
+  !\texttt{TransitionTab}.
+
+  The table caters for nucleotides in caps, of which the smallest is
+  \texttt{A}, decimal 65, and the largest \texttt{T}, 84. Hence the
+  offset is 65 and $n=84-65 + 1=20$ characters are accounted for.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func NewTransitionTab() TransitionTab {
+	  var tab TransitionTab
+	  tab.offset = 65
+	  tab.n = 20
+	  //<<Make transition table, Ch.~\ref{ch:uti}>>
+	  //<<Enter transitions, Ch.~\ref{ch:uti}>>
+	  return tab
+  }
+#+end_src
+#+begin_src latex
+  The transition table is a slice of boolean slices.
+#+end_src
+#+begin_src go <<Make transition table, Ch.~\ref{ch:uti}>>=
+  tab.ts = make([][]bool, tab.n)
+  for i := 0; i < int(tab.n); i++ {
+	  tab.ts[i] = make([]bool, tab.n)
+  }
+#+end_src
+#+begin_src latex
+  We fill in the transition table to get:
+  \begin{center}
+    \begin{tabular}{c|cccc}
+      & \texttt{A} & \texttt{C} & \texttt{G} & \texttt{T}\\\hline
+      \texttt{A} & false & false & true & false\\
+      \texttt{C} & false & false & false & true\\
+      \texttt{G} & true & false & false & false\\
+      \texttt{T} & false & true & false & false\\
+    \end{tabular}
+  \end{center}
+#+end_src
+#+begin_src go <<Enter transitions, Ch.~\ref{ch:uti}>>=
+  a := byte('A') - tab.offset
+  c := byte('C') - tab.offset
+  g := byte('G') - tab.offset
+  t := byte('T') - tab.offset
+  tab.ts[a][g] = true
+  tab.ts[c][t] = true
+  tab.ts[g][a] = true
+  tab.ts[t][c] = true
+#+end_src
+#+begin_src latex
+  \subsection*{Method \texttt{IsTransition}}
+  !\texttt{IsTransition} takes a pair of nucleotides as arguments and
+  !returns true if they are both caps and represent a transition, false
+  !otherwise.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:uti}>>=
+  func (t TransitionTab) IsTransition(a, b byte) bool {
+	  a -= t.offset
+	  b -= t.offset
+	  if a < 0 || b < 0 || a >= t.n || b >= t.n {
+		  return false
+	  }
+	  return t.ts[a][b]
+  }
+#+end_src
+#+begin_src latex
   \section*{Testing}
-  The testing outline contains hooks for imports and the testing logic.
+  The testing outline contains hooks for imports, types, and the testing
+  logic.
 #+end_src
 #+begin_src go <<util_test.go>>=
   package util
@@ -554,7 +641,7 @@ st2 := a.start2
 	  "testing"
 	  //<<Testing imports, Ch.~\ref{ch:uti}>>
   )
-
+  //<<Testing types, Ch.~\ref{ch:uti}>>
   func TestUtil(t *testing.T) {
 	  //<<Testing, Ch.~\ref{ch:uti}>>
   }
@@ -651,5 +738,49 @@ st2 := a.start2
   }
   if !bytes.Equal(get, want) {
 	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  \subsection*{\texttt{TransitionTab}}
+  To test \texttt{TransitionTab}, we set up some tests and run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:uti}>>=
+  tab := NewTransitionTab()
+  //<<Set up transition tests, Ch.~\ref{ch:uti}>>
+  //<<Run transition tests, Ch.~\ref{ch:uti}>>
+#+end_src
+#+begin_src latex
+  Each test consists of three values, two characters and the boolean
+  wanted. We set up the structure \texttt{triplet} to hold these values.
+#+end_src
+#+begin_src go <<Testing types, Ch.~\ref{ch:uti}>>=
+  type triplet struct {
+	  a, b byte
+	  w bool
+  }
+#+end_src
+#+begin_src latex
+  We set up the table of tests.
+#+end_src
+#+begin_src go <<Set up transition tests, Ch.~\ref{ch:uti}>>=
+  tr := make([]triplet, 8)
+  tr = append(tr, triplet{a: 'A', b: 'G', w: true})
+  tr = append(tr, triplet{a: 'G', b: 'A', w: true})
+  tr = append(tr, triplet{a: 'C', b: 'T', w: true})
+  tr = append(tr, triplet{a: 'T', b: 'C', w: true})
+  tr = append(tr, triplet{a: 'A', b: 'C', w: false})
+  tr = append(tr, triplet{a: 'T', b: 'T', w: false})
+  tr = append(tr, triplet{a: 'T', b: 't', w: false})
+  tr = append(tr, triplet{a: '!', b: 'A', w: false})
+#+end_src
+#+begin_src latex
+  If a pair of characters is misclassified, the test fails.
+#+end_src
+#+begin_src go <<Run transition tests, Ch.~\ref{ch:uti}>>=
+  for _, test := range tr {
+	  g := tab.IsTransition(test.a, test.b)
+	  if g != test.w {
+		  t.Errorf("misclassified (%c, %c)\n", test.a, test.b)
+	  }
   }
 #+end_src
