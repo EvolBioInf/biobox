@@ -53,8 +53,7 @@
   randomly drawing $n$ columns. This is done \emph{with replacement},
   which means that some columns are drawn repeatedly, others not at
   all. Given such a bootstrap sample, distances are computed and output,
-  and this bootstrapping is repeated, say $10^4$ times. Hence we aim to
-  make its implementation in \texttt{dnaDist} quick.
+  and this bootstrapping is repeated, say $10^4$ times.
 
   \section*{Implementation}
   The outline of \texttt{dnaDist} contains hooks for imports, types,
