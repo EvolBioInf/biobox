@@ -13,6 +13,8 @@ all:
 	cp dnaDist/dnaDist bin
 	make -C getSeq
 	cp getSeq/getSeq bin
+	make -C mutator
+	cp mutator/mutator bin
 	make -C naiveMatcher
 	cp naiveMatcher/naiveMatcher bin
 	make -C numAl
@@ -37,8 +39,9 @@ clean:
 	make clean -C cchar
 	make clean -C cutSeq
 	make clean -C dnaDist
-	make clean -C getSeq
 	make clean -C doc
+	make clean -C getSeq
+	make clean -C mutator
 	make clean -C naiveMatcher
 	make clean -C numAl
 	make clean -C randomizeSeq
@@ -54,6 +57,7 @@ test:
 	make test -C cutSeq
 	make test -C dnaDist
 	make test -C getSeq
+	make test -C mutator
 	make test -C naiveMatcher
 	make test -C numAl
 	make test -C randomizeSeq

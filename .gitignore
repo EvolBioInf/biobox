@@ -12,6 +12,7 @@ doc/cchar.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
 doc/getSeq.tex
+doc/mutator.tex
 doc/naiveMatcher.tex
 doc/numAl.tex
 doc/randomizeSeq.tex
@@ -28,6 +29,7 @@ cchar/cchar
 cutSeq/cutSeq
 dnaDist/dnaDist
 getSeq/getSeq
+mutator/mutator
 naiveMatcher/naiveMatcher
 numAl/numAl
 randomizeSeq/randomizeSeq

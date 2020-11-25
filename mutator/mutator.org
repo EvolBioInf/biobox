@@ -1,0 +1,399 @@
+#+begin_src latex
+  \section*{Introduction}
+  Much of evolutionary biology is based on sequence comparison, and many
+  of the software tools of the trade take related sequences as input. So
+  it is often useful to transform a sequence into its diverged
+  sibling. The program \texttt{mutator} implements this
+  transformation. By default, it mutates positions with a given
+  probability. However, the user can also opt to supply a list of
+  positions to be mutated.
+
+  \section*{Implementation}
+  The program outline contains hooks for imports, functions, and the
+  logic of the main function.
+#+end_src
+#+begin_src go <<mutator.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:mut}>>
+  )
+  //<<Functions, Ch.~\ref{ch:mut}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:mut}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare and parse the options,
+  and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:mut}>>=
+  //<<Set usage, Ch.~\ref{ch:mut}>>
+  //<<Declare options, Ch.~\ref{ch:mut}>>
+  //<<Parse options, Ch.~\ref{ch:mut}>>
+  //<<Parse input files, Ch.~\ref{ch:mut}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three strings, the usage message proper, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:mut}>>=
+  u := "mutator [-h] [options] [fasta file(s)]"
+  p := "Mutate input sequences."
+  e := "mutator -p 1,10,100 foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import the package \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  There are five options,
+  \begin{enumerate}
+  \item \texttt{-v} to print the program's version,
+  \item \texttt{-m} to set the mutation rate,
+  \item \texttt{-p} to set a list of positions to be mutated,
+  \item \texttt{-P} to switch from DNA to protein sequences, and
+  \item \texttt{-s} the seed for the random number generator.
+  \end{enumerate}
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:mut}>>=
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+  var optM = flag.Float64("m", 0.01, "mutation rate")
+  var optP = flag.String("p", "", "positions to be mutated; " +
+	  "comma-separated, one-based")
+  var optPP = flag.Bool("P", false, "protein instead of DNA")
+  var optS = flag.Int("s", 0, "seed for random number genrator; " +
+	  "default: internal")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  The options are parsed and we extract the positions to be mutated, set
+  the residue ``alphabet'', and set up the random number generator.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:mut}>>=
+  flag.Parse()
+  if *optV { util.PrintInfo("mutator") }
+  //<<Extract Positions, Ch.~\ref{ch:mut}>>
+  //<<Set alphabet, Ch.~\ref{ch:mut}>>
+  //<<Set up random number generator, Ch.~\ref{ch:mut}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  A string of positions is split into individual strings, which are
+  converted to integers, checked, and stored.
+#+end_src
+#+begin_src go <<Extract Positions, Ch.~\ref{ch:mut}>>=
+  var positions []int
+  if *optP != "" {
+	  str := strings.Split(*optP, ",")
+	  for _, ps := range str {
+		  //<<Convert position, Ch.~\ref{ch:mut}>>
+		  //<<Check and store position, Ch.~\ref{ch:mut}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  If a position cannot be converted, we abort. If converted, it is
+  transformed to zero-based.
+#+end_src
+#+begin_src go <<Convert position, Ch.~\ref{ch:mut}>>=
+  position, err := strconv.Atoi(ps)
+  if err != nil {
+	  log.Fatalf("couldn't convert %q\n", ps)
+  }
+  position--
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv} and \texttt{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "strconv"
+  "log"
+#+end_src
+#+begin_src latex
+  If the position is negative, we warn the user, otherwise we store it.
+#+end_src
+#+begin_src go <<Check and store position, Ch.~\ref{ch:mut}>>=
+  if position < 0 {
+	  fmt.Fprintf(os.Stderr, "position %d cannot be mutated\n", position+1)
+  } else {
+	  positions = append(positions, position)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt} and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "fmt"
+  "os"
+#+end_src
+#+begin_src latex
+    The alphabet can be switched from DNA to protein.
+#+end_src
+#+begin_src go <<Set alphabet, Ch.~\ref{ch:mut}>>=
+  alphabet := "ACGT"
+  if *optPP {
+	  alphabet = "ACDEFGHIKLMNPQRSTVWY"
+  }
+#+end_src
+#+begin_src latex
+  If the user gave no seed for the random number generator, a seed is
+  generated from the current time.
+#+end_src
+#+begin_src go <<Set up random number generator, Ch.~\ref{ch:mut}>>=
+  seed := int64(*optS)
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  ran := rand.New(rand.NewSource(seed))
+#+end_src
+#+begin_src latex
+  We import \texttt{time} and \texttt{rand}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "time"
+  "math/rand"
+#+end_src
+#+begin_src latex
+  Scanning the input files is delegated to the function
+  \texttt{ParseFiles}. It takes as arguments the names of the input
+  files, and the name of a function, \texttt{scan}, applied to each
+  file. The arguments of \texttt{scan} are the alphabet, the mutation
+  rate, the positions, and the random number generator.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:mut}>>=
+  f := flag.Args()
+  clio.ParseFiles(f, scan, alphabet, *optM, positions, ran)
+#+end_src
+#+begin_src latex
+  Inside \texttt{scan}, we retrieve the arguments just passed, and
+  iterate over the sequences contained in the file represented by the
+  \texttt{Reader}.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mut}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:mut}>>
+	  //<<Iterate over sequences, Ch.~\ref{ch:mut}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  The arguments are retrieved with type assertions.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:mut}>>=
+  alphabet := args[0].(string)
+  mu := args[1].(float64)
+  pos := args[2].([]int)
+  ran := args[3].(*rand.Rand)
+#+end_src
+#+begin_src latex
+  We iterate over the sequences with a dedicated scanner. For each
+  sequence, we extract the residues, mutate them, and print the mutated
+  sequence.
+#+end_src
+#+begin_src go <<Iterate over sequences, Ch.~\ref{ch:mut}>>=
+  sc := fasta.NewScanner(r)
+  for sc.ScanSequence() {
+	  seq := sc.Sequence()
+	  res := seq.Data()
+	  //<<Mutate residues, Ch.~\ref{ch:mut}>>
+	  //<<Print mutated sequence, Ch.~\ref{ch:mut}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  The residues are either mutated position-wise or according to the
+  mutation rate.
+#+end_src
+#+begin_src go <<Mutate residues, Ch.~\ref{ch:mut}>>=
+  if len(pos) > 0 {
+	  //<<Mutate position-wise, Ch.~\ref{ch:mut}>>
+  } else {
+	  //<<Mutate with rate, Ch.~\ref{ch:mut}>>
+  }
+#+end_src
+#+begin_src latex
+  We read the positions to be mutated and carry out the actual mutation
+  with a dedicated function. If the user is trying to mutate a position
+  beyond the end of the sequence, we send a warning.
+#+end_src
+#+begin_src go <<Mutate position-wise, Ch.~\ref{ch:mut}>>=
+  for _, p := range pos {
+	  l := len(res)
+	  if p < l {
+		  res[p] = mutate(res[p], ran, alphabet)
+	  } else {
+		  fmt.Fprintf(os.Stderr, "trying to mutate " +
+			  "position %d, but sequence only " +
+			  "contains %d residues\n", p+1, l)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The function \texttt{mutate} takes as arguments a random number
+  generator, the alphabet, and the residue to be mutated.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mut}>>=
+  func mutate(res byte, ran *rand.Rand, alphabet string) byte {
+	  n := len(alphabet)
+	  new := res
+	  for new == res {
+		  p := ran.Intn(n)
+		  new = alphabet[p]
+	  }
+	  return new
+  }
+#+end_src
+#+begin_src latex
+  Given a mutation rate, we draw a random number for each residue and
+  check whether it is less than the mutation rate.
+#+end_src
+#+begin_src go <<Mutate with rate, Ch.~\ref{ch:mut}>>=
+  for i, _ := range res {
+	  if ran.Float64() < mu {
+		  res[i] = mutate(res[i], ran, alphabet)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  To print the mutated sequence, we generate a new \texttt{Sequence}
+  object with the mutated residues and append \emph{mutated} to the
+  header. The actual printing is done by the \texttt{String} method of
+  \texttt{Sequence}.
+#+end_src
+#+begin_src go <<Print mutated sequence, Ch.~\ref{ch:mut}>>=
+  h := seq.Header() + " - mutated"
+  ns := fasta.NewSequence(h, res)
+  fmt.Println(ns)
+#+end_src
+#+begin_src latex
+  The \texttt{mutator} is written, time to test it.
+  \section*{Testing}
+  The testing framework contains hooks for imports and the actual
+  testing logic.
+#+end_src
+#+begin_src go <<mutator_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:mut}>>
+  )
+  func TestMutator(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:mut}>>
+  }
+#+end_src
+#+begin_src latex
+  The testing logic consists in running the program under a variety of
+  conditions and comparing the results we get to the results we want,
+  which are stored in sequentially numbered output files. So we
+  construct a set of commands, a list with the names of the result
+  files, and run each test.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:mut}>>=
+  commands := make([]*exec.Cmd, 0)
+  //<<Construct commands, Ch.~\ref{ch:mut}>>
+  //<<Construct list of result files, Ch.~\ref{ch:mut}>>
+  for i, cmd := range commands {
+	  //<<Run test, Ch.~\ref{ch:mut}>>
+  }
+#+end_src
+#+begin_src latex
+  We carry out three tests on the file \texttt{dna.fa}, which contains
+  two random DNA sequences length 100, and a fourth test on
+  \texttt{pro.fa}, which contains two human protein sequences. In each
+  test we set the seed of the random number gnerator to make the run
+  reproducible.
+  \begin{enumerate}
+    \item Run with defaults.
+    \item Mutate positions.
+    \item Change mutation rate.
+    \item Mutate protein sequence.
+  \end{enumerate}
+#+end_src
+#+begin_src latex
+  Import \texttt{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:mut}>>=
+  "os/exec"
+#+end_src
+#+begin_src go <<Construct commands, Ch.~\ref{ch:mut}>>=
+  c := exec.Command("mutator", "-s", "3", "dna.fa")
+  commands = append(commands, c)
+  c = exec.Command("mutator", "-s", "3", "-p", "0,1,3,100,101",
+	  "dna.fa")
+  commands = append(commands, c)
+  c = exec.Command("mutator", "-s", "3", "-m", "0.2", "dna.fa")
+  commands = append(commands, c)
+  c = exec.Command("mutator", "-s", "3", "-P", "pro.fa")
+  commands = append(commands, c)
+#+end_src
+#+begin_src latex
+  The results we want are contained in as many files as there are
+  commands.
+#+end_src
+#+begin_src go <<Construct list of result files, Ch.~\ref{ch:mut}>>=
+  results := make([]string, len(commands))
+  for i, _ := range commands {
+	  results[i] = "r" + strconv.Itoa(i+1) + ".fa"
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:mut}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  For each test we compare what we get with what we want.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:mut}>>=
+  get, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  want, err := ioutil.ReadFile(results[i])
+  if err != nil {
+	  t.Errorf("couldn't open %q\n", results[i])
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{ioutil} and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:mut}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src
