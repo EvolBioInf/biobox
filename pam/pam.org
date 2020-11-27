@@ -1,0 +1,559 @@
+#+begin_src latex
+  \section*{Introduction}
+  The 20 amino acids that make up proteins have diverse chemical
+  properties. Some are large, like the two-ring system of tryptophane,
+  others are small, like the hydrogen atom of glycine. Aspartate and
+  glutamate are acidic and water soluble, leucine and isoleucine are
+  aliphatic and water insoluble. So changes between amino acids have
+  widely differing effects on protein structure, depending on the
+  distance in chemical space traversed. Moreover, amino acids are
+  encoded by triplet codons. The distance between codons in sequence
+  space thus ranges from one to three. As a result, pairs of amino acids
+  are scored individually rather than as binary matches/mismatches.
+
+  The match scores in Figure~\ref{fig:pam120} along the main diagonal
+  range from 3 for alanine (\texttt{A}) and serine (\texttt{S}) to 12
+  for tryptophane (\texttt{W}). The mismatch scores range from -8
+  (\ty{W}, \ty{[CDEGV]}) to 4 (\ty{F}, \ty{Y}).
+  \begin{figure}
+    \small
+  \begin{verbatim}
+      A   R   N   D   C   Q   E   G   H   I   L   K   M   F   P   S   T   W   Y   V 
+  A   3  -3   0   0  -3  -1   0   1  -3  -1  -3  -2  -2  -4   1   1   1  -7  -4   0
+  R  -3   6  -1  -3  -4   1  -3  -4   1  -2  -4   2  -1  -4  -1  -1  -2   1  -6  -3
+  N   0  -1   4   2  -5   0   1   0   2  -2  -4   1  -3  -4  -2   1   0  -5  -2  -3
+  D   0  -3   2   5  -7   1   3   0   0  -3  -5  -1  -4  -7  -2   0  -1  -8  -5  -3
+  C  -3  -4  -5  -7   9  -7  -7  -5  -4  -3  -7  -7  -5  -6  -4  -1  -3  -8  -1  -2
+  Q  -1   1   0   1  -7   6   2  -3   3  -3  -2   0  -1  -6   0  -2  -2  -6  -5  -3
+  E   0  -3   1   3  -7   2   5  -1  -1  -3  -4  -1  -3  -6  -1  -1  -2  -8  -4  -3
+  G   1  -4   0   0  -5  -3  -1   5  -4  -4  -5  -3  -4  -5  -2   1  -1  -8  -6  -2
+  H  -3   1   2   0  -4   3  -1  -4   7  -4  -3  -2  -4  -2  -1  -2  -3  -4  -1  -3
+  I  -1  -2  -2  -3  -3  -3  -3  -4  -4   6   1  -2   1   0  -3  -2   0  -7  -2   3
+  L  -3  -4  -4  -5  -7  -2  -4  -5  -3   1   5  -4   3   0  -3  -4  -3  -4  -3   1
+  K  -2   2   1  -1  -7   0  -1  -3  -2  -2  -4   5   0  -6  -2  -1  -1  -5  -6  -4
+  M  -2  -1  -3  -4  -5  -1  -3  -4  -4   1   3   0   8  -1  -3  -2  -1  -6  -4   1
+  F  -4  -4  -4  -7  -6  -6  -6  -5  -2   0   0  -6  -1   8  -5  -3  -4  -1   4  -3
+  P   1  -1  -2  -2  -4   0  -1  -2  -1  -3  -3  -2  -3  -5   6   1  -1  -7  -6  -2
+  S   1  -1   1   0  -1  -2  -1   1  -2  -2  -4  -1  -2  -3   1   3   2  -2  -3  -2
+  T   1  -2   0  -1  -3  -2  -2  -1  -3   0  -3  -1  -1  -4  -1   2   4  -6  -3   0
+  W  -7   1  -5  -8  -8  -6  -8  -8  -4  -7  -4  -5  -6  -1  -7  -2  -6  12  -1  -8
+  Y  -4  -6  -2  -5  -1  -5  -4  -6  -1  -2  -3  -6  -4   4  -6  -3  -3  -1   8  -3
+  V   0  -3  -3  -3  -2  -3  -3  -2  -3   3   1  -4   1  -3  -2  -2   0  -8  -3   5
+  \end{verbatim}
+  \normalsize
+  \caption{PAM120 amino acid substitution matrix.}\label{fig:pam120}
+  \end{figure}
+
+  Apart from their chemical heterogeneity, there is another complication
+  when scoring pairs amino acids. The probability of change itself
+  changes over time. Initially, just after divergence, it is very low,
+  but grows as time passes. This time-dependence of mutation
+  probabilities is also true for nucleotides, where it is usually
+  ignored. Not so with amino acids, for which whole series of
+  substitution matrices have been devised, covering closely related to
+  highly divergent sequences. The PAM series is an early one that is
+  still used today. PAM stands for Percent Accepted Mutations,
+  Figure~\ref{fig:pam120} shows an example from the series.
+
+  PAM matrices are computed from the mutation probabilities for each
+  pair of amino acids found in proteins separated by an evolutionary
+  distance of 1 PAM. Figure~\ref{fig:pam1} shows this probability matrix
+  with entries multiplied by 10000. This is also the format later used
+  in the computations. An entry, $m_{i,j}$, is the probability of amino
+  acid $j$ changing into amino acid $i$. These probabilities were
+  originally obtained from multiple sequence alignments and are thus not
+  symmetrical. For instance, the probability of valine changing into
+  isoleucine, $\texttt{V}\rightarrow\texttt{I}$, is 0.33\%, while the
+  reverse probability is 0.57\%.
+
+  \begin{figure}
+    \begin{center}
+      \resizebox{\textwidth}{!}{
+	\begin{tabular}{rrrrrrrrrrrrrrrrrrrrr}
+	  \input{pam1}
+	\end{tabular}
+	}
+    \end{center}
+  \caption{Amino acid mutation probabilities for sequences separated by
+    an evolutionary distance of 1 PAM. The probabilities are multiplied
+    by 10,000}\label{fig:pam1}
+  \end{figure}
+
+  Let the product of two $n\times n$ matrices $A=(a_{i,j})$, $B=(b_{i,j})$
+  be $C=c_{i,j}$, where $c_{i,j}$ is the sum of the elements in row
+  $a_i$ multiplied by the elements in column $b_j$,
+  \begin{equation}\label{eq:matMult}
+  c_{i,j}=\sum_{k=1}^n a_{i,k}b_{k,j}.
+  \end{equation}
+  The great thing about this mechanism is that multiplication of the
+  probability matrix in Figure~\ref{fig:pam1} with itself generates the
+  probabilities for an evolutionary distance of 2 PAM. This can be
+  repeated as often as we like, to give the probabilities for any
+  evolutionary distance measured in PAM. In this case, matrix
+  multiplication is a simple way to simulate evolution.
+
+  The mutation probabilities $m_{i,j}$ are normalized by division by the
+  frequency of the amino acid mutated into, $f_i$. Another way to look
+  at $f_i$ is as the probability of randomly drawing amino acid $i$. The
+  result of this division is a relatedness measure,
+  \[
+  r_{i,j}=\frac{m_{i,j}}{f_i}.
+  \]
+  The relatedness matrix is symmetrical. The frequencies that go into
+  its computation are contained in a file with 20 rows, one for each
+  amino acid and its frequency:
+  \begin{verbatim}
+  A 0.087
+  C 0.033       
+  D 0.047
+  E 0.050
+  ...
+  \end{verbatim}                
+  The order of rows doesn't matter.
+
+  In a third and final step, the relatedness values are log-transformed
+  and rounded to the nearest integer. So if $m_{i,j}=f_i$, the score is
+  zero. That is, if the probability of mutating amino acid $j$ to amino
+  acid $i$ is the same as randomly picking a partner for $j$, the score
+  is 0. Similarly, if $m_{i,j}<f_i$, the score is negative like most
+  off-diagonal entries in Figure~\ref{fig:pam120}. If $m_{i,j}>f_i$, the
+  score is positive, like all on-diagonal and some off-diagonal entries
+  in Figure~\ref{fig:pam120}.
+
+  The program \texttt{pam} implements the three steps for computing an
+  amino acid substitution matrix: matrix multiplication, normalization,
+  and log-transformation.
+
+  \section*{Implementation}
+  The outline of \texttt{pam} contains hooks for imports, functions, and
+  the logic of the main function.
+#+end_src
+#+begin_src go <<pam.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:pam}>>
+  )
+  //<<Functions, Ch.~\ref{ch:pam}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:pam}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we state the usage, declare and parse the
+  options, and parse the input file.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:pam}>>=
+  //<<Set usage, Ch.~\ref{ch:pam}>>
+  //<<Declare options, Ch.~\ref{ch:pam}>>
+  //<<Parse options, Ch.~\ref{ch:pam}>>
+  //<<Parse input file, Ch.~\ref{ch:pam}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts: The usage message, an explanation
+  of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:pam}>>=
+  u := "pam [-h] [options] [files]"
+  p := "Compute PAM matrices."
+  e := "pam -n 120 pam1.txt | pam -a aa.txt | pam"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  There are four options:
+  \begin{enumerate}
+  \item \texttt{-n} $n$: Compute $\left(m_{i,j}\right)^n$
+  \item \texttt{-a} \texttt{aa.txt}: Normalize with the amino acid
+    frequencies contained in \texttt{aa.txt}
+  \item \texttt{-b} $f$: Log-odds ratios given in $f$ bits.
+  \item \texttt{-v}: Print version
+  \end{enumerate}
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:pam}>>=
+  var optN = flag.Int("n", 0, "compute matrix^n; " +
+	  "default: log-transformation")
+  var optA = flag.String("a", "", "normalize by frequencies " +
+	  "in file; default: log-transformation")
+  var optB = flag.Float64("b", 0.5, "bits")
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  The options are parsed and we respond to \texttt{-v} by printing the
+  version, and to \texttt{-a} by opening the file and reading the amino
+  acid frequencies.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:pam}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("pam")
+  }
+  frequencies := make(map[byte]float64)
+  if *optA != "" {
+	  //<<Open frequencies file, Ch.~\ref{ch:pam}>>
+	  //<<Read frequencies, Ch.~\ref{ch:pam}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  If the frequencies file cannot be opened, we abort.
+#+end_src
+#+begin_src go <<Open frequencies file, Ch.~\ref{ch:pam}>>=
+  f, err := os.Open(*optA)
+  if err != nil {
+	  log.Fatalf("couldn't open %q\n", *optA)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{os} and \texttt{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "os"
+  "log"
+#+end_src
+#+begin_src latex
+  The frequencies are read with a scanner that splits the line into
+  strings at word boundaries. The first character of the first string
+  contains the amino acid, the second string the frequency. Lines
+  starting with a hash are ignored.
+#+end_src
+#+begin_src go <<Read frequencies, Ch.~\ref{ch:pam}>>=
+  sc := bufio.NewScanner(f)
+  for sc.Scan() {
+	  line := sc.Text()
+	  str := strings.Fields(line)
+	  a := str[0][0]
+	  if a == '#' { continue }
+	  x, err := strconv.ParseFloat(str[1], 64)
+	  if err != nil {
+		  log.Fatalf("couldn't parse %q\n", str[1])
+	  }
+	  frequencies[a] = x
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{bufio}, \texttt{strings}, and \texttt{strconv}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "bufio"
+  "strings"
+  "strconv"
+#+end_src
+#+begin_src latex
+  The remaining argument is the input file. This is parsed using the
+  function \texttt{ParseFiles}, which takes as first argument a list of
+  file names. In our case this list contains at most one entry. The
+  input is scanned with the function \texttt{scan}, which takes as
+  arguments the exponent and the frequencies.
+#+end_src
+#+begin_src go <<Parse input file, Ch.~\ref{ch:pam}>>=
+  f := flag.Args()
+  if len(f) > 1 {
+	  f = f[:1]
+  }
+  clio.ParseFiles(f, scan, *optN, frequencies, *optB)
+#+end_src
+#+begin_src latex
+  In the function \texttt{scan}, we retrieve the arguments, read the
+  matrix, transform, and print it.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pam}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:pam}>>
+	  //<<Read matrix, Ch.~\ref{ch:pam}>>
+	  //<<Transform matrix, Ch.~\ref{ch:pam}>>
+	  //<<Print matrix, Ch.~\ref{ch:pam}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  The exponent, frequencies, and bits just passed are retrieved using
+  type assertions.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:pam}>>=
+  exp := args[0].(int)
+  freq := args[1].(map[byte]float64)
+  bits := args[2].(float64)
+#+end_src
+#+begin_src latex
+  We read the matrix using a dedicated function and extract the entries.
+#+end_src
+#+begin_src go <<Read matrix, Ch.~\ref{ch:pam}>>=
+  aa := "ARNDCQEGHILKMFPSTWYV"
+  sm := util.ReadScoreMatrix(r)
+  m := len(aa)
+  ma := make([][]float64, m)
+  for i := 0; i < m; i++ {
+	  ma[i] = make([]float64, m)
+  }
+  for i := 0; i < m; i++ {
+	  for j := 0; j < m; j++ {
+		  ma[i][j] = sm.Score(aa[i], aa[j])
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The matrix is transformed depending on whether an exponent was set or
+  frequencies were passed.
+#+end_src
+#+begin_src go <<Transform matrix, Ch.~\ref{ch:pam}>>=
+  if exp > 0 {
+	  //<<Multiply matrix, Ch.~\ref{ch:pam}>>
+  } else if len(freq) > 0 {
+	  //<<Normalize matrix, Ch.~\ref{ch:pam}>>
+  } else {
+	  //<<Log-transform matrix, Ch.~\ref{ch:pam}>>
+  }
+#+end_src
+#+begin_src latex
+  To multiply a matrix, $A$, repeatedly with itself, it is first
+  copied to obtain $B$, and the we repeat
+  \[
+  A\leftarrow A\times B.
+  \]
+  So we first copy the matrix and then carry out the multiplication.
+#+end_src
+#+begin_src go <<Multiply matrix, Ch.~\ref{ch:pam}>>=
+  //<<Copy matrix, Ch.~\ref{ch:pam}>>
+  for i := 1; i < exp; i++ {
+	for j := 0; j < m; j++ {
+		for k := 0; k < m; k++ {
+			//<<Compute matrix entry, Ch.~\ref{ch:pam}>>
+	      }
+	}
+  }
+#+end_src
+#+begin_src latex
+  To copy the matrix, we construct a new one and use the built-in
+  function \texttt{copy}.
+#+end_src
+#+begin_src go <<Copy matrix, Ch.~\ref{ch:pam}>>=
+  mo := make([][]float64, m)
+  for i := 0; i < m; i++ {
+	  mo[i] = make([]float64, m)
+	  copy(mo[i], ma[i])
+  }
+#+end_src
+#+begin_src latex
+  The matrix entry is computed using equation~(\ref{eq:matMult}).
+#+end_src
+#+begin_src go <<Compute matrix entry, Ch.~\ref{ch:pam}>>=
+  s := 0.0
+  for l := 0; l < m; l++ {
+	  s += ma[j][l] * mo[l][k]
+  }
+  ma[j][k] = s
+#+end_src
+#+begin_src latex
+  The matrix is normalized by dividing by the frequency of the amino
+  acid mutated into.
+#+end_src
+#+begin_src go <<Normalize matrix, Ch.~\ref{ch:pam}>>=
+  for i := 0; i < m; i++ {
+	  for j := 0; j < m; j++ {
+		  ma[i][j] /= freq[aa[i]]
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The scores are odds measured in bits, hence the log-transformation is
+  to the basis of 2. The result is rounded to the nearest integer.
+#+end_src
+#+begin_src go <<Log-transform matrix, Ch.~\ref{ch:pam}>>=
+  for i := 0; i < m; i++ {
+	  for j := 0; j < m; j++ {
+		  ma[i][j] = math.Log2(ma[i][j]) / bits
+		  ma[i][j] = math.Round(ma[i][j])
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "math"
+#+end_src
+#+begin_src latex 
+  Having computed the new matrix, we print it. To line up the columns,
+  we use a \texttt{tabwriter}. Once constructed, we fill it with the
+  header and body of the table.
+#+end_src
+#+begin_src go <<Print matrix, Ch.~\ref{ch:pam}>>=
+  //<<Construct tabwriter, Ch.~\ref{ch:pam}>>
+  //<<Print table header, Ch.~\ref{ch:pam}>>
+  //<<Print table body, Ch.~\ref{ch:pam}>>
+#+end_src
+#+begin_src latex
+  The \texttt{tabwriter} is used to write to a buffer. It is initialized
+  to a minimal cell width of 1, zero-width tabs, and a single blank
+  added for padding.
+#+end_src
+#+begin_src go <<Construct tabwriter, Ch.~\ref{ch:pam}>>=
+  var buf []byte
+  buffer := bytes.NewBuffer(buf)
+  w := new(tabwriter.Writer)
+  w.Init(buffer, 1, 0, 1, ' ', 0)
+#+end_src
+#+begin_src latex
+  We import \texttt{tabwriter} and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "text/tabwriter"
+  "bytes"
+#+end_src
+#+begin_src latex
+  The header consists of the amino acids.
+#+end_src
+#+begin_src go <<Print table header, Ch.~\ref{ch:pam}>>=
+  fmt.Fprintf(w, "\t")
+  for _, a := range aa {
+	  fmt.Fprintf(w, "  %c\t", a)
+  }
+  fmt.Fprintf(w, "\n")
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  Each row of the table starts with an amino acid, followed by the
+  numerical entries. When all the data are entered, the
+  \texttt{tabwriter} is flushed to the buffer, which is printed.
+#+end_src
+#+begin_src go <<Print table body, Ch.~\ref{ch:pam}>>=
+  for i := 0; i < m; i++ {
+	  fmt.Fprintf(w, "%c\t", aa[i])
+	  for j := 0; j < m; j++ {
+		  if exp > 0 || len(freq) > 0 {
+			  fmt.Fprintf(w, "%.4f\t", ma[i][j])
+		  } else {
+			  fmt.Fprintf(w, "%3d\t", int(ma[i][j]))
+		  }
+	  }
+	  fmt.Fprintf(w, "\n")
+  }
+  w.Flush()
+  fmt.Printf("%s", buffer)
+#+end_src
+#+begin_src latex
+  The program is finished, let's test.
+  \section*{Testing}
+  The outline for the testing program provides hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<pam_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:pam}>>
+  )
+
+  func TestPam(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:pam}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a series of commands and run them. Then we compare what
+  we get with what we want, which is stored in a corresponding set of
+  pre-computed results files.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:pam}>>=
+  commands := make([]*exec.Cmd, 0)
+  //<<Construct commands, Ch.~\ref{ch:pam}>>
+  //<<Construct list of result files, Ch.~\ref{ch:pam}>>
+  for i, cmd := range commands {
+	  //<<Run test, Ch.~\ref{ch:pam}>>
+  }
+#+end_src
+#+begin_src latex
+  We test each of the three modes of the program, matrix multiplication,
+  normalization, and log transformation. The latter is repeated with a
+  different bit-value.
+#+end_src
+#+begin_src go <<Construct commands, Ch.~\ref{ch:pam}>>=
+  c := exec.Command("pam", "-n", "170", "pam1.txt")
+  commands = append(commands, c)
+  c = exec.Command("pam", "-a", "aa.txt", "p170.txt")
+  commands = append(commands, c)
+  c = exec.Command("pam", "p170n.txt")
+  commands = append(commands, c)
+  c = exec.Command("pam", "-b", "0.3333", "p170n.txt")
+  commands = append(commands, c)
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pam}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  The results wanted are contained in as many files as we just defined
+  commands.
+#+end_src
+#+begin_src go <<Construct list of result files, Ch.~\ref{ch:pam}>>=
+  results := make([]string, len(commands))
+  for i, _ := range commands {
+	  results[i] = "r" + strconv.Itoa(i+1) + ".txt"
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pam}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  When a command is run, we compare what we get to what we want.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:pam}>>=
+  get, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", cmd)
+  }
+  want, err := ioutil.ReadFile(results[i])
+  if err != nil {
+	  t.Errorf("couldn't open %q\n", results[i])
+  }
+  if !bytes.Equal(want, get) {
+	  t.Errorf("%s\nwant:\n%s\nget:\n%s\n", cmd, want, get)
+  }
+
+#+end_src
+#+begin_src latex
+  We import \texttt{ioutil} and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pam}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src

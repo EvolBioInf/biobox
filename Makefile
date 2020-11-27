@@ -19,6 +19,8 @@ all:
 	cp naiveMatcher/naiveMatcher bin
 	make -C numAl
 	cp numAl/numAl bin
+	make -C pam
+	cp pam/pam bin
 	make -C randomizeSeq
 	cp randomizeSeq/randomizeSeq bin
 	make -C ranseq
@@ -44,6 +46,7 @@ clean:
 	make clean -C mutator
 	make clean -C naiveMatcher
 	make clean -C numAl
+	make clean -C pam
 	make clean -C randomizeSeq
 	make clean -C ranseq
 	make clean -C revComp
@@ -60,6 +63,7 @@ test:
 	make test -C mutator
 	make test -C naiveMatcher
 	make test -C numAl
+	make test -C pam
 	make test -C randomizeSeq
 	make test -C ranseq
 	make test -C revComp

@@ -1,4 +1,4 @@
-all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex mutator.tex naiveMatcher.tex numAl.tex ranseq.tex randomizeSeq revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
+all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
@@ -21,7 +21,9 @@ naiveMatcher.tex: ../naiveMatcher/naiveMatcher.org
 	bash ../scripts/org2nw ../naiveMatcher/naiveMatcher.org | noweave -n -x | sed 's/_test/\\_test/g' > naiveMatcher.tex
 numAl.tex: ../numAl/numAl.org
 	bash ../scripts/org2nw ../numAl/numAl.org | noweave -n -x | sed 's/_test/\\_test/g' > numAl.tex
-randomizeSeq: ../randomizeSeq/randomizeSeq.org
+pam.tex: ../pam/pam.org
+	bash ../scripts/org2nw ../pam/pam.org | noweave -n -x | sed 's/_test/\\_test/g' > pam.tex
+randomizeSeq.tex: ../randomizeSeq/randomizeSeq.org
 	bash ../scripts/org2nw ../randomizeSeq/randomizeSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > randomizeSeq.tex
 ranseq.tex: ../ranseq/ranseq.org
 	bash ../scripts/org2nw ../ranseq/ranseq.org | noweave -n -x | sed 's/_test/\\_test/g' > ranseq.tex	
@@ -36,4 +38,4 @@ watterson.tex: ../watterson/watterson.org
 wrapSeq.tex: ../wrapSeq/wrapSeq.org
 	bash ../scripts/org2nw ../wrapSeq/wrapSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > wrapSeq.tex
 clean:
-	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex mutator.tex numAl.tex util.tex var.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 
+	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex util.tex var.tex watterson.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 
