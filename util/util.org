@@ -540,7 +540,6 @@ st2 := a.start2
 			  "(%q, %q)\n", c1, c2)
 	  }
 	  s.m[c1][c2] = float32(sc)
-	  s.m[c2][c1] = s.m[c1][c2]
   }
 #+end_src
 #+begin_src latex
