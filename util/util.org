@@ -1,12 +1,15 @@
 #+begin_src latex
   !Package \texttt{util} contains data and functions used by many of the
-  !programs collected in the \texttt{biobox}.  The package outline
-  !provides hooks for imports, constants, types, variables, methods, and
-  !functions.
+  !programs collected in the \texttt{biobox}.
+
+  The package outline provides hooks for imports, constants, types,
+  variables, methods, and functions. Some of the computations are
+  delegated to the GNU Scientific library, which is written in C. We
+  therefore also provide hooks for dealing with C.
 #+end_src
 #+begin_src go <<util.go>>=
   package util
-
+  //<<Deal with C, Ch.~\ref{ch:uti}>>
   import (
 	  //<<Imports, Ch.~\ref{ch:uti}>>
   )
@@ -19,7 +22,18 @@
   //<<Functions, Ch.~\ref{ch:uti}>>
 #+end_src
 #+begin_src latex
-  \section*{Structure \texttt{Alignment}}
+  To deal with C, we import \texttt{C}. Our bridge between Go and C is
+  cgo, so there is a hook for cgo commands, and one for includes.
+#+end_src
+#+begin_src go <<Deal with C, Ch.~\ref{ch:uti}>>=
+  /*
+  //<<Cgo, Ch.~\ref{ch:uti}>>
+  //<<Includes, Ch.~\ref{ch:uti}>>
+  */
+  import "C"
+#+end_src
+#+begin_src latex
+  \section{Structure \texttt{Alignment}}
   !The structure \texttt{Alignment} holds the alignment of two
   !sequences.
 
@@ -279,7 +293,7 @@
 st2 := a.start2
 #+end_src
 #+begin_src latex
-  \section*{Function \texttt{PrintInfo}}
+  \section{Function \texttt{PrintInfo}}
   Each program in the biobox provides the same information on author,
   email, and license. These are stored as constants.
 #+end_src
@@ -319,7 +333,7 @@ st2 := a.start2
   var date string
 #+end_src
 #+begin_src latex
-  \section*{Structure \texttt{ScoreMatrix}}
+  \section{Structure \texttt{ScoreMatrix}}
   !A \texttt{ScoreMatrix} stores the scores of residue pairs.
   To save
   space, scores are 32-bit floats.
@@ -543,7 +557,7 @@ st2 := a.start2
   }
 #+end_src
 #+begin_src latex
-  \section*{Structure \texttt{TransitionTab}}
+  \section{Structure \texttt{TransitionTab}}
   !A \texttt{transitionTab} indicates whether or not a pair of
   !nucleotides represents a transition. Nucleotides come in two types,
   !the purines, \texttt{A} and \texttt{G}, and the pyrimidines,
@@ -629,7 +643,159 @@ st2 := a.start2
   }
 #+end_src
 #+begin_src latex
-  \section*{Testing}
+  \section{Function \texttt{TTest}}
+  !\texttt{TTest} tests the equality of two sample means. It takes as
+  !input two samples and returns their means,  the value of $t$, and its
+  !significance, $p$. It runs with equal variance (original Student's
+  !t-test), or with unequal variances (Welch's test)
+
+  For Student's t-test, $t$ is defined as
+  \begin{equation}\label{eq:t1}
+    t = \frac{m_1-m_2}{s_p\sqrt{1/n_1 + 1/n_2}},
+  \end{equation}
+  where $m_1$ and $m_2$ are the sample means, $n_1$ and $n_2$ their
+  sizes, and $s_p$ the pooled standard deviation,
+  \[
+  s_p=\sqrt{\frac{(n_1-1)v_1+(n_2-1)v_2}{n_1+n_2-2}},
+  \]
+  where $v_1$ and $v_2$ are the sample variances. The degrees of freedom
+  for significance testing are 
+  \begin{equation}\label{eq:d1}
+    d=n_1+n_2-2.
+  \end{equation}
+
+  For Welch's t-test, we have
+  \begin{equation}\label{eq:t2}
+  t=\frac{m_1-m_2}{\sqrt{v_1/n_1+v_2/n_2}}.
+  \end{equation}
+  In this case the degrees of freedom are
+  \begin{equation}\label{eq:d2}
+  d = \frac{\left(v_1/n_1+v_2/n_2\right)^2}{
+    v_1^2/n_1^2/(n_1-1) + v_2^2/n_2^2/(n_2-1)
+  }.
+  \end{equation}
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func TTest(d1, d2 []float64, equalVar bool) (m1, m2, t, p float64) {
+	  //<<Compute means and variances, Ch.~\ref{ch:uti}>>
+	  //<<Compute $t$ and degrees of freedom, Ch.~\ref{ch:uti}>>
+	  //<<Compute $P$-value, Ch.~\ref{ch:uti}>>
+	  return m1, m2, t, p
+  }
+#+end_src
+#+begin_src latex
+  Means and variances are calculated in a single function.
+#+end_src
+#+begin_src go <<Compute means and variances, Ch.~\ref{ch:uti}>>=
+  m1, v1 := MeanVar(d1)
+  m2, v2 := MeanVar(d2)
+#+end_src
+#+begin_src latex
+  !\texttt{MeanVar} takes as input a data set and returns its mean and
+  !sample variance.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func MeanVar(data []float64) (float64, float64) {
+	  var m, v float64
+	  //<<Calculate mean, Ch.~\ref{ch:uti}>>
+	  //<<Calculate variance, Ch.~\ref{ch:uti}>>
+	  return m, v
+  }
+#+end_src
+#+end_src
+#+begin_src latex
+  We calculate the mean,
+#+end_src
+#+begin_src go <<Calculate mean, Ch.~\ref{ch:uti}>>=
+  n := len(data)
+  for i := 0; i < n; i++ {
+	  m += data[i]
+  }
+  m /= float64(n)
+#+end_src
+#+begin_src latex
+  and the variance.
+#+end_src
+#+begin_src go <<Calculate variance, Ch.~\ref{ch:uti}>>=
+  for i := 0; i < n; i++ {
+	  s := m - data[i]
+	  v += s * s
+  }
+  v /= float64(n - 1)
+#+end_src
+#+begin_src latex
+  The value of the test statistic, $t$, depends on whether or not we are
+  dealing with equal variances.
+#+end_src
+#+begin_src go <<Compute $t$ and degrees of freedom, Ch.~\ref{ch:uti}>>=
+  var d float64
+  n1 := float64(len(d1))
+  n2 := float64(len(d2))
+  if equalVar {
+	  //<<Equal variances, Ch.~\ref{ch:uti}>>
+  } else {
+	  //<<Unequal variances, Ch.~\ref{ch:uti}>>
+  }
+#+end_src
+#+begin_src latex
+  For the equal-variance case we transcribe equations~(\ref{eq:t1}) and
+  (\ref{eq:d1}).
+#+end_src
+#+begin_src go <<Equal variances, Ch.~\ref{ch:uti}>>=
+  x := (n1 - 1.0) * v1 + (n2 - 1.0) * v2
+  if x == 0 {
+	  log.Fatal("util.TTest: Error, data constant.\n")
+  }
+  d  = n1 + n2 - 2.0
+  if d == 0 {
+	  log.Fatal("util.TTest: Error, samples too small.\n")
+  }
+  sp := math.Sqrt(x/d)
+  x = sp * math.Sqrt(1.0/n1 + 1.0/n2)
+  t = (m1 - m2) / x
+#+end_src
+#+begin_src latex
+  For the unequal-variance case we transcribe equations~(\ref{eq:t2})
+  and (\ref{eq:d2}).
+#+end_src
+#+begin_src go <<Unequal variances, Ch.~\ref{ch:uti}>>=
+  t = (m1 - m2) / math.Sqrt(v1/n1 + v2/n2)
+  x := (v1/n1 + v2/n2) * (v1/n1 + v2/n2)
+  y := v1*v1/n1/n1/(n1-1.0) + v2*v2/n2/n2/(n2-1.0)
+  if y == 0 {
+	  log.Fatal("util.TTest: Error, data constant.\n")
+  }
+  d = x / y
+#+end_src
+#+begin_src latex
+  For the significance computation we call the cumulative density
+  function of the $t$-distribution provided by the Gnu Scientific
+  Library. This is written in C and we use cgo to communicate between C
+  and Go.
+#+end_src
+#+begin_src go <<Compute $P$-value, Ch.~\ref{ch:uti}>>=
+  ct := C.double(t)
+  cd := C.double(d)
+  if t > 0 {
+	  p = float64(C.gsl_cdf_tdist_Q(ct, cd)) * 2.0
+  } else {
+	  p = float64(C.gsl_cdf_tdist_P(ct, cd)) * 2.0
+  }
+#+end_src
+#+begin_src latex
+  We add the GSL to cgo,
+#+end_src
+#+begin_src go <<Cgo, Ch.~\ref{ch:uti}>>=
+  #cgo LDFLAGS: -lgsl
+#+end_src
+#+begin_src latex
+  and include the header for the cumulative density functions.
+#+end_src
+#+begin_src go <<Includes, Ch.~\ref{ch:uti}>>=
+  #include <gsl/gsl_cdf.h>
+#+end_src
+#+begin_src latex
+  \section{Testing}
   The testing outline contains hooks for imports, types, and the testing
   logic.
 #+end_src
@@ -729,6 +895,7 @@ st2 := a.start2
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:uti}>>=
   al.scoreMatrix.setScore('Y', 'F', 0)
+  al.scoreMatrix.setScore('F', 'Y', 0)
   get = []byte(al.String())
   get = append(get, '\n')
   want, err = ioutil.ReadFile("res3.txt")
@@ -736,7 +903,7 @@ st2 := a.start2
 	  t.Error("couldn't open res3.txt")
   }
   if !bytes.Equal(get, want) {
-	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+	  t.Errorf("3 want:\n%s\nget:\n%s\n", want, get)
   }
 #+end_src
 #+begin_src latex
@@ -781,5 +948,69 @@ st2 := a.start2
 	  if g != test.w {
 		  t.Errorf("misclassified (%c, %c)\n", test.a, test.b)
 	  }
+  }
+#+end_src
+#+begin_src latex
+  \subsection*{\texttt{TTest}}
+  We create a file for storing the results of our t-test. Once carried
+  out, we compare the results of our test with the results we want,
+  before deleting the file again.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:uti}>>=
+  //<<Create file for t-test, Ch.~\ref{ch:uti}>>
+  //<<Carry out t-test and save results, Ch.~\ref{ch:uti}>>
+  //<<Compare t-test results, Ch.~\ref{ch:uti}>>
+  //<<Remove file for t-test, Ch.~\ref{ch:uti}>>
+#+end_src
+#+begin_src latex
+  We open a file to store our results in and throw an error if we can't.
+#+end_src
+#+begin_src go <<Create file for t-test, Ch.~\ref{ch:uti}>>=
+fn := "tmp.txt"
+outf, err := os.Create(fn)
+if err != nil {
+	t.Errorf("couldn't open %q\n", fn)
+}
+#+end_src
+#+begin_src latex
+  We construct two data sets and carry out the test with equal variances
+  and without.
+#+end_src
+#+begin_src go <<Carry out t-test and save results, Ch.~\ref{ch:uti}>>=
+  d1 := []float64{11.961,12.401,11.661,11.96,10.454,11.584,11.175}
+  d2 := []float64{8.479,8.523,8.793,8.726,9.677,8.728,8.383,11.086}
+  m1, m2, st, p := TTest(d1, d2, true)
+  fmt.Fprintln(outf, m1, m2, st, p)
+  m1, m2, st, p = TTest(d1, d2, false)
+  fmt.Fprintln(outf, m1, m2, st, p)
+  outf.Close()
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:uti}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  The file \texttt{res4.txt} contains the results we want, which we
+  compare to what we get.
+#+end_src
+#+begin_src go <<Compare t-test results, Ch.~\ref{ch:uti}>>=
+  want, err = ioutil.ReadFile("res4.txt")
+  if err != nil {
+	  t.Errorf("couldn't open res4.txt\n")
+  }
+  get, err  = ioutil.ReadFile(fn)
+  if err != nil {
+	  t.Errorf("couldn't open %q\n", fn)
+  }
+  if !bytes.Equal(want, get) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src go <<Remove file for t-test, Ch.~\ref{ch:uti}>>=
+  err = os.Remove(fn)
+  if err != nil {
+	  t.Errorf("couldn't remove %q\n", fn)
   }
 #+end_src
