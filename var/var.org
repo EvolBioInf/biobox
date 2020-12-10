@@ -1,9 +1,8 @@
 #+begin_src latex
   \section*{Introduction}
   Given a set of numbers, \texttt{var} computes their mean, variance,
-  and standard deviation. The variance is calculated using the
-  numerically stable two-pass method. Input is read from a single
-  column, one number per line.
+  and standard deviation. Input is read from a single column, one number
+  per line.
   \section*{Implementation}
   The outline contains hooks for imports, variables, functions, and the
   logic of the main function.
@@ -120,33 +119,10 @@
   "log"
 #+end_src
 #+begin_src latex
-  The data is analyzed in two passes.
+  The data is analyzed using the utility function \texttt{MeanVar}.
 #+end_src
 #+begin_src go <<Analyze data, Ch.~\ref{ch:var}>>=
-  //<<First pass, Ch.~\ref{ch:var}>>
-  //<<Second pass, Ch.~\ref{ch:var}>>
-#+end_src
-#+begin_src latex
-  The average is computed in the first pass.
-#+end_src
-#+begin_src go <<First pass, Ch.~\ref{ch:var}>>=
-  var ave float64
-  for _, v := range data {
-	  ave += v
-  }
-  n := len(data)
-  ave /= float64(n)
-#+end_src
-#+begin_src latex
-  The variance and standard deviation are computed in the second pass.
-#+end_src
-#+begin_src go <<Second pass, Ch.~\ref{ch:var}>>=
-  var variance float64
-  for _, v := range data {
-	  d := ave - v
-	  variance += d * d
-  }
-  variance /= float64(n - 1)
+  ave, variance := util.MeanVar(data)
   sdev := math.Sqrt(variance)
 #+end_src
 #+begin_src latex
@@ -167,7 +143,7 @@
   w.Init(os.Stdout, 4, 0, 1, ' ', 0)
   fmt.Fprintf(w, "# File\tAvg\tVar\tSD\tn\n")
   fmt.Fprintf(w, "%s\t%.6g\t%.6g\t%.6g\t%d\n",
-	  fn[0], ave, variance, sdev, n)
+	  fn[0], ave, variance, sdev, len(data))
   w.Flush()
 #+end_src
 #+begin_src latex
