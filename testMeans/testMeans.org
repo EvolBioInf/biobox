@@ -1,0 +1,503 @@
+#+begin_src latex
+  \section*{Introduction}
+  Given two samples with means $\mu_1$ and $\mu_2$, \texttt{testMeans}
+  tests the null hypothesis that $\mu_1\approx\mu_2$. Three tests are
+  available, Student's t-test with equal variances, Student's t-test
+  with unequal variances, also known as Welch's test, and a Monte-Carlo
+  test. The Monte-Carlo test establishes the frequency with which a
+  difference in means at least as large as the one observed between
+  $\mu_1$ and $\mu_2$ is found by chance alone.
+
+  The input consists of two files of matched samples. These might
+  correspond to expression values for genes under treatment and control
+  conditions. For example,
+  \begin{center}
+    \begin{tabular}{ccc}
+      Samples 1 & & Samples 2\\
+      \begin{minipage}{5cm}
+	  \begin{tabular}{ccccccc}
+	    $\mbox{id}_1$ & $x_{1,1}$ & $x_{1,2}$ & $x_{1,3}$ & $x_{1,4}$\\
+	    $\mbox{id}_2$ & $x_{2,1}$ & $x_{2,2}$ & $x_{2,3}$ & $x_{2,4}$ & $x_{2,5}$\\
+	    $\mbox{id}_3$ & $x_{3,1}$ & $x_{3,2}$ & $x_{3,3}$ & $x_{3,4}$ & $x_{3,5}$\\
+	    \textcolor{white}{$g_4$}
+	  \end{tabular}
+      \end{minipage}
+      & \textcolor{white}{aa} &
+      \begin{minipage}{5cm}
+	  \begin{tabular}{ccccccc}
+	    $\mbox{id}_1$ & $y_{1,1}$ & $y_{1,2}$ & $y_{1,3}$ & $y_{1,4}$\\
+	    $\mbox{id}_2$ & $y_{2,1}$ & $y_{2,2}$ & $y_{2,3}$ & $y_{2,4}$ & $y_{2,5}$\\
+	    $\mbox{id}_3$ & $y_{3,1}$ & $y_{3,2}$ & $y_{3,3}$ & $y_{3,4}$\\
+	    $\mbox{id}_4$ & $y_{4,1}$ & $y_{4,2}$ & $y_{4,3}$ & $y_{4,4}$\\
+	  \end{tabular}
+      \end{minipage}
+    \end{tabular}
+  \end{center}
+  So an individual sample occupies one row and consists of an identifier
+  followed by numerical values separated by blanks. Samples are matched
+  by identifiers, which means they don't need to be in the same order in
+  the two files. The program only considers those samples that have
+  entries in both files. So for our example the output would be
+  \begin{center}
+    \begin{tabular}{cccc}
+      \hline
+      ID & Mean 1 & Mean 2 & $P$\\\hline
+      $\mbox{id}_1$ & $\mu^{1}_1$ & $\mu^{2}_1$ & $P_1$\\
+      $\mbox{id}_2$ & $\mu^{1}_2$ & $\mu^{2}_2$ & $P_2$\\
+      $\mbox{id}_3$ & $\mu^{1}_3$ & $\mu^{2}_3$ & $P_3$\\\hline
+    \end{tabular}
+  \end{center}
+  \section*{Implementation}
+  The outline of \texttt{testMeans} provides hooks for imports,
+  types, functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<testMeans.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:tm}>>
+  )
+  //<<Types, Ch.~\ref{ch:tm}>>
+  //<<Functions, Ch.~\ref{ch:tm}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:tm}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare and parse the options, read the
+  two input files, carry out the tests, and print the results.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:tm}>>=
+  //<<Set usage, Ch.~\ref{ch:tm}>>
+  //<<Declare options, Ch.~\ref{ch:tm}>>
+  //<<Parse options, Ch.~\ref{ch:tm}>>
+  //<<Read input files, Ch.~\ref{ch:tm}>>
+  //<<Carry out tests, Ch.~\ref{ch:tm}>>
+  //<<Print results, Ch.~\ref{ch:tm}>>
+#+end_src
+#+begin_src latex
+  The usage message has three parts, the usage proper, an explanation of
+  the program's purpose, and an example command. We include a sketch of
+  the input data with the program's purpose.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:tm}>>=
+  u := "testMeans [-h] [options] samples1.txt samples2.txt"
+  p := "Student's t-test for multiple experiments.\n" +
+	  "Data: name_1 x_1,1 x_1,2 ...\n" +
+	  "      name_2 x_2,1 x_2,2 ...\n" +
+	  "      ..."
+  e := "testMeans -m 10000 samples1.txt samples2.txt"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare four options,
+  \begin{enumerate}
+  \item \texttt{-u}: unequal variance
+  \item \texttt{-m}: number of iterations for Monte-Carlo test
+  \item \texttt{-s}: seed for random number generator
+  \item \texttt{-v}: version
+  \end{enumerate}
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:tm}>>=
+  var optU = flag.Bool("u", false, "unequal variance")
+  var optM = flag.Int("m", 0, "Monte-Carlo iterations")
+  var optS = flag.Int("s", 0, "seed for random number generator")
+  var optV = flag.Bool("v", false, "print version & " +
+	  "program information")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \texttt{-v} by printing the
+  program version, and to \texttt{-m} by initializing the random number
+  generator. We also determine the names of the two input files.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:tm}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("testMeans")
+  }
+  if *optM > 0 {
+	  //<<Initialize random number generator, Ch.~\ref{ch:tm}>>
+  }
+  //<<Get names of input files, Ch.~\ref{ch:tm}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{rand} and \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "math/rand"
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  If the user supplied a seed for the random number generator, we use
+  that, otherwise the current time.
+#+end_src
+#+begin_src go <<Initialize random number generator, Ch.~\ref{ch:tm}>>=
+  seed := int64(*optS)
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  rand.NewSource(seed)
+#+end_src
+#+begin_src latex
+  We import \texttt{time}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "time"
+#+end_src
+#+begin_src latex
+  If the user hasn't supplied two input files, we kindly ask for them
+  and abort.
+#+end_src
+#+begin_src go <<Get names of input files, Ch.~\ref{ch:tm}>>=
+  if len(flag.Args()) != 2 {
+	  fmt.Fprintf(os.Stderr,
+		  "Please supply two input files.\n")
+	  os.Exit(0)
+  }
+  dataFile1 := flag.Args()[0]
+  dataFile2 := flag.Args()[1]
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt} and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "fmt"
+  "os"
+#+end_src
+#+begin_src latex
+  The data files are read by calling a dedicated function.
+#+end_src
+#+begin_src go <<Read input files, Ch.~\ref{ch:tm}>>=
+  samples1, ids := readData(dataFile1)
+  samples2, _   := readData(dataFile2)
+#+end_src
+#+begin_src latex
+  The data file is opened and scanned. Each sample in it is loaded into
+  a map of identifiers and measurements. The identifiers listed in the
+  first data file are also returned separately. We use them later to
+  order the output, as the keys of a map have no stable order.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:tm}>>=
+  func readData(file string) (map[string][]float64, []string) {
+	  r, err := os.Open(file)
+	  if err != nil {
+		  log.Fatalf("couldn't open %q\n", file)
+	  }
+	  samples := make(map[string][]float64)
+	  sc := bufio.NewScanner(r)
+	  ids := make([]string, 0)
+	  //<<Read samples, Ch.~\ref{ch:tm}>>
+	  return samples, ids
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{log} and \texttt{bufio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "log"
+  "bufio"
+#+end_src
+#+begin_src latex
+  For each sample, the key is the identifier in the first column, and
+  the value the numbers in the subsequent columns, which are stored in a
+  slice.
+#+end_src
+#+begin_src go <<Read samples, Ch.~\ref{ch:tm}>>=
+  for sc.Scan() {
+	  fields := strings.Fields(sc.Text())
+	  ids = append(ids, fields[0])
+	  n := len(fields)
+	  numbers := make([]float64, 0)
+	  //<<Store numbers, Ch.~\ref{ch:tm}>>
+	  samples[fields[0]] = numbers
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strings}.
+#+end_src
+#+begin_src latex
+  Before storing a number, it is converted from string.
+#+end_src
+#+begin_src go <<Store numbers, Ch.~\ref{ch:tm}>>=
+  for i := 1; i < n; i++ {
+	  x, err := strconv.ParseFloat(fields[i], 64)
+	  if err != nil {
+		  log.Fatalf("couldn't convert %q\n", fields[i])
+	  }
+	  numbers = append(numbers, x)
+  }
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "strings"
+  "strconv"
+#+end_src
+#+begin_src latex
+  Test results are stored in a map pairing the identifier with a
+  result. We iterate over the identifiers and for each one choose the
+  test requested.
+#+end_src
+#+begin_src go <<Carry out tests, Ch.~\ref{ch:tm}>>=
+  results := make(map[string]result)
+  for _, id := range ids {
+	  result := new(result)
+	  sample1 := samples1[id]
+	  sample2 := samples2[id]
+	  //<<Choose test, Ch.~\ref{ch:tm}>>
+	  results[id] = *result
+  }
+#+end_src
+#+begin_src latex
+  A result consists of the two means, the test statistic, and its
+  significance.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:tm}>>=
+  type result struct {
+	  m1, m2, t, p float64
+  }
+#+end_src
+#+begin_src latex
+  We always carry out the parametric test, the Monte-Carlo test only if
+  desired.
+#+end_src
+#+begin_src go <<Choose test, Ch.~\ref{ch:tm}>>=
+  //<<Parametric test, Ch.~\ref{ch:tm}>>
+  if *optM > 0 {
+	  //<<Monte-Carlo test, Ch.~\ref{ch:tm}>>
+  }
+#+end_src
+#+begin_src latex
+  The parametric test is delegated to a function.
+#+end_src
+#+begin_src go <<Parametric test, Ch.~\ref{ch:tm}>>=
+  m1, m2, t, p := util.TTest(sample1, sample2, !*optU)
+  result.m1 = m1
+  result.m2 = m2
+  result.t = t
+  result.p = p
+#+end_src
+#+begin_src latex
+  The Monte-Carlo test starts from the observed difference between the
+  two sample means. The measurements are then shuffled between the
+  samples, and the means are recomputed and compared.
+#+end_src
+#+begin_src go <<Monte-Carlo test, Ch.~\ref{ch:tm}>>=
+  result.p = 0
+  do := math.Abs(result.m1 - result.m2)
+  merged := sample1
+  merged = append(merged, sample2...)
+  l := len(sample1)
+  for i := 0; i < *optM; i++ {
+	  //<<Shuffle values, Ch.~\ref{ch:tm}>>
+	  //<<Get shuffled means, Ch.~\ref{ch:tm}>>
+	  //<<Compare differences between means, Ch.~\ref{ch:tm}>>
+  }
+  result.p /= float64(*optM)
+#+end_src
+#+begin_src latex
+  Both samples are written into a single slice and shuffled.
+#+end_src
+#+begin_src go <<Shuffle values, Ch.~\ref{ch:tm}>>=
+  rand.Shuffle(len(merged), func(i, j int) {
+	  merged[i], merged[j] = merged[j], merged[i]
+  })
+#+end_src
+#+begin_src latex
+  The slice just shuffled is divided into two portions the size of the
+  original samples, and the mean of each portion is computed.
+#+end_src
+#+begin_src go <<Get shuffled means, Ch.~\ref{ch:tm}>>=
+  m1 := mean(merged[0:l])
+  m2 := mean(merged[l:])
+#+end_src
+#+begin_src latex
+  We calculate the mean.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:tm}>>=
+  func mean(data []float64) float64 {
+	  var avg float64
+	  for _, d := range data {
+		  avg += d
+	  }
+	  avg /= float64(len(data))
+	  return avg
+  }
+#+end_src
+#+begin_src latex
+  If the difference between the shuffled means is greater or equal to
+  the difference between the original means, we count.
+#+end_src
+#+begin_src go <<Compare differences between means, Ch.~\ref{ch:tm}>>=
+  d := math.Abs(m1 - m2)
+  if d >= do {
+	  result.p++
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "math"
+#+end_src
+#+begin_src latex
+  Having performed the tests, we print the results. To line them up in
+  neat columns, we use a \texttt{tabwriter}.
+#+end_src
+#+begin_src go <<Print results, Ch.~\ref{ch:tm}>>=
+  //<<Construct \texttt{tabwriter}, Ch.~\ref{ch:tm}>>
+  //<<Write results, Ch.~\ref{ch:tm}>>
+  //<<Output, Ch.~\ref{ch:tm}>>
+#+end_src
+#+begin_src latex
+  The \texttt{tabwriter} writes to a byte buffer. The writer is
+  initialized to a minimal cell width of 1, tabs of width zero, and
+  padding with two blanks.
+#+end_src
+#+begin_src go <<Construct \texttt{tabwriter}, Ch.~\ref{ch:tm}>>=
+  var buf []byte
+  buffer := bytes.NewBuffer(buf)
+  w := new(tabwriter.Writer)
+  w.Init(buffer, 1, 0, 2, ' ', 0)
+#+end_src
+#+begin_src latex
+  We import \texttt{bytes} and \texttt{tabwriter}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "bytes"
+  "text/tabwriter"
+#+end_src
+#+begin_src latex
+  The results table has a header line followed by rows of data. However,
+  if $P=0$ was returned by the Monte-Carlo test, we need to think again.
+#+end_src
+#+begin_src go <<Write results, Ch.~\ref{ch:tm}>>=
+  fmt.Fprintf(w, "# ID\tm1\tm2\tt\tP\t\n")
+  for _, id := range ids {
+	  r := results[id]
+	  //<<Check for zero $P$-value, Ch.~\ref{ch:tm}>>
+  }
+  w.Flush()
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  $P=0$ obtained by Monte-Carlo with $n$ iterations, in fact signifies
+  $P<1/n$.
+#+end_src
+#+begin_src go <<Check for zero $P$-value, Ch.~\ref{ch:tm}>>=
+  if r.p == 0 && *optM > 0 {
+	  x := 1.0 / float64(*optM)
+	  fmt.Fprintf(w, "%s\t%.3g\t%.3g\t%.3g\t<%.3g\t\n",
+		  id, r.m1, r.m2, r.t, x)
+  } else {
+	  fmt.Fprintf(w, "%s\t%.3g\t%.3g\t%.3g\t%.3g\t\n",
+		  id, r.m1, r.m2, r.t, r.p)
+  }
+#+end_src
+#+begin_src latex
+  The buffer contains the output.
+#+end_src
+#+begin_src go <<Output, Ch.~\ref{ch:tm}>>=
+  fmt.Printf("%s", buffer)
+#+end_src
+#+begin_src latex
+  This completes \texttt{testMeans}, time to test the test.
+  \section*{Testing}
+  The testing outline provides hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<testMeans_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:tm}>>
+  )
+  func TestTestMeans(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:tm}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a list of tests and a list of files that contain the
+  output we want. Then we run the tests.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:tm}>>=
+  tests := make([]*exec.Cmd, 0)
+  //<<Construct tests, Ch.~\ref{ch:tm}>>
+  //<<Construct list of result files, Ch.~\ref{ch:tm}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:tm}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:tm}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We analyze two small data files three times in the three modes of
+  \texttt{testMeans}, Student's, Welch's, and Monte-Carlo.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:tm}>>=
+  test := exec.Command("testMeans", "d1.txt", "d2.txt")
+  tests = append(tests, test)
+  test = exec.Command("testMeans", "-u", "d1.txt", "d2.txt")
+  tests = append(tests, test)
+  test = exec.Command("testMeans", "-s", "3", "-m", "1000",
+	  "d1.txt", "d2.txt")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We construct as many results files as tests.
+#+end_src
+#+begin_src go <<Construct list of result files, Ch.~\ref{ch:tm}>>=
+  results := make([]string, 0)
+  for i, _ := range tests {
+	  r := "r" + strconv.Itoa(i+1) + ".txt"
+	  results = append(results, r)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:tm}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  In a given test, we compare the result we want with the result we get.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:tm}>>=
+  want, err := ioutil.ReadFile(results[i])
+  if err != nil {
+	  t.Errorf("couldn't open %q\n", results[i])
+  }
+  get, err := test.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", test)
+  }
+  if !bytes.Equal(want, get) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{ioutil} and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:tm}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src

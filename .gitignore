@@ -7,6 +7,7 @@ doc/bioboxDoc.dvi
 doc/*.log
 doc/bioboxDoc.pdf
 doc/bioboxDoc.toc
+doc/bioboxDoc.ps
 doc/al.tex
 doc/cchar.tex
 doc/cutSeq.tex
@@ -19,6 +20,7 @@ doc/pam.tex
 doc/randomizeSeq.tex
 doc/ranseq.tex
 doc/revComp.tex
+doc/testMeans.tex
 doc/util.tex
 doc/var.tex
 doc/watterson.tex
@@ -37,6 +39,7 @@ pam/pam
 randomizeSeq/randomizeSeq
 ranseq/ranseq
 revComp/revComp
+testMeans/testMeans
 var/var
 watterson/watterson
 wrapSeq/wrapSeq

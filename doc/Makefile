@@ -1,10 +1,11 @@
-all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
+all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex testMeans.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
 	latex bioboxDoc
 	latex bioboxDoc
-	dvipdf bioboxDoc
+	dvips bioboxDoc -o -q
+	ps2pdf bioboxDoc.ps
 al.tex: ../al/al.org
 	bash ../scripts/org2nw ../al/al.org   | noweave -n -x | sed 's/_test/\\_test/g' > al.tex
 cchar.tex: ../cchar/cchar.org
@@ -28,7 +29,9 @@ randomizeSeq.tex: ../randomizeSeq/randomizeSeq.org
 ranseq.tex: ../ranseq/ranseq.org
 	bash ../scripts/org2nw ../ranseq/ranseq.org | noweave -n -x | sed 's/_test/\\_test/g' > ranseq.tex	
 revComp.tex: ../revComp/revComp.org
-	bash ../scripts/org2nw ../revComp/revComp.org | noweave -n -x | sed 's/_test/\\_test/g' > revComp.tex	
+	bash ../scripts/org2nw ../revComp/revComp.org | noweave -n -x | sed 's/_test/\\_test/g' > revComp.tex
+testMeans.tex: ../testMeans/testMeans.org
+	bash ../scripts/org2nw ../testMeans/testMeans.org | noweave -n -x | sed 's/_test/\\_test/g' > testMeans.tex	
 util.tex: ../util/util.org
 	bash ../scripts/org2nw ../util/util.org | awk -f ../scripts/preWeave.awk | noweave -n -x | sed 's/_test/\\_test/g' > util.tex
 var.tex: ../var/var.org
@@ -38,4 +41,4 @@ watterson.tex: ../watterson/watterson.org
 wrapSeq.tex: ../wrapSeq/wrapSeq.org
 	bash ../scripts/org2nw ../wrapSeq/wrapSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > wrapSeq.tex
 clean:
-	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex util.tex var.tex watterson.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 
+	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex testMeans.tex util.tex var.tex watterson.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 
