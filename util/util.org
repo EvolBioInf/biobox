@@ -293,6 +293,40 @@
 st2 := a.start2
 #+end_src
 #+begin_src latex
+  \section{Function \texttt{MeanVar}}
+  !\texttt{MeanVar} takes as input a data set and returns its mean and
+  !sample variance.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func MeanVar(data []float64) (float64, float64) {
+	  var m, v float64
+	  //<<Calculate mean, Ch.~\ref{ch:uti}>>
+	  //<<Calculate variance, Ch.~\ref{ch:uti}>>
+	  return m, v
+  }
+#+end_src
+#+end_src
+#+begin_src latex
+  We calculate the mean,
+#+end_src
+#+begin_src go <<Calculate mean, Ch.~\ref{ch:uti}>>=
+  n := len(data)
+  for i := 0; i < n; i++ {
+	  m += data[i]
+  }
+  m /= float64(n)
+#+end_src
+#+begin_src latex
+  and the variance.
+#+end_src
+#+begin_src go <<Calculate variance, Ch.~\ref{ch:uti}>>=
+  for i := 0; i < n; i++ {
+	  s := m - data[i]
+	  v += s * s
+  }
+  v /= float64(n - 1)
+#+end_src
+#+begin_src latex
   \section{Function \texttt{PrintInfo}}
   Each program in the biobox provides the same information on author,
   email, and license. These are stored as constants.
@@ -689,39 +723,6 @@ st2 := a.start2
 #+begin_src go <<Compute means and variances, Ch.~\ref{ch:uti}>>=
   m1, v1 := MeanVar(d1)
   m2, v2 := MeanVar(d2)
-#+end_src
-#+begin_src latex
-  !\texttt{MeanVar} takes as input a data set and returns its mean and
-  !sample variance.
-#+end_src
-#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
-  func MeanVar(data []float64) (float64, float64) {
-	  var m, v float64
-	  //<<Calculate mean, Ch.~\ref{ch:uti}>>
-	  //<<Calculate variance, Ch.~\ref{ch:uti}>>
-	  return m, v
-  }
-#+end_src
-#+end_src
-#+begin_src latex
-  We calculate the mean,
-#+end_src
-#+begin_src go <<Calculate mean, Ch.~\ref{ch:uti}>>=
-  n := len(data)
-  for i := 0; i < n; i++ {
-	  m += data[i]
-  }
-  m /= float64(n)
-#+end_src
-#+begin_src latex
-  and the variance.
-#+end_src
-#+begin_src go <<Calculate variance, Ch.~\ref{ch:uti}>>=
-  for i := 0; i < n; i++ {
-	  s := m - data[i]
-	  v += s * s
-  }
-  v /= float64(n - 1)
 #+end_src
 #+begin_src latex
   The value of the test statistic, $t$, depends on whether or not we are

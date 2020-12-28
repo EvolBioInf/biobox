@@ -27,6 +27,8 @@ all:
 	cp ranseq/ranseq bin
 	make -C revComp
 	cp revComp/revComp bin
+	make -C simNorm
+	cp simNorm/simNorm bin
 	make -C testMeans
 	cp testMeans/testMeans bin
 	make -C watterson
@@ -70,6 +72,7 @@ test:
 	make test -C randomizeSeq
 	make test -C ranseq
 	make test -C revComp
+	make test -C simNorm
 	make test -C testMeans
 	make test -C util
 	make test -C var

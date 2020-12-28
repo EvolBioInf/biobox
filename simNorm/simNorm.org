@@ -1,0 +1,274 @@
+#+begin_src latex
+  \section*{Introduction}
+  Many random variables we observe in nature are normally
+  distributed. As a result, many statistical tests are based on the
+  assumption of a normal null distribution. It is thus useful to be able
+  to generate samples under this distribution, for example to explore
+  statistical tests. The program \texttt{simNorm} simulates samples
+  drawn from the normal distribution and produces output that can be
+  read by \texttt{testMeans}.
+  \section*{Implementation}
+  The program outline has hooks for imports, and the logic of the main
+  function.
+#+end_src
+#+begin_src go <<simNorm.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:sn}>>
+  )
+
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:sn}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare and parse the options,
+  and carry out the simulation.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:sn}>>=
+  //<<Set usage, Ch.~\ref{ch:sn}>>
+  //<<Declare options, Ch.~\ref{ch:sn}>>
+  //<<Parse options, Ch.~\ref{ch:sn}>>
+  //<<Carry out simulation, Ch.~\ref{ch:sn}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts, the usage message itself, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:sn}>>=
+  u := "simNorm [-h] [options]"
+  p := "Simulate samples drawn from the normal distribution."
+  e := "simNorm -i 3"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sn}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare six options:
+  \begin{enumerate}
+  \item \texttt{-i}: number of iterations
+  \item \texttt{-n}: sample size
+  \item \texttt{-m}: mean
+  \item \texttt{-d}: standard deviation
+  \item \texttt{-s}: seed for random number generator
+  \item \texttt{-v}: version
+  \end{enumerate}
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:sn}>>=
+  var optI = flag.Int("i", 10, "number of iterations")
+  var optN = flag.Int("n", 8, "sample size")
+  var optM = flag.Float64("m", 0, "mean")
+  var optD = flag.Float64("d", 1, "standard deviation")
+  var optS = flag.Int("s", 0, "seed for random number " +
+	  "generator; default: internal")
+  var optV = flag.Bool("v", false, "print version & " +
+	  "other program information")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sn}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options, print the version if requested, and initialize
+  the random number generator.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:sn}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("simNorm")
+  }
+  seed := int64(*optS)
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  rand.NewSource(seed)
+#+end_src
+#+begin_src latex
+  We import \texttt{util}, \texttt{time}, and \texttt{rand}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sn}>>=
+  "github.com/evolbioinf/biobox/util"
+  "time"
+  "math/rand"
+#+end_src
+#+begin_src latex
+  We use a \texttt{tabwriter} to arrange the output into neat
+  columns. The \texttt{tabwriter} is first constructed, then the samples
+  are written, before the final result is printed.
+#+end_src
+#+begin_src go <<Carry out simulation, Ch.~\ref{ch:sn}>>=
+  //<<Create \texttt{tabwriter}, Ch.~\ref{ch:sn}>>
+  //<<Write samples, Ch.~\ref{ch:sn}>>
+  //<<Print result, Ch.~\ref{ch:sn}>>
+#+end_src
+#+begin_src latex
+  A \texttt{tabwriter} writes to a buffer. The writer is initialized to
+  a minimal cell width of 1, tabs of width zero, and padding with two
+  blanks.
+#+end_src
+#+begin_src go <<Create \texttt{tabwriter}, Ch.~\ref{ch:sn}>>=
+  var buf []byte
+  buffer := bytes.NewBuffer(buf)
+  w := new(tabwriter.Writer)
+  w.Init(buffer, 1, 0, 2, ' ', 0)
+#+end_src
+#+begin_src latex
+  We import \texttt{bytes} and \texttt{tabwriter}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sn}>>=
+  "bytes"
+  "text/tabwriter"
+#+end_src
+#+begin_src latex
+  The samples are effectively written as a table. We first write the
+  table header, then its body.
+#+end_src
+#+begin_src go <<Write samples, Ch.~\ref{ch:sn}>>=
+  //<<Print table header, Ch.~\ref{ch:sn}>>
+  //<<Print table body, Ch.~\ref{ch:sn}>>
+#+end_src
+#+begin_src latex
+  The table header has $n+1$ entries, where $n$ is the sample size.
+#+end_src
+#+begin_src go <<Print table header, Ch.~\ref{ch:sn}>>=
+  n := *optN
+  fmt.Fprintf(w, "# ID\t")
+  for i := 0; i < n; i++ {
+	  fmt.Fprintf(w, "x_%d\t", i + 1)
+  }
+  fmt.Fprintf(w, "\n")
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sn}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  The table body consists of random entries computed as
+  \[
+  r = \mbox{normRand}()\times s + m,
+  \]
+  where $s$ is the standard deviation set by the user and $m$ the mean.
+#+end_src
+#+begin_src go <<Print table body, Ch.~\ref{ch:sn}>>=
+  m := *optM
+  s := *optD
+  for i := 0; i < *optI; i++ {
+	  fmt.Fprintf(w, "s_%d\t", i + 1)
+	  for j := 0; j < n; j++ {
+		  r := rand.NormFloat64() * s + m
+		  fmt.Fprintf(w, "%.3g\t", r)
+	  }
+	  fmt.Fprintf(w, "\n")
+  }
+#+end_src
+#+begin_src latex
+  Before printing the buffer, the tabwriter is flushed.
+#+end_src
+#+begin_src go <<Print result, Ch.~\ref{ch:sn}>>=
+  w.Flush()
+  fmt.Printf("%s", buffer)
+#+end_src
+#+begin_src latex
+  We're done with \texttt{simNorm}, let's test it.
+  \section*{Testing}
+  There are three options, number of iterations, mean, and standard
+  deviation, so we run four tests, one with all defaults, and one for
+  each option.
+
+  The outline of the testing program has hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<simNorm_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:sn}>>
+  )
+
+  func TestSimNorm(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:sn}>>
+  }
+#+end_src
+#+begin_src latex
+  The test results are compared to output stored in a list of files,
+  \texttt{r1.txt}, \texttt{r2.txt},... So we construct the tests and the
+  list of output files, and run the tests.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:sn}>>=
+  tests := make([]*exec.Cmd, 0)
+  //<<Construct tests, Ch.~\ref{ch:sn}>>
+  //<<Construct file names, Ch.~\ref{ch:sn}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:sn}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:sn}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  Every test is run with a preset seed for the random number generator
+  to make it reproducible.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:sn}>>=
+  test := exec.Command("simNorm", "-s", "3")
+  tests = append(tests, test)
+  test = exec.Command("simNorm", "-s", "3", "-i", "3")
+  tests = append(tests, test)
+  test = exec.Command("simNorm", "-s", "3", "-m", "10.1")
+  tests = append(tests, test)
+  test = exec.Command("simNorm", "-s", "3", "-d", "2.5")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  For each test there is a results file.
+#+end_src
+#+begin_src go <<Construct file names, Ch.~\ref{ch:sn}>>=
+  results := make([]string, 0)
+  for i, _ := range tests {
+	  r := "r" + strconv.Itoa(i+1) + ".txt"
+	  results = append(results, r)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:sn}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  A given test is run, and the result we get compared to the result we
+  want.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:sn}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", test)
+  }
+  want, err := ioutil.ReadFile(results[i])
+  if err != nil {
+	  t.Errorf("couldn't open %q\n", results[i])
+  }
+  if !bytes.Equal(want, get) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{ioutil} and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:sn}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src

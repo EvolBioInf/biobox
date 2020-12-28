@@ -20,6 +20,7 @@ doc/pam.tex
 doc/randomizeSeq.tex
 doc/ranseq.tex
 doc/revComp.tex
+doc/simNorm.tex
 doc/testMeans.tex
 doc/util.tex
 doc/var.tex
@@ -39,6 +40,7 @@ pam/pam
 randomizeSeq/randomizeSeq
 ranseq/ranseq
 revComp/revComp
+simNorm/simNorm
 testMeans/testMeans
 var/var
 watterson/watterson
