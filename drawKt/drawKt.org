@@ -1,0 +1,293 @@
+#+begin_src latex
+    \section*{Introduction}
+    A keyword tree is a data structure for efficient set
+    matching~\cite{aho75:eff}, and the program \texttt{drawKt} draws
+    keyword trees as plain text or in in \LaTeX{}. Take, for example, the
+    five patterns
+    \begin{itemize}
+    \item $p_1=\texttt{ATTT}$
+    \item $p_2=\texttt{ATTG}$
+    \item $p_3=\texttt{AT}$
+    \item $p_4=\texttt{TG}$
+    \item $p_5=\texttt{TT}$
+    \end{itemize}
+    The \LaTeX{}-version of their keyword tree is shown in
+    Figure~\ref{fig:kt}A. Each character is drawn along a black match
+    link, the failure links are in light gray. In the text version
+    (Figure~\ref{fig:kt}B), the nodes are identified by numbers; a line
+    like the last one,
+    \begin{verbatim}
+    T->5^4->9{1,5}
+    \end{verbatim}
+    means \texttt{T} labels the incoming edge to node 5, whose parent is
+    node 4, its failure link 9, and whose output set contains $p_1$ and $p_5$.
+    \begin{figure}
+      \begin{center}
+      \begin{tabular}{cc}
+	\textbf{A} & \textbf{B}\\\\
+	\raisebox{-2.5cm}{\input{kt}} &
+	\begin{minipage}{3cm}
+    \begin{verbatim}
+    _->1^0->1
+    T->7^1->1
+    T->9^7->7{5}
+    G->8^7->1{4}
+    A->2^1->1
+    T->3^2->7{3}
+    T->4^3->9{5}
+    C->6^4->1{2}
+    T->5^4->9{1,5}
+  \end{verbatim}
+	\end{minipage}\\\\
+      \end{tabular}
+      \end{center}
+      \caption{Keyword tree of the fire patterns $p_1=\texttt{ATTT}$,
+	$p_2=\texttt{ATTC}$, $p_3=\texttt{AT}$, $p_4=\texttt{TG}$,
+	$p_5=\texttt{TT}$ in \LaTeX{} (\textbf{A}) and text format
+	(\textbf{B}).}\label{fig:kt}
+    \end{figure}
+    \section*{Implementation}
+    The program outline
+    contains hooks for imports, and the logic of the main function.
+#+end_src
+#+begin_src go <<drawKt.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:dkt}>>
+  )
+
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:dkt}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare and parse the options,
+  get the patterns, and draw their tree.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:dkt}>>=
+  //<<Set usage, Ch.~\ref{ch:dkt}>>
+  //<<Declare options, Ch.~\ref{ch:dkt}>>
+  //<<Parse options, Ch.~\ref{ch:dkt}>>
+  //<<Get patterns, Ch.~\ref{ch:dkt}>>
+  //<<Draw tree, Ch.~\ref{ch:dkt}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts, the actual usage message, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:dkt}>>=
+  u := "drawKt [-h] [options] [patterns]"
+  p := "Draw the keyword tree of a set of patterns"
+  e := "drawKt ATTT ATTG AT TG TT > kt.tex"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the default help, there are two options, the user can
+  request the program version, and plain text instead of \LaTeX{}.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:dkt}>>=
+  var optV = flag.Bool("v", false, "print program version & " +
+	  "other information")
+  var optT = flag.Bool("t", false, "plain text; default: LaTeX")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  When parsing the options, we respond to \texttt{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:dkt}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("drawKt")
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  Patterns are read either from the command line or from the standard
+  input stream.
+#+end_src
+#+begin_src go <<Get patterns, Ch.~\ref{ch:dkt}>>=
+  var patterns []string
+  if len(flag.Args()) > 0 {
+	  patterns = flag.Args()
+  } else {
+	  sc := bufio.NewScanner(os.Stdin)
+	  for sc.Scan() {
+		  patterns = append(patterns, sc.Text())
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{bufio} and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
+  "bufio"
+  "os"
+#+end_src
+#+begin_src latex
+  The tree is drawn either as plain text or in \LaTeX{}. If drawn in
+  \LaTeX{}, we also write a wrapper to make the output more useful.
+#+end_src
+#+begin_src go <<Draw tree, Ch.~\ref{ch:dkt}>>=
+  tree := kt.NewKeywordTree(patterns)
+  if *optT {
+	  fmt.Println(tree)
+  } else {
+	  fmt.Println(tree.WriteLatex())
+	  //<<Write wrapper, Ch.~\ref{ch:dkt}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{kt} and \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
+  "github.com/evolbioinf/kt"
+  "fmt"
+#+end_src
+#+begin_src latex
+  When writing the wrapper, we open a file, write to it, and tell the user.
+#+end_src
+#+begin_src go <<Write wrapper, Ch.~\ref{ch:dkt}>>=
+  //<<Open file, Ch.~\ref{ch:dkt}>>
+  //<<Write to file, Ch.~\ref{ch:dkt}>>
+  //<<Tell user, Ch.~\ref{ch:dkt}>>
+#+end_src
+#+begin_src latex
+  We open the file \texttt{ktWrapper.tex}.
+#+end_src
+#+begin_src go <<Open file, Ch.~\ref{ch:dkt}>>=
+  fn := "ktWrapper.tex"
+  f, err := os.Create(fn)
+  if err != nil {
+	  log.Fatalf("couldn't open %q\n", fn)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{os} and \texttt{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
+  "os"
+  "log"
+#+end_src
+#+begin_src latex
+  We write brief, but sufficient, \LaTeX{} code to
+  \texttt{ktWrapper.tex} and close it again.
+#+end_src
+#+begin_src go <<Write to file, Ch.~\ref{ch:dkt}>>=
+  fmt.Fprintf(f, "\\documentclass{article}\n")
+  fmt.Fprintf(f, "\\usepackage{pst-all}\n")
+  fmt.Fprintf(f, "\\begin{document}\n")
+  fmt.Fprintf(f, "\\begin{center}\n\\input{kt.tex}\n\\end{center}\n")
+  fmt.Fprintf(f, "\\end{document}\n")
+  f.Close()
+#+end_src
+#+begin_src latex
+  We tell the user how to use the wrapper.
+#+end_src
+#+begin_src go <<Tell user, Ch.~\ref{ch:dkt}>>=
+  fmt.Fprintf(os.Stderr, "# Wrote %s; if the keyword tree is in " +
+	  "kt.tex, run \n# latex ktWrapper\n# dvips ktWrapper -o -q\n# " +
+	  "ps2pdf ktWrapper.ps\n", fn)
+#+end_src
+#+begin_src latex
+  The drawing program is done, time for testing fun.
+  \section*{Testing}
+  The outline of the testing program contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<drawKt_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:dkt}>>
+  )
+
+  func TestDrawKt(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:dkt}>>
+  }
+#+end_src
+#+begin_src latex
+  We a few test cases and compare the output we get with the
+  pre-computed output we want. To avoid repeating ourselves, we first
+  construct the commands and the output files, and then run loop over
+  the commands.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:dkt}>>=
+  var commands []*exec.Cmd
+  //<<Declare commands, Ch.~\ref{ch:dkt}>>
+  //<<Construct list of output files, Ch.~\ref{ch:dkt}>>
+  for i, command := range commands {
+	  //<<Run command, Ch.~\ref{ch:dkt}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dkt}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We run the program twice, first in default, then in text mode.
+#+end_src
+#+begin_src go <<Declare commands, Ch.~\ref{ch:dkt}>>=
+  c := exec.Command("drawKt", "ATTT", "ATTC", "AT", "TG", "TT")
+  commands = append(commands, c)
+  c = exec.Command("drawKt", "-t", "ATTT", "ATTC", "AT", "TG", "TT")
+  commands = append(commands, c)
+#+end_src
+#+begin_src latex
+  For each command, there is an output file.
+#+end_src
+#+begin_src go <<Construct list of output files, Ch.~\ref{ch:dkt}>>=
+  var names []string
+  for i, _ := range commands {
+	  s := "r" + strconv.Itoa(i+1) + ".txt"
+	  names = append(names, s)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dkt}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  For each command, we compare the output we get with what we want.
+#+end_src
+#+begin_src go <<Run command, Ch.~\ref{ch:dkt}>>=
+  get, err := command.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", command)
+  }
+  want, err := ioutil.ReadFile(names[i])
+  if err != nil {
+	  t.Errorf("couldnt' open %q\n", names[i])
+  }
+  if !bytes.Equal(want, get) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{ioutil} and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dkt}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src

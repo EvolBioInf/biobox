@@ -12,6 +12,7 @@ doc/al.tex
 doc/cchar.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
+doc/drawKt.tex
 doc/getSeq.tex
 doc/mutator.tex
 doc/naiveMatcher.tex
@@ -32,6 +33,7 @@ al/al
 cchar/cchar
 cutSeq/cutSeq
 dnaDist/dnaDist
+drawKt/drawKt
 getSeq/getSeq
 mutator/mutator
 naiveMatcher/naiveMatcher
@@ -46,3 +48,6 @@ var/var
 watterson/watterson
 wrapSeq/wrapSeq
 
+# Miscellaneous
+drawKt/ktWrapper*
+drawKt/kt.tex

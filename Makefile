@@ -11,6 +11,8 @@ all:
 	cp cutSeq/cutSeq bin
 	make -C dnaDist
 	cp dnaDist/dnaDist bin
+	make -C drawKt
+	cp drawKt/drawKt bin
 	make -C getSeq
 	cp getSeq/getSeq bin
 	make -C mutator
@@ -46,6 +48,7 @@ clean:
 	make clean -C cutSeq
 	make clean -C dnaDist
 	make clean -C doc
+	make clean -C drawKt
 	make clean -C getSeq
 	make clean -C mutator
 	make clean -C naiveMatcher

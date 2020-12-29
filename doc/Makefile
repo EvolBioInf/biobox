@@ -1,4 +1,4 @@
-all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex simNorm.tex testMeans.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
+all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex getSeq.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex simNorm.tex testMeans.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
@@ -14,6 +14,8 @@ cutSeq.tex: ../cutSeq/cutSeq.org
 	bash ../scripts/org2nw ../cutSeq/cutSeq.org   | noweave -n -x | sed 's/_test/\\_test/g' > cutSeq.tex
 dnaDist.tex: ../dnaDist/dnaDist.org
 	bash ../scripts/org2nw ../dnaDist/dnaDist.org   | noweave -n -x | sed 's/_test/\\_test/g' > dnaDist.tex
+drawKt.tex: ../drawKt/drawKt.org
+	bash ../scripts/org2nw ../drawKt/drawKt.org   | noweave -n -x | sed 's/_test/\\_test/g' > drawKt.tex
 getSeq.tex: ../getSeq/getSeq.org
 	bash ../scripts/org2nw ../getSeq/getSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > getSeq.tex
 mutator.tex: ../mutator/mutator.org
