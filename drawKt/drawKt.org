@@ -89,13 +89,15 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  Apart from the default help, there are two options, the user can
-  request the program version, and plain text instead of \LaTeX{}.
+  Apart from the default help, there are three options, the user can
+  request a \LaTeX{} wrapper, plain text instead of \LaTeX{}, and the
+  program version.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:dkt}>>=
+  var optW = flag.String("w", "", "LaTeX wrapper file")
+  var optT = flag.Bool("t", false, "plain text; default: LaTeX")
   var optV = flag.Bool("v", false, "print program version & " +
 	  "other information")
-  var optT = flag.Bool("t", false, "plain text; default: LaTeX")
 #+end_src
 #+begin_src latex
   We import \texttt{flag}.
@@ -150,7 +152,9 @@
 	  fmt.Println(tree)
   } else {
 	  fmt.Println(tree.WriteLatex())
-	  //<<Write wrapper, Ch.~\ref{ch:dkt}>>
+	  if *optW != "" {
+		  //<<Write wrapper, Ch.~\ref{ch:dkt}>>
+	  }
   }
 #+end_src
 #+begin_src latex
@@ -169,13 +173,12 @@
   //<<Tell user, Ch.~\ref{ch:dkt}>>
 #+end_src
 #+begin_src latex
-  We open the file \texttt{ktWrapper.tex}.
+  We open the file passed with \texttt{-w}.
 #+end_src
 #+begin_src go <<Open file, Ch.~\ref{ch:dkt}>>=
-  fn := "ktWrapper.tex"
-  f, err := os.Create(fn)
+  f, err := os.Create(*optW)
   if err != nil {
-	  log.Fatalf("couldn't open %q\n", fn)
+	  log.Fatalf("couldn't open %q\n", *optW)
   }
 #+end_src
 #+begin_src latex
@@ -186,8 +189,7 @@
   "log"
 #+end_src
 #+begin_src latex
-  We write brief, but sufficient, \LaTeX{} code to
-  \texttt{ktWrapper.tex} and close it again.
+  We write brief \LaTeX{} code to wrapper file and close it again.
 #+end_src
 #+begin_src go <<Write to file, Ch.~\ref{ch:dkt}>>=
   fmt.Fprintf(f, "\\documentclass{article}\n")
@@ -201,9 +203,9 @@
   We tell the user how to use the wrapper.
 #+end_src
 #+begin_src go <<Tell user, Ch.~\ref{ch:dkt}>>=
-  fmt.Fprintf(os.Stderr, "# Wrote %s; if the keyword tree is in " +
+  fmt.Fprintf(os.Stderr, "# Wrote wrapper %s; if the keyword tree is in " +
 	  "kt.tex, run \n# latex ktWrapper\n# dvips ktWrapper -o -q\n# " +
-	  "ps2pdf ktWrapper.ps\n", fn)
+	  "ps2pdf ktWrapper.ps\n", *optW)
 #+end_src
 #+begin_src latex
   The drawing program is done, time for testing fun.
