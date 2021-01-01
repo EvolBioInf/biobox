@@ -14,6 +14,7 @@ doc/cutSeq.tex
 doc/dnaDist.tex
 doc/drawKt.tex
 doc/getSeq.tex
+doc/keyMat.tex
 doc/mutator.tex
 doc/naiveMatcher.tex
 doc/numAl.tex
@@ -35,6 +36,7 @@ cutSeq/cutSeq
 dnaDist/dnaDist
 drawKt/drawKt
 getSeq/getSeq
+keyMat/keyMat
 mutator/mutator
 naiveMatcher/naiveMatcher
 numAl/numAl

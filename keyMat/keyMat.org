@@ -1,0 +1,341 @@
+#+begin_src latex
+  \section*{Introduction}
+  The program \texttt{keyMat} finds the starting positions of one or
+  more patterns in one or more sequences. Its outline contains hooks for
+  imports, function, and the logic of the main function.
+#+end_src
+#+begin_src go <<keyMat.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:km}>>
+  )
+
+  //<<Functions, Ch.~\ref{ch:km}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:km}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare and parse the options,
+  and run the search.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:km}>>=
+  //<<Set usage, Ch.~\ref{ch:km}>>
+  //<<Declare options, Ch.~\ref{ch:km}>>
+  //<<Parse options, Ch.~\ref{ch:km}>>
+  //<<Run search, Ch.~\ref{ch:km}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage statement, an explanation of
+  the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:km}>>=
+  u := "keyMat [-h] [options] [file(s)]"
+  p := "Set matching in sequence data"
+  e := "keyMat -p ATTC,ATTG foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the default help option, \texttt{-h}, we declare four
+  additional options:
+  \begin{enumerate}
+  \item \texttt{-p}: one or more patterns
+  \item \texttt{-f}: file containing patterns
+  \item \texttt{-r}: include reverse strand
+  \item \texttt{-v}: program version
+  \end{enumerate}
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:km}>>=
+  var optP = flag.String("p", "", "comma-separated patterns")
+  var optF = flag.String("f", "", "file with FASTA-formatted patterns")
+  var optR = flag.Bool("r", false, "include reverse strand")
+  var optV = flag.Bool("v", false, "print version & " +
+	  "other program information")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  When parsing the options, we respond to a request for the version,
+  collect the patterns, and check them.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:km}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("keyMat")
+  }
+  //<<Collec patterns, Ch.~\ref{ch:km}>>
+  //<<Check patterns, Ch.~\ref{ch:km}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The patterns are collected from the command line and/or a file. Since
+  the file contains FASTA-formatted sequences, all patterns are stored
+  in this format.
+#+end_src
+#+begin_src go <<Collec patterns, Ch.~\ref{ch:km}>>=
+  var patterns []*fasta.Sequence
+  if *optP != "" {
+	  //<<Collect patterns from command line, Ch.~\ref{ch:km}>>
+  }
+  if *optF != "" {
+	  //<<Collect patterns from file, Ch.~\ref{ch:km}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  Patterns on the command line are delimited by commas. When converting
+  the patterns to sequences, we use the sequence as header.
+#+end_src
+#+begin_src go <<Collect patterns from command line, Ch.~\ref{ch:km}>>=
+  p := strings.Split(*optP, ",")
+  for _, s := range p {
+	  seq := fasta.NewSequence(s, []byte(s))
+	  patterns = append(patterns, seq)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  We use a scanner to collect the patterns from the file.
+#+end_src
+#+begin_src go <<Collect patterns from file, Ch.~\ref{ch:km}>>=
+  file, err := os.Open(*optF)
+  if err != nil {
+	  log.Fatalf("couldn't open %q\n", *optF)
+  }
+  scanner := fasta.NewScanner(file)
+  for scanner.ScanSequence() {
+	  patterns = append(patterns, scanner.Sequence())
+  }
+  file.Close()
+#+end_src
+#+begin_src latex
+  We import \texttt{os} and \texttt{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "os"
+  "log"
+#+end_src
+#+begin_src latex
+  There are several ways in which we could check the patterns; we might
+  look for duplicates, test for non-UPAC symbols, or just make sure we
+  have any patterns at all. Here we just count the patterns and abort if
+  there are none.
+#+end_src
+#+begin_src go <<Check patterns, Ch.~\ref{ch:km}>>=
+  if len(patterns) == 0 {
+	  fmt.Fprintf(os.Stderr, "please enter at least one pattern\n")
+	  os.Exit(-1)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  When running the search, we iterate over the input files and apply the
+  function \texttt{scan} to each one. This function takes as argument
+  the keyword tree constructed from the patterns, the patterns in
+  sequence and string format, and the \texttt{-r} flag.
+#+end_src
+#+begin_src go <<Run search, Ch.~\ref{ch:km}>>=
+  var sp []string
+  for _, s := range patterns {
+	  sp = append(sp, string(s.Data()))
+  }
+  tree := kt.NewKeywordTree(sp)
+  files := flag.Args()
+  clio.ParseFiles(files, scan, tree, patterns, sp, *optR)
+#+end_src
+#+begin_src latex
+  We import \texttt{kt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "github.com/evolbioinf/kt"
+#+end_src
+#+begin_src latex
+  In \texttt{scan} we retrieve the arugments just passed and search each
+  sequence in turn.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:km}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:km}>>
+	  scanner := fasta.NewScanner(r)
+	  for scanner.ScanSequence() {
+		  seq := scanner.Sequence()
+		  //<<Search sequence, Ch.~\ref{ch:km}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  The arguments are retrieved via reflection.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:km}>>=
+  tree := args[0].(*kt.Node)
+  pseq := args[1].([]*fasta.Sequence)
+  pstr := args[2].([]string)
+  optR := args[3].(bool)
+#+end_src
+#+begin_src latex
+  We search the forward and possibly also the reverse strand of a sequence,
+  and print the matches.
+#+end_src
+#+begin_src go <<Search sequence, Ch.~\ref{ch:km}>>=
+  matches := tree.Search(seq.Data(), pstr)
+  fmt.Printf("# %s\n", seq.Header())
+  printMatches(matches, pseq)
+  if optR {
+	  seq.ReverseComplement()
+	  matches = tree.Search(seq.Data(), pstr)
+	  fmt.Printf("# %s - Reverse\n", seq.Header())
+	  printMatches(matches, pseq)
+  }
+#+end_src
+#+begin_src latex
+  Matches are printed as pairs of positions and names.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:km}>>=
+  func printMatches(matches []kt.Match, patterns []*fasta.Sequence) {
+	  for _, m := range matches {
+		  s := patterns[m.Pattern]
+		  fmt.Printf("%d\t%s\n", m.Position+1, s.Header())
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The program is finished, let's tests it.
+  \section*{Testing}
+  The outline of the testing program contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<keyMat_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:km}>>
+  )
+
+  func TestKeyMat(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:km}>>
+  }
+#+end_src
+#+begin_src latex
+  We declare a few testing commands. Each of them corresponds to a file
+  of pre-computed output. Then the commands are run and the results we
+  get compared to the results we want.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:km}>>=
+  var commands []*exec.Cmd
+  //<<Construct commands, Ch.~\ref{ch:km}>>
+  //<<Construct list of output files, Ch.~\ref{ch:km}>>
+  for i, command := range commands {
+	  //<<Run command, Ch~\ref{ch:km}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:km}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  The commands look for matches in a test sequence. To write them
+  succinctly, we first prepare a set of variables covering the command
+  to be run, the list of patterns, the pattern file, and the input file.
+#+end_src
+#+begin_src go <<Construct commands, Ch.~\ref{ch:km}>>=
+  r := "keyMat"
+  p := "ATTT,ATTC,AT,TG,TT"
+  f := "patterns.fasta"
+  i := "test.fasta"
+  //<<Write commands, Ch.~\ref{ch:km}>>
+#+end_src
+#+begin_src latex
+  The commands go through the options.
+#+end_src
+#+begin_src go <<Write commands, Ch.~\ref{ch:km}>>=
+  c := exec.Command(r, "-p",  p, i)
+  commands = append(commands, c)
+  c = exec.Command(r, "-p", p, "-r", i)
+  commands = append(commands, c)
+  c = exec.Command(r, "-f", f, i)
+  commands = append(commands, c)
+  c = exec.Command(r, "-f", f, "-r", i)
+  commands = append(commands, c)
+  c = exec.Command(r, "-f", f, "-p", "ATTA", i)
+  commands = append(commands, c)
+#+end_src
+#+begin_src latex
+  For each command, there is an output file.
+#+end_src
+#+begin_src go <<Construct list of output files, Ch.~\ref{ch:km}>>=
+  var files []string
+  for i, _ := range commands {
+	  f := "r" + strconv.Itoa(i+1) + ".txt"
+	  files = append(files, f)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:km}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  When running a command, we compare the result we get with the result
+  we want.
+#+end_src
+#+begin_src go <<Run command, Ch~\ref{ch:km}>>=
+  get, err := command.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", command)
+  }
+  want, err := ioutil.ReadFile(files[i])
+  if err != nil {
+	  t.Errorf("couldn't open %q\n", files[i])
+  }
+  if !bytes.Equal(want, get) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{ioutil} and \texttt{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:km}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src

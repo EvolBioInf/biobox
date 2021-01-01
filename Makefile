@@ -15,6 +15,8 @@ all:
 	cp drawKt/drawKt bin
 	make -C getSeq
 	cp getSeq/getSeq bin
+	make -C keyMat
+	cp keyMat/keyMat bin
 	make -C mutator
 	cp mutator/mutator bin
 	make -C naiveMatcher
@@ -50,6 +52,7 @@ clean:
 	make clean -C doc
 	make clean -C drawKt
 	make clean -C getSeq
+	make clean -C keyMat
 	make clean -C mutator
 	make clean -C naiveMatcher
 	make clean -C numAl
@@ -68,6 +71,7 @@ test:
 	make test -C cutSeq
 	make test -C dnaDist
 	make test -C getSeq
+	make test -C keyMat
 	make test -C mutator
 	make test -C naiveMatcher
 	make test -C numAl
