@@ -1,4 +1,4 @@
-\begin{pspicture}(0,0)(4.00,4.5)
+\begin{pspicture}(0,0)(4.00,4.70)
 %% Nodes
 \dotnode(2,4){0}
 \dotnode(3.33,3){6}
@@ -10,16 +10,16 @@
 \dotnode(1.33,0){5}
 \dotnode(0,0){4}
 %% Match links
-\ncline{->}{0}{6}\ncput*[nrot=:U]{T}
-\ncline{->}{6}{8}\ncput*[nrot=:U]{T}
-\ncline{->}{6}{7}\ncput*[nrot=:U]{G}
-\ncline{->}{0}{1}\ncput*[nrot=:U]{A}
-\ncline{->}{1}{2}\ncput*[nrot=:U]{T}
-\ncline{->}{2}{3}\ncput*[nrot=:U]{T}
-\ncline{->}{3}{5}\ncput*[nrot=:U]{C}
-\ncline{->}{3}{4}\ncput*[nrot=:U]{T}
+\psset{linecolor=lightgray}\ncline{0}{6}\ncput[nrot=:U]{\texttt{T}}
+\ncline{6}{8}\ncput[nrot=:U]{\texttt{T}}
+\ncline{6}{7}\ncput[nrot=:U]{\texttt{G}}
+\ncline{0}{1}\ncput[nrot=:U]{\texttt{A}}
+\ncline{1}{2}\ncput[nrot=:U]{\texttt{T}}
+\ncline{2}{3}\ncput[nrot=:U]{\texttt{T}}
+\ncline{3}{5}\ncput[nrot=:U]{\texttt{C}}
+\ncline{3}{4}\ncput[nrot=:U]{\texttt{T}}
 %% Failure links
-\psset{linecolor=lightgray,nodesep=3pt}
+\psset{linecolor=red,linewidth=0.5pt,nodesep=2pt}
 \nccurve[angleA=130,angleB=50,ncurv=6]{->}{0}{0}
 \ncarc[arcangle=-50]{->}{6}{0}
 \ncarc[arcangle=-50]{->}{8}{6}

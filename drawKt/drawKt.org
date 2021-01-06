@@ -6,49 +6,48 @@
     five patterns
     \begin{itemize}
     \item $p_1=\texttt{ATTT}$
-    \item $p_2=\texttt{ATTG}$
+    \item $p_2=\texttt{ATTC}$
     \item $p_3=\texttt{AT}$
     \item $p_4=\texttt{TG}$
     \item $p_5=\texttt{TT}$
     \end{itemize}
     The \LaTeX{}-version of their keyword tree is shown in
-    Figure~\ref{fig:kt}A. Each character is drawn along a black match
-    link, the failure links are in light gray. In the text version
-    (Figure~\ref{fig:kt}B), the nodes are identified by numbers; a line
-    like the last one,
-    \begin{verbatim}
-    T->5^4->9{1,5}
-    \end{verbatim}
-    means \texttt{T} labels the incoming edge to node 5, whose parent is
-    node 4, its failure link 9, and whose output set contains $p_1$ and $p_5$.
+    Figure~\ref{fig:kt}A. Each character is drawn along match link, the
+    failure links are red arks. When thinking about trees, it is often
+    useful to label each node. Figure~\ref{fig:kt}B shows the keyword
+    tree with labeled nodes. The corresponding text version
+    (Figure~\ref{fig:kt}C) is in Newick
+    format\footnote{\texttt{evolution.genetics.washington.edu/phylip/newick\char`_doc.html}}. An
+    example node is
+  \begin{verbatim}
+  5[T->9{1,5}]
+  \end{verbatim}
+  which means that node 5 has an incoming edge labeled \texttt{T}, a
+  failure link referring to node 9, and an output set comprising $p_1$
+  and $p_5$---just as shown in Figure~\ref{fig:kt}B.
     \begin{figure}
       \begin{center}
-      \begin{tabular}{cc}
-	\textbf{A} & \textbf{B}\\\\
-	\raisebox{-2.5cm}{\input{kt}} &
-	\begin{minipage}{3cm}
-    \begin{verbatim}
-    _->1^0->1
-    T->7^1->1
-    T->9^7->7{5}
-    G->8^7->1{4}
-    A->2^1->1
-    T->3^2->7{3}
-    T->4^3->9{5}
-    C->6^4->1{2}
-    T->5^4->9{1,5}
-  \end{verbatim}
-	\end{minipage}\\\\
-      \end{tabular}
+	\begin{tabular}{ccc}
+	  \textbf{A} & \textcolor{white}{AAA}& \textbf{B}\\
+	  \raisebox{1cm}{\input{dkt1}} & & \input{dkt2}
+	\end{tabular}
+      \end{center}
+      \begin{center}
+	\textbf{C}
+  \begin{center}
+  \verb+((((5[T->9{1,5}],6[C->1{2}])4[T->9{5}])3[T->7{3}],+
+  \verb+(8[G->1{4}],9[T->7{5}])7[T->1])2[A->1])1[->1];+
+  \end{center}
       \end{center}
       \caption{Keyword tree of the fire patterns $p_1=\texttt{ATTT}$,
 	$p_2=\texttt{ATTC}$, $p_3=\texttt{AT}$, $p_4=\texttt{TG}$,
-	$p_5=\texttt{TT}$ in \LaTeX{} (\textbf{A}) and text format
-	(\textbf{B}).}\label{fig:kt}
+	$p_5=\texttt{TT}$ in \LaTeX{} (\textbf{A}), again in \LaTeX{}
+	but with labeled nodes (\textbf{B}), and in text format
+	(\textbf{C}).}\label{fig:kt}
     \end{figure}
     \section*{Implementation}
-    The program outline
-    contains hooks for imports, and the logic of the main function.
+    The program outline contains hooks for imports, functions,
+    and the logic of the main function.
 #+end_src
 #+begin_src go <<drawKt.go>>=
   package main
@@ -56,13 +55,13 @@
   import (
 	  //<<Imports, Ch.~\ref{ch:dkt}>>
   )
-
+  //<<Functions, Ch.~\ref{ch:dkt}>>
   func main() {
 	  //<<Main function, Ch.~\ref{ch:dkt}>>
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, declare and parse the options,
+  In the main function we set the usage, declare and parse the options,
   get the patterns, and draw their tree.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:dkt}>>=
@@ -79,7 +78,7 @@
 #+begin_src go <<Set usage, Ch.~\ref{ch:dkt}>>=
   u := "drawKt [-h] [options] [patterns]"
   p := "Draw the keyword tree of a set of patterns"
-  e := "drawKt ATTT ATTG AT TG TT > kt.tex"
+  e := "drawKt ATTT ATTC AT TG TT > kt.tex"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -89,12 +88,13 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  Apart from the default help, there are three options, the user can
-  request a \LaTeX{} wrapper, plain text instead of \LaTeX{}, and the
-  program version.
+  Apart from the default help option, there are five declared options,
+  the user can request a \LaTeX{} wrapper, labeled instead of plain
+  nodes, plain text instead of \LaTeX{}, and the program version.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:dkt}>>=
   var optW = flag.String("w", "", "LaTeX wrapper file")
+  var optL = flag.Bool("l", false, "labeled nodes; default: plain")
   var optT = flag.Bool("t", false, "plain text; default: LaTeX")
   var optV = flag.Bool("v", false, "print program version & " +
 	  "other information")
@@ -144,14 +144,15 @@
 #+end_src
 #+begin_src latex
   The tree is drawn either as plain text or in \LaTeX{}. If drawn in
-  \LaTeX{}, we also write a wrapper to make the output more useful.
+  \LaTeX{}, we also write a wrapper upon request to make the output more
+  useful.
 #+end_src
 #+begin_src go <<Draw tree, Ch.~\ref{ch:dkt}>>=
   tree := kt.NewKeywordTree(patterns)
   if *optT {
 	  fmt.Println(tree)
   } else {
-	  fmt.Println(tree.WriteLatex())
+	  fmt.Println(writeLatex(tree, *optL, *optX))
 	  if *optW != "" {
 		  //<<Write wrapper, Ch.~\ref{ch:dkt}>>
 	  }
@@ -165,7 +166,311 @@
   "fmt"
 #+end_src
 #+begin_src latex
-  When writing the wrapper, we open a file, write to it, and tell the user.
+  The function \texttt{writeLatex} converts a keyword tree to \LaTeX{}
+  and print it to a byte buffer that is returned as a string.  We
+  implement the actual printing by first working out the coordinates of
+  each node. Then we print the nodes, the match \& failure links, and
+  the output sets.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>=
+  func writeLatex(root *kt.Node, optL bool) string {
+	  w := new(bytes.Buffer)
+	  //<<Calculate y-coordinates, Ch.~\ref{ch:dkt}>>
+	  //<<Calculate x-coordinates, Ch.~\ref{ch:dkt}>>
+	  //<<Print nodes, Ch.~\ref{ch:dkt}>>
+	  //<<Print match links, Ch.~\ref{ch:dkt}>>
+	  //<<Print failure links, Ch.~\ref{ch:dkt}>>
+	  //<<Print output sets, Ch.~\ref{ch:dkt}>>
+	  return(w.String())
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{bytes}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
+  "bytes"
+#+end_src
+#+begin_src latex
+  To work out the y-coordinates, take another look at the keyword tree
+  in Figure~\ref{fig:kt}A. The bottom left hand corner of the image has
+  coordinates $(0,0)$, the top right hand corner $(\mbox{width},
+  \mbox{md})$, where $\mbox{md}$ is the maximum depth. A y-coordinate is
+  thus $\mbox{md}-\mbox{depth}$, which means we need to first compute
+  the maximum depth. We do this using the function
+  \texttt{BreadthFirst}, which traverses the tree breadth-first and
+  applies the function \texttt{findMaxDepth} with argument
+  \texttt{findMaxDepth} to every node.
+#+end_src
+#+begin_src go <<Calculate y-coordinates, Ch.~\ref{ch:dkt}>>=
+  var maxDepth int
+  kt.BreadthFirst(root, findMaxDepth, &maxDepth)
+#+end_src
+#+begin_src latex
+  In \texttt{findMaxDepth}, we retrieves the variable \texttt{maxDepth}
+  by reflection and update it where appropriate.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>=
+  func findMaxDepth(v *kt.Node, args ...interface{}) {
+	  maxDepth := args[0].(*int)
+	  if v.Depth > *maxDepth {
+		  *maxDepth = v.Depth
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The organizing principle of the x-coordinates is that the leaves are
+  spread evenly along the horizontal axis and a parent's position is in
+  the middle of its children. Thus we compute the horizontal distance
+  between leaves and then calculate the x-coordinate of every node.
+#+end_src
+#+begin_src go <<Calculate x-coordinates, Ch.~\ref{ch:dkt}>>=
+  //<<Compute distance between leaves, Ch.~\ref{ch:dkt}>>
+  //<<Compute x-coordinates, Ch.~\ref{ch:dkt}>>
+#+end_src
+#+begin_src latex
+  The distance between two neighboring leaves is the width of the tree
+  divided by the number of leaves minus one. The number of
+  leaves is taken as the tree's width.
+#+end_src
+#+begin_src go <<Compute distance between leaves, Ch.~\ref{ch:dkt}>>=
+  var nl int
+  kt.BreadthFirst(root, countLeaves, &nl)
+  dist := float64(nl) / (float64(nl) - 1.0)
+#+end_src
+#+begin_src latex
+  The function \texttt{countLeaves} takes as argument a node and a pointer to
+  an integer.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>= 
+  func countLeaves(n *kt.Node, args ...interface{}) {
+	  nl := args[0].(*int)
+	  if n.Child == nil {
+		  *nl = *nl + 1
+	  }
+  }
+#+end_src
+#+begin_src latex
+  To compute the x-coordinates, we need space to store them. So we
+  allocate a slice with as many entries as nodes and refer to a
+  particular entry by a node's ID. Then we traverse the tree
+  postorder~\cite[p. 334]{knu97:ar1} to ensure the leaves are
+  encountered before their parents.
+#+end_src
+#+begin_src go <<Compute x-coordinates, Ch.~\ref{ch:dkt}>>=
+  xcoords := make([]float64, kt.NodeCount())
+  var curX float64
+  postorder(root, setX, &curX, dist, xcoords)
+#+end_src
+#+begin_src latex
+  We write the postorder traversal.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>=
+  func postorder(v *kt.Node, fn kt.NodeAction, args ...interface{}) {
+	  if v != nil {
+		  postorder(v.Child, fn, args...)
+		  fn(v, args...)
+		  postorder(v.Sib, fn, args...)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The function \texttt{setX} retrieves the arguments just passed and
+  places the node, which is either a leaf or a parent.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>=
+  func setX(v *kt.Node, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:dkt}>>
+	  if v.Child == nil {
+		  //<<Place leaf, Ch.~\ref{ch:dkt}>>
+	  } else {
+		  //<<Place parent, Ch.~\ref{ch:dkt}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The arguments are retrieved via reflection.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:dkt}>>=
+  curX := args[0].(*float64)
+  dist := args[1].(float64)
+  xcoords := args[2].([]float64)
+#+end_src
+#+begin_src latex
+  A leaf is placed at the current x-position, which is then
+  incremented.
+#+end_src
+#+begin_src go <<Place leaf, Ch.~\ref{ch:dkt}>>=
+  xcoords[v.Id] = *curX
+  *curX = *curX + dist
+#+end_src
+#+begin_src latex
+  A parent is placed in the middle of its children.
+#+end_src	
+#+begin_src go <<Place parent, Ch.~\ref{ch:dkt}>>=
+  x1 := xcoords[v.Child.Id]
+  cp := v.Child
+  for cp.Sib != nil {
+	  cp = cp.Sib
+  }
+  x2 := xcoords[cp.Id]
+  xcoords[v.Id] = (x1 + x2) / 2.0
+#+end_src
+#+begin_src latex
+  Before printing the nodes, we declare the beginning of a
+  \texttt{pspicture}. Then we apply the function \texttt{writeLatexNode}
+  to each node of the tree.
+#+end_src
+#+begin_src go <<Print nodes, Ch.~\ref{ch:dkt}>>=
+  fmt.Fprintf(w, "\\begin{pspicture}(0,0)(%.2f,%.2f)\n",
+	  optX, float64(maxDepth)+0.7)
+  fmt.Fprint(w, "%% Nodes\n")
+  kt.BreadthFirst(root, writeLatexNode, w, xcoords, maxDepth, optL)
+#+end_src
+#+begin_src latex
+  To write a node, we retrieve the arguments just passed, compute the
+  node's coordinates, and print it.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>=
+  func writeLatexNode(v *kt.Node, args ...interface{}) {
+	  //<<Retrieve \LaTeX{} arguments, Ch.~\ref{ch:dkt}>>
+	  //<<Compute coordinates, Ch.~\ref{ch:dkt}>>
+	  //<<Print node, Ch.~\ref{ch:dkt}>>
+  }
+#+end_src
+#+begin_src latex
+  The argumetns are retrieved by reflection.
+#+end_src
+#+begin_src go <<Retrieve \LaTeX{} arguments, Ch.~\ref{ch:dkt}>>=
+  w := args[0].(*bytes.Buffer)
+  xcoords := args[1].([]float64)
+  maxDepth := args[2].(int)
+  optL := args[3].(bool)
+#+end_src
+#+begin_src latex
+  The y-coordinate is the inverse of the depth, the x-coordinate is
+  looked up.
+#+end_src
+#+begin_src go <<Compute coordinates, Ch.~\ref{ch:dkt}>>=
+  y := maxDepth - v.Depth
+  x := xcoords[v.Id]
+#+end_src
+#+begin_src latex
+  By default the tree consists of unlabeled \texttt{dotnode}s
+  (\ \raisebox{0.1cm}{\dotnode{1}}\ ) but the user can request
+  \texttt{cnode}s with one-based labels instead,
+  \circlenode{1}{1}.
+#+end_src
+#+begin_src go <<Print node, Ch.~\ref{ch:dkt}>>=
+  if optL {
+	  fmt.Fprintf(w, "\\cnodeput(%.3g,%d){%d}{%d}\n",
+		  x, y, v.Id, v.Id+1)
+  } else {
+	  fmt.Fprintf(w, "\\dotnode(%.3g,%d){%d}\n",
+		  x, y, v.Id)
+  }
+#+end_src
+#+begin_src latex
+  Light gray match links are added in a second traversal.
+#+end_src
+#+begin_src go <<Print match links, Ch.~\ref{ch:dkt}>>=
+  fmt.Fprint(w, "%% Match links\n")
+  fmt.Fprintf(w, "\\psset{linecolor=lightgray}")
+  kt.BreadthFirst(root, writeMatchLink, w)
+#+end_src
+#+begin_src latex
+  Except for the root, each node has one incoming match-link. 
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>=
+  func writeMatchLink(v *kt.Node, args ...interface{}) {
+	  w := args[0].(*bytes.Buffer)
+	  if v.Parent != nil {
+		  p := v.Parent.Id
+		  n := v.Id
+		  c := v.In
+		  fmt.Fprintf(w, "\\ncline{%d}{%d}" +
+			  "\\ncput[nrot=:U]{\\texttt{%c}}\n",
+			  p, n, c)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Failure links are red arks $v\rightarrow\mbox{fail(v)}$. There is a
+  2pt gap between the arrows and their start and the end nodes. To draw
+  them, we need the relative x-positions of $v$ and $\mbox{fail}(v)$; so
+  the x-coordinates are passed into the computation.
+#+end_src
+#+begin_src go <<Print failure links, Ch.~\ref{ch:dkt}>>=
+  fmt.Fprint(w, "%% Failure links\n")
+  fmt.Fprint(w, "\\psset{linecolor=red,linewidth=0.5pt,nodesep=2pt}\n")
+  kt.BreadthFirst(root, writeFailureLink, w, xcoords)
+#+end_src
+#+begin_src latex
+  Every node has a failure link that points to another node, except for
+  the root, whose failure link points to itself. So we distinguish these
+  two types of failure links.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>=
+  func writeFailureLink(v *kt.Node, args ...interface{}) {
+	  w := args[0].(*bytes.Buffer)
+	  xcoords := args[1].([]float64)
+	  if v.Parent == nil {
+		  //<<Write failure link for root, Ch.~\ref{ch:dkt}>>
+	  } else {
+		  //<<Write failure link for non-root, Ch.~\ref{ch:dkt}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  After reading up on nodes and their connections in
+  \cite[p.162]{vos05:pst} and some trial and error, I found that the
+  root's self-referential failure link is best drawn with
+  \texttt{nccurve}.
+#+end_src
+#+begin_src go <<Write failure link for root, Ch.~\ref{ch:dkt}>>=
+  fmt.Fprint(w, "\\nccurve[angleA=130,angleB=50,ncurv=6]" +
+	  "{->}{0}{0}\n")
+#+end_src
+#+begin_src latex
+  An ordinary failure link is either left-tilted or right-tilted.
+#+end_src
+#+begin_src go <<Write failure link for non-root, Ch.~\ref{ch:dkt}>>=
+  angle := 50
+  x1 := xcoords[v.Id]
+  x2 := xcoords[v.Fail.Id]
+  if x1 > x2 { angle = -50 }
+  fmt.Fprintf(w, "\\ncarc[arcangle=%d]{->}{%d}{%d}\n",
+	  angle, v.Id, v.Fail.Id)
+#+end_src
+#+begin_src latex
+  The output sets are printed last, and we omit the newline from the
+  last line.
+#+end_src
+#+begin_src go <<Print output sets, Ch.~\ref{ch:dkt}>>=
+  fmt.Fprint(w, "%% Output sets\n")
+  kt.BreadthFirst(root, writeOutputSet, w)
+  fmt.Fprintf(w, "\\end{pspicture}")
+#+end_src
+#+begin_src latex
+  Output sets of leaves are placed below them, output sets of other
+  nodes to their right.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>=
+  func writeOutputSet(v *kt.Node, args ...interface{}) {
+	  if len(v.Output) == 0 { return }
+	  w := args[0].(*bytes.Buffer)
+	  angle := 0
+	  if v.Child == nil { angle = -90 }
+	  fmt.Fprintf(w, "\\nput{%d}{%d}{\\{%d",
+		  angle, v.Id, v.Output[0]+1)
+	  for i := 1; i < len(v.Output); i++ {
+		  fmt.Fprintf(w, ",%d", v.Output[i]+1)
+	  }
+	  fmt.Fprint(w, "\\}}\n")
+  }
+#+end_src
+#+begin_src latex
+  When writing the wrapper, we open a file, write to it, and tell the
+  user what we have done.
 #+end_src
 #+begin_src go <<Write wrapper, Ch.~\ref{ch:dkt}>>=
   //<<Open file, Ch.~\ref{ch:dkt}>>
@@ -189,7 +494,7 @@
   "log"
 #+end_src
 #+begin_src latex
-  We write brief \LaTeX{} code to wrapper file and close it again.
+  We write brief \LaTeX{} code to the wrapper file and close it again.
 #+end_src
 #+begin_src go <<Write to file, Ch.~\ref{ch:dkt}>>=
   fmt.Fprintf(f, "\\documentclass{article}\n")
@@ -203,9 +508,18 @@
   We tell the user how to use the wrapper.
 #+end_src
 #+begin_src go <<Tell user, Ch.~\ref{ch:dkt}>>=
+  old := *optW
+  new := strings.TrimSuffix(old, ".tex")
   fmt.Fprintf(os.Stderr, "# Wrote wrapper %s; if the keyword tree is in " +
-	  "kt.tex, run \n# latex ktWrapper\n# dvips ktWrapper -o -q\n# " +
-	  "ps2pdf ktWrapper.ps\n", *optW)
+	  "kt.tex, run \n# latex %s\n# dvips %s -o -q\n# " +
+	  "ps2pdf %s.ps\n", old, new, new, new)
+#+end_src
+#+begin_src latex
+  We import \texttt{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
+  "strings"
+#+end_src
 #+end_src
 #+begin_src latex
   The drawing program is done, time for testing fun.
@@ -226,10 +540,10 @@
   }
 #+end_src
 #+begin_src latex
-  We a few test cases and compare the output we get with the
+  We define test cases and compare the output we get with the
   pre-computed output we want. To avoid repeating ourselves, we first
-  construct the commands and the output files, and then run loop over
-  the commands.
+  construct the test commands and the output files, and then run loop
+  over the commands.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:dkt}>>=
   var commands []*exec.Cmd
@@ -246,13 +560,17 @@
   "os/exec"
 #+end_src
 #+begin_src latex
-  We run the program twice, first in default, then in text mode.
+  We run the program three times, in default mode, text mode, and with
+  labeled nodes.
 #+end_src
 #+begin_src go <<Declare commands, Ch.~\ref{ch:dkt}>>=
   c := exec.Command("drawKt", "ATTT", "ATTC", "AT", "TG", "TT")
   commands = append(commands, c)
   c = exec.Command("drawKt", "-t", "ATTT", "ATTC", "AT", "TG", "TT")
   commands = append(commands, c)
+  c = exec.Command("drawKt", "-l", "ATTT", "ATTC", "AT", "TG", "TT")
+  commands = append(commands, c)
+
 #+end_src
 #+begin_src latex
   For each command, there is an output file.
@@ -293,3 +611,5 @@
   "io/ioutil"
   "bytes"
 #+end_src
+
+
