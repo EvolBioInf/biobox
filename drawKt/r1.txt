@@ -1,4 +1,4 @@
-\begin{pspicture}(0,0)(4.00,4.70)
+\begin{pspicture}(0,0)(4,4.70)
 %% Nodes
 \dotnode(2,4){0}
 \dotnode(3.33,3){6}

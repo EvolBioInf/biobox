@@ -152,7 +152,7 @@
   if *optT {
 	  fmt.Println(tree)
   } else {
-	  fmt.Println(writeLatex(tree, *optL, *optX))
+	  fmt.Println(writeLatex(tree, *optL))
 	  if *optW != "" {
 		  //<<Write wrapper, Ch.~\ref{ch:dkt}>>
 	  }
@@ -321,8 +321,8 @@
   to each node of the tree.
 #+end_src
 #+begin_src go <<Print nodes, Ch.~\ref{ch:dkt}>>=
-  fmt.Fprintf(w, "\\begin{pspicture}(0,0)(%.2f,%.2f)\n",
-	  optX, float64(maxDepth)+0.7)
+  fmt.Fprintf(w, "\\begin{pspicture}(0,0)(%d,%.2f)\n",
+	  nl, float64(maxDepth)+0.7)
   fmt.Fprint(w, "%% Nodes\n")
   kt.BreadthFirst(root, writeLatexNode, w, xcoords, maxDepth, optL)
 #+end_src
