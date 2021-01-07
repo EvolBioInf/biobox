@@ -15,8 +15,9 @@
     Figure~\ref{fig:kt}A. Each character is drawn along match link, the
     failure links are red arks. When thinking about trees, it is often
     useful to label each node. Figure~\ref{fig:kt}B shows the keyword
-    tree with labeled nodes. The corresponding text version
-    (Figure~\ref{fig:kt}C) is in Newick
+    tree with labeled nodes and patterns labeled $p_i$ instead of plain
+    $i$. The corresponding text version (Figure~\ref{fig:kt}C) is in
+    Newick
     format\footnote{\texttt{evolution.genetics.washington.edu/phylip/newick\char`_doc.html}}. An
     example node is
   \begin{verbatim}
@@ -42,7 +43,8 @@
       \caption{Keyword tree of the fire patterns $p_1=\texttt{ATTT}$,
 	$p_2=\texttt{ATTC}$, $p_3=\texttt{AT}$, $p_4=\texttt{TG}$,
 	$p_5=\texttt{TT}$ in \LaTeX{} (\textbf{A}), again in \LaTeX{}
-	but with labeled nodes (\textbf{B}), and in text format
+	but with labeled nodes (\textbf{B}) and more elaborately labeled
+	patterns, and in text format
 	(\textbf{C}).}\label{fig:kt}
     \end{figure}
     \section*{Implementation}
@@ -316,23 +318,32 @@
   xcoords[v.Id] = (x1 + x2) / 2.0
 #+end_src
 #+begin_src latex
-  Before printing the nodes, we declare the beginning of a
-  \texttt{pspicture}. Then we apply the function \texttt{writeLatexNode}
-  to each node of the tree.
+  Nodes are printed in a \texttt{pspicture}, which has dimensions we
+  still need to determine before we can declare it. Then we apply the
+  function \texttt{writeLatexNode} to each node of the tree.
 #+end_src
 #+begin_src go <<Print nodes, Ch.~\ref{ch:dkt}>>=
+  //<<Calculate picture coordinates, Ch.~\ref{ch:dkt}>>
+  fmt.Fprintf(w, "\\begin{pspicture}(%.2g,%.2g)(%.2g,%.2g)\n",
+	  x1, y1, x2, y2)
+  fmt.Fprint(w, "%% Nodes\n")
+  kt.BreadthFirst(root, writeLatexNode, w, xcoords, maxDepth, optL)
+#+end_src
+#+begin_src latex
+  The picture coordinates depend on whether or not we are using labeled
+  nodes, because labeled nodes are larger.
+#+end_src
+#+begin_src go <<Calculate picture coordinates, Ch.~\ref{ch:dkt}>>=
   var x1 float64
+  y1 := -0.8
   x2 := float64(nl)
   y2 := float64(maxDepth)+0.7
   if optL {
 	  x1 -= 0.3
+	  y1 -= 0.2
 	  x2 += 0.3
 	  y2 += 0.5
   }
-  fmt.Fprintf(w, "\\begin{pspicture}(%.2g,0)(%.2g,%.2g)\n",
-	  x1, x2, y2)
-  fmt.Fprint(w, "%% Nodes\n")
-  kt.BreadthFirst(root, writeLatexNode, w, xcoords, maxDepth, optL)
 #+end_src
 #+begin_src latex
   To write a node, we retrieve the arguments just passed, compute the
@@ -402,7 +413,7 @@
   }
 #+end_src
 #+begin_src latex
-  Failure links are red arks $v\rightarrow\mbox{fail(v)}$. There is a
+  Failure links are red arks $v\rightarrow f(v)$. There is a
   2pt gap between the arrows and their start and the end nodes. To draw
   them, we need the relative x-positions of $v$ and $\mbox{fail}(v)$; so
   the x-coordinates are passed into the computation.
@@ -455,26 +466,39 @@
 #+end_src
 #+begin_src go <<Print output sets, Ch.~\ref{ch:dkt}>>=
   fmt.Fprint(w, "%% Output sets\n")
-  kt.BreadthFirst(root, writeOutputSet, w)
+  kt.BreadthFirst(root, writeOutputSet, w, optL)
   fmt.Fprintf(w, "\\end{pspicture}")
 #+end_src
 #+begin_src latex
-  Output sets of leaves are placed below them, output sets of other
-  nodes to their right.
+  Output sets of leaves are placed below them at an angle of -90, output
+  sets of other nodes to their right, at an angle of 0. As you can see
+  when comparing Figures~\ref{fig:kt}A and B, there is a simple and a
+  slightly more fancy version of the output set, and the distinction
+  requires a bit of extra reasoning.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:dkt}>>=
   func writeOutputSet(v *kt.Node, args ...interface{}) {
 	  if len(v.Output) == 0 { return }
 	  w := args[0].(*bytes.Buffer)
+	  optL := args[1].(bool)
 	  angle := 0
 	  if v.Child == nil { angle = -90 }
-	  fmt.Fprintf(w, "\\nput{%d}{%d}{\\{%d",
-		  angle, v.Id, v.Output[0]+1)
-	  for i := 1; i < len(v.Output); i++ {
-		  fmt.Fprintf(w, ",%d", v.Output[i]+1)
-	  }
-	  fmt.Fprint(w, "\\}}\n")
+	  //<<Print simple or fancy output set>>
   }
+#+end_src
+#+begin_src latex
+  The simple 
+#+end_src
+#+begin_src go <<Print simple or fancy output set>>=
+  fmt.Fprintf(w, "\\nput{%d}{%d}{$\\{", angle, v.Id)
+  if optL { fmt.Fprintf(w, "p_") }
+  fmt.Fprintf(w, "%d", v.Output[0]+1)
+  for i := 1; i < len(v.Output); i++ {
+	  fmt.Fprintf(w, ",")
+	  if optL { fmt.Fprintf(w, "p_") }
+	  fmt.Fprintf(w, "%d", v.Output[i]+1)
+  }
+  fmt.Fprint(w, "\\}$}\n")
 #+end_src
 #+begin_src latex
   When writing the wrapper, we open a file, write to it, and tell the
