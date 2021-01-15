@@ -31,6 +31,8 @@ all:
 	cp ranseq/ranseq bin
 	make -C revComp
 	cp revComp/revComp bin
+	make -C shustring
+	cp shustring/shustring bin
 	make -C simNorm
 	cp simNorm/simNorm bin
 	make -C testMeans
@@ -60,6 +62,8 @@ clean:
 	make clean -C randomizeSeq
 	make clean -C ranseq
 	make clean -C revComp
+	make clean -C shustring
+	make clean -C simNorm
 	make clean -C testMeans
 	make clean -C util
 	make clean -C watterson
@@ -79,6 +83,7 @@ test:
 	make test -C randomizeSeq
 	make test -C ranseq
 	make test -C revComp
+	make test -C shustring
 	make test -C simNorm
 	make test -C testMeans
 	make test -C util

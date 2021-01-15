@@ -1,0 +1,14 @@
+>Rand1
+#  Count  Position  Length  Shustring
+   1      52        3       ACC
+   2      54        3       CGG
+   3      55        3       GGG
+   4      86        3       GGA
+   5      94        3       TCG
+>Rand2
+#  Count  Position  Length  Shustring
+   1      33        3       CAG
+   2      36        3       GCC
+   3      42        3       TAC
+   4      79        3       GTG
+   5      94        3       GAC

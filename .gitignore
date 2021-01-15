@@ -22,6 +22,7 @@ doc/pam.tex
 doc/randomizeSeq.tex
 doc/ranseq.tex
 doc/revComp.tex
+doc/shustring.tex
 doc/simNorm.tex
 doc/testMeans.tex
 doc/util.tex
@@ -44,6 +45,7 @@ pam/pam
 randomizeSeq/randomizeSeq
 ranseq/ranseq
 revComp/revComp
+shustring/shustring
 simNorm/simNorm
 testMeans/testMeans
 var/var

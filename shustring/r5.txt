@@ -1,0 +1,14 @@
+>Rand1
+#  Count  Position  Length
+   1      52        3
+   2      54        3
+   3      55        3
+   4      86        3
+   5      94        3
+>Rand2
+#  Count  Position  Length
+   1      33        3
+   2      36        3
+   3      42        3
+   4      79        3
+   5      94        3
