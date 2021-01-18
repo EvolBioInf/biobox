@@ -7,14 +7,14 @@
   \[
   t=\texttt{TATTTTTATA}
   \]
-  consisting of ten nucleotides. At every position in $t$ we can ask,
-  what is the shortest unique substring starting there? Consider the
-  first nucleotide in $t$, $t[1...1]=\texttt{T}$ is not unique, nor is
+  consisting of ten nucleotides. At every position in $t$ we ask, what
+  is the shortest unique substring starting there? Consider the first
+  nucleotide in $t$, $t[1...1]=\texttt{T}$ is not unique, nor is
   $t[1...2]=\texttt{TA}$ or $t[1...3]=\texttt{TAT}$, but
   $t[1...4]=\texttt{TATT}$ is. Since all extensions of \texttt{TATT},
-  such as $t[1...5]=\texttt{TATTT}$, $t[1...6]=\texttt{TATTTT}$, and
-  so on, are also unique, we call \texttt{TATT} emph{shortest} unique,
-  a shustring.
+  such as $t[1...5]=\texttt{TATTT}$, $t[1...6]=\texttt{TATTTT}$, and so
+  on, are also unique, we call \texttt{TATT} \emph{shortest} unique, a
+  shustring.
 
   Table~\ref{tab:shu} shows the shustring lengths, $\shu[i]$ and the
   actual shustrings of $t$. They are a compact representation of a
@@ -41,7 +41,7 @@
   Shustrings are found using the enhanced suffix array of $t$. This
   consists of three tables:
   \begin{enumerate}
-    \item the \emph{suffix array} of alphabetically suffixes,
+    \item the \emph{suffix array} of alphabetically ordered suffixes,
       $\sa$
     \item the longest common prefix array of the lengths of matching
       prefixes, $\lcp$, and
@@ -63,25 +63,29 @@
   \end{table}
 
   As shown in Table~\ref{tab:esa}, the enhanced suffix array of $t$
-  consists of three columns of integers that refer to the starting
-  positions and lengths of strings. However, it is easier to think
-  about strings by looking at them than by contemplating their
-  positions and lengths, hence Table~\ref{tab:esa} also shows the
-  suffixes, $\suf$, of $t$. Their starting positions are in $\sa$. The
-  lengths of the prefixes matching between $\suf[i]$ and $\suf[i-1]$
-  are in $\lcp[i]$. And $\isa$ stores the positions of suffixes in
-  text-order. For example, the first suffix in $t$, $t[1...]$, is
-  located at $\isa[1]=6$, the second suffix, $t[2...]$, at
+  consists of three columns of integers, where $\sa$ and $\isa$ refer to
+  the starting positions and $\lcp$ to the lengths of strings. However,
+  it is easier to think about strings by looking at them than by
+  contemplating numbers, hence Table~\ref{tab:esa} also shows the
+  suffixes, $\suf$, of $t$. As I just said, their starting positions are
+  in $\sa$. The lengths of the prefixes matching between $\suf[i]$ and
+  $\suf[i-1]$ are in $\lcp[i]$. And $\isa$ stores the positions of
+  suffixes in text-order. For example, the first suffix in $t$,
+  $t[1...]$, is located at $\isa[1]=6$, the second suffix, $t[2...]$, at
   $\isa[2]=3$, and so on.
 
-  From the enhanced suffix array in Table~\ref{tab:esa}, we can look
-  up the shustring lengths in Table~\ref{tab:shu} as
+  From the enhanced suffix array in Table~\ref{tab:esa}, we can look up
+  the shustring lengths in Table~\ref{tab:shu} as the $\lcp$-value of
+  the corresponding suffix, or that of its right-hand neighbor,
+  whichever is larger. And since the $\lcp$-values are the lengths of
+  right-maximal repeats, extending them by one creates shsutrings. To
+  summarize,
   \begin{equation}\label{eq:shu}
   \shu[i] = \mbox{max}\left(\lcp\left[\isa[i]\right],\lcp\left[isa[i]+1\right]\right) + 1.
   \end{equation}
   For example, to compute $\shu[1]$, we write
   \begin{eqnarray*}
-    \shu[i] & = &
+    \shu[1] & = &
     \mbox{max}\left(\lcp\left[\isa[1]\right],\lcp\left[\isa[1]+1\right]\right)
     + 1\\
     & = & \mbox{max}\left(\lcp[6],\lcp[7]\right)+1\\
@@ -90,9 +94,12 @@
   \end{eqnarray*}
 
   Given the shustrings of $t$, we can ask, how long are the shortest
-  shustrings? Table~\ref{tab:shu} tells us that's 3, and there are
-  three of them, \texttt{ATT}, \texttt{TTA}, and \texttt{ATA}. We call
-  such shortest shustrings \emph{global}, the set of all shustrings
+  shustrings? Table~\ref{tab:shu} tells us that's 3, and there are three
+  of them, \texttt{ATT}, \texttt{TTA}, and \texttt{ATA}. We call such
+  shortest shustrings \emph{global}, to distinguish them from the
+  containing set of all shustrings, which we call \emph{local}.
+
+  the set of all shustrings
   \emph{local}. The program \texttt{shustring} computes either global
   or local shustrings for an arbitrary set of sequences.
 
@@ -190,7 +197,7 @@
   files. These are parsed by applying the function \texttt{scan} to each
   one in turn. Scan takes as arguments a slice of pointers to sequences,
   the option values for local, reverse, and quiet, and the regular
-  expression to identify sequences.
+  expression to pick sequences.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:shu}>>=
   files := flag.Args()
@@ -232,7 +239,8 @@
   seqReg := args[4].(*regexp.Regexp)
 #+end_src
 #+begin_src latex
-  The sequences contained in the current file are stored in a slice.
+  The sequences contained in the current file are stored in the
+  eponymous slice.
 #+end_src
 #+begin_src go <<Collect sequences, Ch.~\ref{ch:shu}>>=
   scanner := fasta.NewScanner(r)
@@ -244,9 +252,9 @@
 #+begin_src latex
   To analyze the sequences, we concatenate them into one long byte
   slice, and, if appropriate, also add their reverse strands. Then we
-  calculate the enhanced suffix array for the sequence data. From the
+  calculate the enhanced suffix array of the concatenated data. From the
   enhanced suffix array we compute the shustrings---strictly speaking
-  their lengths. These are analyzed and printed.
+  their lengths---which are analyzed and printed.
 #+end_src
 #+begin_src go <<Analyze sequences, Ch.~\ref{ch:shu}>>=
   //<<Concatenate sequences, Ch.~\ref{ch:shu}>>
@@ -260,13 +268,14 @@
 #+end_src
 #+begin_src latex
   We concatenate the sequences and note their start and end
-  positions. However, concatenation can create new substrings that mask
-  legitimate shustrings. Consider for example the two sequences
-  $s_1=\texttt{GTG}$ and $s_2=\texttt{TT}$. Their combined shustring
-  inventory is \{\texttt{GT}, \texttt{TG}, and \texttt{TT}. However,
-  concatenation to \texttt{GTGTT} creates a second \texttt{GT}, which
-  masks the uniqueness of the first. To prevent this, we separate
-  sequences by a character outside of their alphabet, the zero byte.
+  positions. However, concatenation can create new substrings at the
+  border between the joined sequences, which may mask legitimate
+  shustrings. Consider for example the two sequences $s_1=\texttt{GTG}$
+  and $s_2=\texttt{TT}$. Their combined shustring inventory is
+  \\texttt{GT}, \texttt{TG}, and \texttt{TT}. However, concatenation to
+  \texttt{GTGTT} creates a second \texttt{GT}, which masks the
+  uniqueness of the first. To prevent this, we separate sequences by a
+  character outside of their alphabet, the zero byte.
 #+end_src
 #+begin_src go <<Concatenate sequences, Ch.~\ref{ch:shu}>>=
   var cat []byte
@@ -284,7 +293,8 @@
 #+begin_src latex
   We reverse-complement each sequence and append it. No position
   information is required for the reverse strands, but we still separate
-  sequences by the zero byte.
+  sequences by the zero byte to prevent the creation of spurious
+  substrings.
 #+end_src
 #+begin_src go <<Concatenate reverse strands, Ch.~\ref{ch:shu}>>=
   for _, sequence := range sequences {
@@ -311,9 +321,10 @@
 #+end_src
 #+begin_src latex
   We now implement the computation of shustring lengths using
-  equation~(\ref{eq:shu}).  To ensure that there always is an element
-  $\lcp[i+1]$, we append a value smaller than any legitimate prefix
-  length to $\lcp$, -1.
+  equation~(\ref{eq:shu}).  To ensure that there always exists an
+  element $\lcp[i+1]$, we extend $\lcp$ by one cell. The value of this
+  extra cell should be smaller than the length of any legitimate common
+  prefix, we use the same value as in the first cell, $-1$.
 #+end_src
 #+begin_src go <<Compute shustrings, Ch.~\ref{ch:shu}>>=
   shu := make([]int, len(sa))
@@ -325,9 +336,9 @@
   }
 #+end_src
 #+begin_src latex
-  When calculating an individual shustring length, we set shustrings
-  that extend beyond the end of their host sequence to the largest
-  integer available.
+  When calculating an individual shustring length, we mark shustrings
+  that extend beyond the end of their host sequence as non-existent by
+  setting them to the largest integer available.
 #+end_src
 #+begin_src go <<Calculate a shustring length, Ch.~\ref{ch:shu}>>=
   is := isa[j]
@@ -341,13 +352,13 @@
   }
 #+end_src
 #+begin_src latex
-  In local mode we print all shustrings, in global just the shortest. So
-  the difference between these modes is the maximum length of a
-  shustring to be printed. In local mode, we include all shustrings and
-  thus set the maximum is a very large integer, but not the largest, as
-  we have just used that to mark positions without any shustring at
-  all. In global mode, the minimum shustring length becomes the
-  maximum, which is computed for each sequence.
+  In local mode, we print all shustrings, in global just the
+  shortest. So the difference between these modes is the maximum length
+  of a shustring to be printed. In local mode, we include all shustrings
+  and thus set the maximum is a very large integer, but not the largest,
+  as we have just used that to mark positions without any shustring at
+  all. In global mode, the minimum shustring length becomes the maximum,
+  which is computed for each sequence.
 #+end_src
 #+begin_src go <<Analyze shustrings, Ch.~\ref{ch:shu}>>=
   var maxima []int
@@ -427,12 +438,9 @@
   fmt.Printf("%s", buffer)
 #+end_src
 #+begin_src latex
-  The table header differs between the modes. In global mode, it consists
-  of four fields:
-  \begin{tabular}{cccc}
-    count & position & length & sequence
-  \end{tabular}
-  In local mode, the count and the position coincide, so we drop the
+  The table header differs between the modes. In global mode, it
+  consists of four fields, count, position, length, and sequence. In
+  local mode, the count and the position coincide, so we drop the
   count. Similarly, in quiet mode we drop the column of shustring
   sequences.
 #+end_src
@@ -449,8 +457,7 @@
 #+end_src
 #+begin_src latex
   For a given sequence, we walk though the $\lcp$ array in text-order
-  and count and write the shustrings that are no longer than the
-  maximum. 
+  and count and write the shustrings that don't exceed the maximum.
 #+end_src
 #+begin_src go <<Write table body, Ch.~\ref{ch:shu}>>=
   count := 0
@@ -517,7 +524,8 @@
   "os/exec"
 #+end_src
 #+begin_src latex
-  We run six tests, one for each option plus one without any options
+  We run a test without any options, followed by one test for each of
+  the five options, so we construct six commands in total.
 #+end_src
 #+begin_src go <<Construct commands, Ch.~\ref{ch:shu}>>=
   p := "shustring"
