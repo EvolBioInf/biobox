@@ -97,11 +97,9 @@
   shustrings? Table~\ref{tab:shu} tells us that's 3, and there are three
   of them, \texttt{ATT}, \texttt{TTA}, and \texttt{ATA}. We call such
   shortest shustrings \emph{global}, to distinguish them from the
-  containing set of all shustrings, which we call \emph{local}.
-
-  the set of all shustrings
-  \emph{local}. The program \texttt{shustring} computes either global
-  or local shustrings for an arbitrary set of sequences.
+  containing set of all shustrings, which we call \emph{local}. The
+  program \texttt{shustring} computes either global or local shustrings
+  for an arbitrary set of sequences.
 
   \section*{Implementation}
   The outline of \texttt{shustring} has hooks for imports, functions,
@@ -195,15 +193,12 @@
 #+begin_src latex
   The arguments not parsed yet are interpreted as the names of the input
   files. These are parsed by applying the function \texttt{scan} to each
-  one in turn. Scan takes as arguments a slice of pointers to sequences,
-  the option values for local, reverse, and quiet, and the regular
-  expression to pick sequences.
+  one in turn. Scan takes as arguments the option values for local,
+  reverse, and quiet, and the regular expression to pick sequences.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:shu}>>=
   files := flag.Args()
-  var sequences []*fasta.Sequence
-  clio.ParseFiles(files, scan, sequences,
-	  *optL, *optR, *optQ, seqReg)
+  clio.ParseFiles(files, scan, *optL, *optR, *optQ, seqReg)
 #+end_src
 #+begin_src latex
   We import \texttt{fasta}.
@@ -232,11 +227,10 @@
   The arguments are retrieved by reflection.
 #+end_src
 #+begin_src go <<Retrieve arguments, Ch.~\ref{ch:shu}>>=
-  sequences := args[0].([]*fasta.Sequence)
-  local := args[1].(bool)
-  reverse := args[2].(bool)
-  quiet := args[3].(bool)
-  seqReg := args[4].(*regexp.Regexp)
+  local := args[0].(bool)
+  reverse := args[1].(bool)
+  quiet := args[2].(bool)
+  seqReg := args[3].(*regexp.Regexp)
 #+end_src
 #+begin_src latex
   The sequences contained in the current file are stored in the
@@ -244,6 +238,7 @@
 #+end_src
 #+begin_src go <<Collect sequences, Ch.~\ref{ch:shu}>>=
   scanner := fasta.NewScanner(r)
+  var sequences []*fasta.Sequence
   for scanner.ScanSequence() {
 	  sequence := scanner.Sequence()
 	  sequences = append(sequences, sequence)
@@ -272,7 +267,7 @@
   border between the joined sequences, which may mask legitimate
   shustrings. Consider for example the two sequences $s_1=\texttt{GTG}$
   and $s_2=\texttt{TT}$. Their combined shustring inventory is
-  \\texttt{GT}, \texttt{TG}, and \texttt{TT}. However, concatenation to
+  \texttt{GT}, \texttt{TG}, and \texttt{TT}. However, concatenation to
   \texttt{GTGTT} creates a second \texttt{GT}, which masks the
   uniqueness of the first. To prevent this, we separate sequences by a
   character outside of their alphabet, the zero byte.
