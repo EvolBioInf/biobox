@@ -39,15 +39,11 @@
   \end{table}
 
   Shustrings are found using the enhanced suffix array of $t$. This
-  consists of three tables:
-  \begin{enumerate}
-    \item the \emph{suffix array} of alphabetically ordered suffixes,
-      $\sa$
-    \item the longest common prefix array of the lengths of matching
-      prefixes, $\lcp$, and
-    \item the inverse suffix array to map positions in $t$ onto
-      positions in $\sa$.
-  \end{enumerate}
+  usually consists of two tables, the \emph{suffix array} of
+  alphabetically ordered suffixes, $\sa$, and the longest common prefix
+  array of the lengths of matching, $\lcp$. We augment these two with a
+  third array, the inverse suffix array, $\isa$, to map positions in $t$
+  onto positions in $\sa$.
 
   \begin{table}
     \caption{Enhanced suffix array of
@@ -72,7 +68,10 @@
   $\suf[i-1]$ are in $\lcp[i]$. And $\isa$ stores the positions of
   suffixes in text-order. For example, the first suffix in $t$,
   $t[1...]$, is located at $\isa[1]=6$, the second suffix, $t[2...]$, at
-  $\isa[2]=3$, and so on.
+  $\isa[2]=3$, and so on. In other words,
+  \begin{equation}\label{eq:isa}
+    \isa[\sa[i]]=i.
+  \end{equation}
 
   From the enhanced suffix array in Table~\ref{tab:esa}, we can look up
   the shustring lengths in Table~\ref{tab:shu} as the $\lcp$-value of
@@ -247,9 +246,10 @@
 #+begin_src latex
   To analyze the sequences, we concatenate them into one long byte
   slice, and, if appropriate, also add their reverse strands. Then we
-  calculate the enhanced suffix array of the concatenated data. From the
-  enhanced suffix array we compute the shustrings---strictly speaking
-  their lengths---which are analyzed and printed.
+  calculate the enhanced suffix array and the inverse suffix array of
+  the concatenated data. From the enhanced suffix array we compute the
+  shustrings---strictly speaking their lengths---which are analyzed and
+  printed.
 #+end_src
 #+begin_src go <<Analyze sequences, Ch.~\ref{ch:shu}>>=
   //<<Concatenate sequences, Ch.~\ref{ch:shu}>>
@@ -257,6 +257,7 @@
 	  //<<Concatenate reverse strands, Ch.~\ref{ch:shu}>>
   }
   //<<Compute enhanced suffix array, Ch.~\ref{ch:shu}>>
+  //<<Compute inverse suffix array, Ch.~\ref{ch:shu}>>
   //<<Compute shustrings, Ch.~\ref{ch:shu}>>
   //<<Analyze shustrings, Ch.~\ref{ch:shu}>>
   //<<Print shustrings, Ch.~\ref{ch:shu}>>
@@ -301,12 +302,11 @@
 #+begin_src latex
   For the upcoming shustring analysis, we process the sequence just
   generated into the three components of an enhanced suffix array, the
-  suffix array proper, the longest common prefix array, and the inverse
-  suffix array.
+  suffix array proper and the longest common prefix array.
 #+end_src
 #+begin_src go <<Compute enhanced suffix array, Ch.~\ref{ch:shu}>>=
   sa := esa.Sa(cat)
-  lcp, isa := esa.LcpIsa(cat, sa)
+  lcp := esa.Lcp(cat, sa)
 #+end_src
 #+begin_src latex
   We import \texttt{esa}.
@@ -320,6 +320,16 @@
   element $\lcp[i+1]$, we extend $\lcp$ by one cell. The value of this
   extra cell should be smaller than the length of any legitimate common
   prefix, we use the same value as in the first cell, $-1$.
+#+end_src
+#+begin_src latex
+  We implement the inverse suffix array according to equation
+  (\ref{eq:isa}).
+#+end_src
+#+begin_src go <<Compute inverse suffix array, Ch.~\ref{ch:shu}>>=
+  isa := make([]int, len(sa))
+  for i, _ := range sa {
+	  isa[sa[i]] = i
+  }
 #+end_src
 #+begin_src go <<Compute shustrings, Ch.~\ref{ch:shu}>>=
   shu := make([]int, len(sa))
