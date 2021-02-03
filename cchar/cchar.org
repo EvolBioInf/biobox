@@ -201,7 +201,7 @@
   }
   for i, v := range counts {
 	  if v > 0 {
-		  fmt.Fprintf(w, "%c\t%d\t%g\t\n", i, v,
+		  fmt.Fprintf(w, "%c\t%d\t%.3g\t\n", i, v,
 			  float64(v)/float64(s))
 	  }
   }
