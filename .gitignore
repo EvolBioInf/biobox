@@ -21,6 +21,7 @@ doc/numAl.tex
 doc/pam.tex
 doc/randomizeSeq.tex
 doc/ranseq.tex
+doc/repeater.tex
 doc/revComp.tex
 doc/shustring.tex
 doc/simNorm.tex
@@ -44,6 +45,7 @@ numAl/numAl
 pam/pam
 randomizeSeq/randomizeSeq
 ranseq/ranseq
+repeater/repeater
 revComp/revComp
 shustring/shustring
 simNorm/simNorm

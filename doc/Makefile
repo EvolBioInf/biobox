@@ -1,4 +1,4 @@
-all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex shustring.tex simNorm.tex testMeans.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
+all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex shustring.tex simNorm.tex testMeans.tex repeater.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
@@ -32,6 +32,8 @@ randomizeSeq.tex: ../randomizeSeq/randomizeSeq.org
 	bash ../scripts/org2nw ../randomizeSeq/randomizeSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > randomizeSeq.tex
 ranseq.tex: ../ranseq/ranseq.org
 	bash ../scripts/org2nw ../ranseq/ranseq.org | noweave -n -x | sed 's/_test/\\_test/g' > ranseq.tex	
+repeater.tex: ../repeater/repeater.org
+	bash ../scripts/org2nw ../repeater/repeater.org | noweave -n -x | sed 's/_test/\\_test/g' > repeater.tex	
 revComp.tex: ../revComp/revComp.org
 	bash ../scripts/org2nw ../revComp/revComp.org | noweave -n -x | sed 's/_test/\\_test/g' > revComp.tex
 shustring.tex: ../shustring/shustring.org
@@ -49,4 +51,4 @@ watterson.tex: ../watterson/watterson.org
 wrapSeq.tex: ../wrapSeq/wrapSeq.org
 	bash ../scripts/org2nw ../wrapSeq/wrapSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > wrapSeq.tex
 clean:
-	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex shustring simNorm.tex testMeans.tex util.tex var.tex watterson.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 
+	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex repeater.tex revComp.tex shustring simNorm.tex testMeans.tex util.tex var.tex watterson.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 

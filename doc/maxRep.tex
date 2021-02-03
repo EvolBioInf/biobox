@@ -1,0 +1,25 @@
+\REQUIRE{$t$} \COMMENT{Text with $t[0]=\texttt{\$}$.}
+\REQUIRE{$\lcp$} \COMMENT{$\lcp$ array with -1 appended.}
+\REQUIRE{$n$} \COMMENT{Length of $\lcp$ array}
+\REQUIRE{$\sa$} \COMMENT{Suffix array of $t[1...n-1]$}
+\ENSURE{Maximal repeats.}
+\STATE{$\push(0,1)$} \COMMENT{Initialize stack.}
+\STATE{$\delta\leftarrow 1$} \COMMENT{Position of most recent left-difference.}
+\FOR{$i\leftarrow 2$ \TO $n$} 
+  \STATE{$\ell\leftarrow i-1$} \COMMENT{Left border of node.}
+  \WHILE{$\lcp[i]<\topp().d$}
+    \STATE{$v\leftarrow\pop()$}
+    \STATE{$\ell\leftarrow v.\ell$}
+    \STATE{$d\leftarrow v.d$}
+    \IF{$d > 0$ \AND $\delta > \ell$}
+      \STATE{$m\leftarrow t[\sa[\ell]...\sa[\ell]+d-1]$} \COMMENT{The maximal repeat.}
+      \STATE{report maximal repeat $m$ at $\sa[j], \ell\le j\le i-1$}
+    \ENDIF
+  \ENDWHILE
+  \IF{$\lcp[i]>\topp().d$}
+    \STATE{$\push(\lcp[i],\ell)$}
+  \ENDIF
+  \IF{$i < n$ \AND $t[\sa[i-1]-1]\ne t[sa[i]-1]$}
+    \STATE{$\delta\leftarrow i$}
+  \ENDIF
+\ENDFOR

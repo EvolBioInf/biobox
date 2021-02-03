@@ -29,6 +29,8 @@ all:
 	cp randomizeSeq/randomizeSeq bin
 	make -C ranseq
 	cp ranseq/ranseq bin
+	make -C repeater
+	cp repeater/repeater bin
 	make -C revComp
 	cp revComp/revComp bin
 	make -C shustring
@@ -61,6 +63,7 @@ clean:
 	make clean -C pam
 	make clean -C randomizeSeq
 	make clean -C ranseq
+	make clean -C repeater
 	make clean -C revComp
 	make clean -C shustring
 	make clean -C simNorm
@@ -82,6 +85,7 @@ test:
 	make test -C pam
 	make test -C randomizeSeq
 	make test -C ranseq
+	make test -C repeater
 	make test -C revComp
 	make test -C shustring
 	make test -C simNorm

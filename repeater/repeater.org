@@ -1,0 +1,937 @@
+#+begin_src latex
+  The repeat structure of molecular sequences, particularly DNA
+  sequences, plays an important role in the design of genetic markers
+  and read mapping. However, some care needs to be taken when describing
+  this structure to avoid excessive output. For example, we might be
+  tempted to extract all pairs of repeated substrings, but their number
+  grows very quickly with sequence length. Consider for example the
+  sequence $t=\texttt{AAA}$ and let's write a repeated pair as a triple
+  consisting of the two starting positions, and the length. Our tiny
+  example sequence would already produce 4 repeat pairs, $(1,2,1)$,
+  $(1,3,1)$, $(2,3,1)$, and $(1,2,2)$. To avoid this behavior, we
+  restrict our attention to maximal substrings.
+
+  In a second example sequence $t=\texttt{CAGATAT}$, \ty{A} is repeated
+  three times. The pairs $(2,4,1)$ and $(2,6,1)$ cannot be extended to
+  the left or to the right without losing the repeat. Such pairs of
+  substrings are called maximal~\cite[p. 143]{gus97:alg}. In contrast,
+  the pair $(4,6,1)$ can be extended to the right, so it is not maximal.
+
+  Any sequence of non-trivial length tends to contain many maximal
+  pairs. To obtain a more compact description of repetitiveness, a
+  maximal repeat is defined as a substring that participates in a
+  maximal pair. So $\texttt{A}$ would be a maximal repeat in $t$ as it
+  participates in the maximal pair $(2,4,1)$, even though it also
+  participates in the pair $(4,6,1)$, which is not maximal. The program
+  \texttt{repeater} finds all maximal repeats in a sequence.
+
+  The maximal repeats of a string are discovered from its suffix
+  tree. Figure~\ref{fig:st} shows the suffix tree for a third example
+  sequence, $t=\texttt{CTAATAATG}$. Any path label that ends at an
+  internal node can be extended by at least two distinct nucleotides,
+  which makes it right-diverse. Maximal repeats are those right-diverse
+  path labels that are also left-diverse. Left-diversity is discovered
+  by traversing the suffix tree from the leaves upward. During such a
+  bottom-up traversal we encounter leaves and internal nodes. If we are
+  at a leaf, we store the character to its left in the parent node. If
+  we are at an internal node, we pass characters already collected to
+  the parent. As soon as two or more characters are found, the node is
+  left-diverse and this property propagates up the
+  tree~\cite[p. 145]{gus97:alg}.
+
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{ccccccccc}
+	1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9\\
+	\ty{C} & \ty{T} & \ty{A} & \ty{A} & \ty{T} & \ty{A} & \ty{A} &
+	\ty{T} & \ty{G}
+	\end{tabular}
+    \end{center}
+    \begin{center}
+      \input{st}
+    \end{center}
+    \caption{Suffix tree of $t=\texttt{CTAATAATG}$.}\label{fig:st}
+  \end{figure}
+
+  In practice, suffix trees have been replaced by enhanced suffix
+  arrays. Table~\ref{tab:esa1} shows the enhanced suffix array
+  corresponding to the suffix tree in Figure~\ref{fig:st}. It consists
+  of the suffix array, $\sa$, the longest common prefix array, $\lcp$,
+  and the suffixes, $\suf$.
+  \begin{table}
+    \caption{Enhanced suffix array of $t=\ty{CTAATAATG}$.}\label{tab:esa1}
+    \begin{center}
+      \begin{tabular}{cccl}
+	\hline
+	$i$ & $\sa[i]$ & $\lcp[i]$ & $\suf[i]$\\\hline
+	\input{esa1}
+	\hline
+      \end{tabular}
+    \end{center}
+  \end{table}
+  Table~\ref{tab:esa1} is in the customary vertical
+  orientation. However, getting from the array to the tree is easier if
+  we rotate it and omit the suffixes as shown in
+  Table~\ref{tab:setup}. Notice that the order of entries in $\sa$ is
+  the same as the order of leaves in the suffix tree. So by annotating
+  $\sa$ with parenthesis, we get the tree:
+  \begin{center}
+    \[
+    (((3\ 6) (4\ 7)) 1\ 9 ((7\ 5) 8))
+    \]
+  \end{center}
+  To find these parentheses, we begin by appending a last $\lcp$ value
+  that is smaller than all legitimate values, -1.
+  \begin{table}
+  \caption{Setup for converting an enhanced suffix array to its suffix tree.}\label{tab:setup}
+  \begin{center}
+    \begin{tabular}{lcccccccccc}
+      \input{esa2}
+    \end{tabular}
+  \end{center}
+  \end{table}
+  We initialize the empty Table~\ref{tab:setup} by writing the opening
+  parenthesis of the root node, which we also annotate with its depth,
+  0.
+  \begin{center}
+      \begin{tabular}{lcccccccccc}
+  $i$  & \.1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+  $\sa[i]$ &  ($_0$ \hspace{5pt} 3 & 6 & 4 & 7 & 1 & 9 & 2 & 5 & 8 & \\
+  $\lcp[i]$ & -1 & 3 & 1 & 2 & 0 & 0 & 0 & 4 & 1 & -1\\
+  \end{tabular}
+  \end{center}
+  We denote this half-open root node as the pair $(0,1)$ and place it on
+  a stack that we manipulate throughout tree construction using the
+  functions $\push(v)$ to add node $v$ to the stack, $\topp()$ to refer
+  to the uppermost node, and $\pop()$ to remove the top node. We're done
+  with $i=1$ and tick it off with a dot.
+
+  The repeated part of the procedure starts at $i=2$. From now on we ask
+  at every $i$, whether $\lcp[i]$ is less than or greater than
+  $\topp().d$. While $\lcp[i]<\topp().d$, we write closing parentheses
+  at $i-1$ and remove, or pop, the corresponding opening parentheses
+  from the stack. If $\lcp[i]>\topp().d$, we place an opening
+  parenthesis at the position of the last opening parenthesis removed,
+  or, if none was removed, at $i-1$. Here is a summary of the procedure:
+  \begin{algorithmic}
+    \STATE{$\ell\leftarrow i - 1$} \COMMENT{Left border of node.}
+    \WHILE{$\lcp[i] < \topp().d$}
+    \STATE{write ``)'' at $i-1$} \COMMENT{Right border of node.}
+    \STATE{$\ell\leftarrow\topp().\ell$}
+    \STATE{dot the depth of the corresponding ``(``}
+    \STATE{$\pop()$}
+    \ENDWHILE
+    \IF{$\lcp[i]>\topp().d$}
+    \STATE{$d\leftarrow\lcp[i]$}
+    \STATE{write ``($_d$'' at $\ell$}
+    \STATE{$\push(d,\ell)$}
+    \ENDIF
+  \end{algorithmic}
+  Now, $\lcp[2]>\topp().d=0$ so we write ($_3$ at $i=1$ to push
+  $(3,1)$.
+  \begin{center}
+      \begin{tabular}{lcccccccccc}
+  $i$  & \.1 & \.2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+  $\sa[i]$ &  ($_0$ \hspace{5pt} ($_3$ 3 & 6 & 4 & 7 & 1 & 9 & 2 & 5 & 8 & \\
+  $\lcp[i]$ & -1 & 3 & 1 & 2 & 0 & 0 & 0 & 4 & 1 & -1\\
+  \end{tabular}
+  \end{center}
+  At $i=3$ we close ($_3$ and dot it to remove it from the stack. Now,
+  $\lcp[3]=1$ is greater than the depth of the new top node, 0, so we
+  write ($_1$ at $i=1$ to push $(1,1)$.
+  \begin{center}
+      \begin{tabular}{lcccccccccc}
+  $i$  & \.1 & \.2 & \.3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+  $\sa[i]$ &  ($_0$ \hspace{5pt} ($_1$ ($_{\dot{3}}$ 3 & 6) & 4 & 7 & 1 & 9 & 2 & 5 & 8 & \\
+  $\lcp[i]$ & -1 & 3 & 1 & 2 & 0 & 0 & 0 & 4 & 1 & -1\\
+  \end{tabular}
+  \end{center}
+  At $i=4$ we write ($_4$ at $i=3$ to push $(2,3)$.
+  \begin{center}
+      \begin{tabular}{lcccccccccc}
+  $i$  & \.1 & \.2 & \.3 & \.4 & 5 & 6 & 7 & 8 & 9 & 10\\
+  $\sa[i]$ &  ($_0$ \hspace{5pt} ($_1$ ($_{\dot{3}}$ 3 & 6) & ($_2$ 4 & 7 & 1 & 9 & 2 & 5 & 8 & \\
+  $\lcp[i]$ & -1 & 3 & 1 & 2 & 0 & 0 & 0 & 4 & 1 & -1\\
+  \end{tabular}
+  \end{center}
+  At $i=5$ we write two closing parentheses at $i=4$ and dot the
+  corresponding depths to pop $(2,3)$ and $(1,1)$.
+  \begin{center}
+      \begin{tabular}{lcccccccccc}
+  $i$  & \.1 & \.2 & \.3 & \.4 & \.5 & 6 & 7 & 8 & 9 & 10\\
+  $\sa[i]$ &  ($_0$ \hspace{5pt} ($_{\dot{1}}$ ($_{\dot{3}}$ 3 & 6) & ($_{\dot{2}}$ 4 & 7)) & 1 & 9 & 2 & 5 & 8 & \\
+  $\lcp[i]$ & -1 & 3 & 1 & 2 & 0 & 0 & 0 & 4 & 1 & -1\\
+  \end{tabular}
+  \end{center}
+  At $i=6$ and $i=7$ nothing changes, so we skip forward to $i=8$,
+  where we write ($_4$ at $i=7$ to push $(4,7)$.
+  \begin{center}
+      \begin{tabular}{lcccccccccc}
+  $i$  & \.1 & \.2 & \.3 & \.4 & \.5 & \.6 & \.7 & \.8 & 9 & 10\\
+  $\sa[i]$ &  ($_0$ \hspace{5pt} ($_{\dot{1}}$ ($_{\dot{3}}$ 3 & 6) &
+	  ($_{\dot{2}}$ 4 & 7)) & 1 & 9 & ($_4$ 2 & 5 & 8 & \\
+  $\lcp[i]$ & -1 & 3 & 1 & 2 & 0 & 0 & 0 & 4 & 1 & -1\\
+  \end{tabular}
+  \end{center}
+  At $i=9$ we write ) at $i=8$ and pop $(4,7)$; then we write ($_1$ at
+  $i=7$ to push $(1,7)$.
+  \begin{center}
+      \begin{tabular}{lcccccccccc}
+  $i$  & \.1 & \.2 & \.3 & \.4 & \.5 & \.6 & \.7 & \.8 & \.9 & 10\\
+  $\sa[i]$ &  ($_0$ \hspace{5pt} ($_{\dot{1}}$ ($_{\dot{3}}$ 3 & 6) &
+	  ($_{\dot{2}}$ 4 & 7)) & 1 & 9 & ($_1$ ($_{\dot{4}}$ 2 & 5) & 8 & \\
+  $\lcp[i]$ & -1 & 3 & 1 & 2 & 0 & 0 & 0 & 4 & 1 & -1\\
+  \end{tabular}
+  \end{center}
+  Finally, at $i=10$ we close and pop the nodes with depths 1 and 0
+  remaining on the stack. And, voil\'a, there's our tree:
+  \begin{center}
+      \begin{tabular}{lcccccccccc}
+  $i$  & \.1 & \.2 & \.3 & \.4 & \.5 & \.6 & \.7 & \.8 & \.9 & \.10\\
+  $\sa[i]$ &  ($_{\dot{0}}$ \hspace{5pt} ($_{\dot{1}}$ ($_{\dot{3}}$ 3 & 6) &
+	  ($_{\dot{2}}$ 4 & 7)) & 1 & 9 & ($_{\dot{1}}$ ($_{\dot{4}}$ 2 & 5) & 8)) & \\
+  $\lcp[i]$ & -1 & 3 & 1 & 2 & 0 & 0 & 0 & 4 & 1 & -1\\
+  \end{tabular}
+  \end{center}
+
+  This gives us a paper-and-pencil construction of suffix trees from
+  $\lcp$ arrays. It also gives us a new perspective on the search for
+  maximal repeats. I said earlier that these could be found by walking
+  up the suffix tree in Figure~\ref{fig:st} and noting whether any of
+  the suffixes in a node's subtree differed in their left characters.
+
+  Now, during our paper-and-pencil procedure we encountered the suffixes
+  in the order in which they occur in the tree. So we just monitor the
+  last position at which a suffix differed from its neighbor. If that
+  position is greater than the left border of the current node, the node
+  a maximal repeat, unless, of course, it's the root.
+
+  This reasoning is summarized in
+  Algorithm~\ref{alg:maxRep}~\cite[p. 149]{ohl13:bio}. In its last
+  if-clause, we compare the characters to the left of two suffixes. For
+  this to work, we conceptually place a sentinel character to the left
+  of the first proper character in $t$, $t[0]=\ty{\$}$. We also refer to
+  $\sa[i]$, where $i$ ranges from 1 to $n$, which is the length of the
+  $\lcp$-array. However, the $\lcp$-array is one element longer than
+  $\sa$, so we have to make sure we don't overstep its right-hand
+  border. The program \texttt{repeater} implements this algorithm to
+  find the maximal repeats of one or more sequences.
+  \begin{algorithm}
+    \caption{Finding maximal repeats by bottom-up suffix tree
+      traversal~\cite[p. 149]{ohl13:bio}.}\label{alg:maxRep}
+    \begin{algorithmic}
+      \input{maxRep}
+    \end{algorithmic}
+  \end{algorithm}
+
+  \section*{Implementation}
+  The outline of \texttt{repeater} contains hooks for imports,
+  types, functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<repeater.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:rep}>>
+  )
+  //<<Types, Ch.~\ref{ch:rep}>>
+  //<<Methods, Ch.~\ref{ch:rep}>>
+  //<<Functions, Ch.~\ref{ch:rep}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:rep}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare and parse the options,
+  and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:rep}>>=
+  //<<Set usage, Ch.~\ref{ch:rep}>>
+  //<<Declare options, Ch.~\ref{ch:rep}>>
+  //<<Parse options, Ch.~\ref{ch:rep}>>
+  //<<Parse input files, Ch.~\ref{ch:rep}>>
+#+end_src
+#+begin_src latex
+    The usage consists of three parts, the usage message proper, an
+    explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:rep}>>=
+  u := "repeater [-h] [options] [files]"
+  p := "Find maximal repeats."
+  e := "repeater foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare five options,
+  \begin{enumerate}
+  \item \texttt{-m} $m$: print only repeats of minimum length $m$
+  \item \texttt{-r}: include reverse strand
+  \item \texttt{-p}: print all positions
+  \item \texttt{-s}: print full sequences
+  \item \texttt{-v} print program version
+  \end{enumerate}
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:rep}>>=
+  var optM = flag.Int("m", 0, "minimum repeat length; default: longest")
+  var optR = flag.Bool("r", false, "include reverse strand")
+  var optP = flag.Bool("p", false, "print all positions")
+  var optS = flag.Bool("s", false, "print full sequences")
+  var optV = flag.Bool("v", false, "print version & license")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \texttt{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:rep}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("repeater")
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining arguments on the command line are interpreted as input
+  files. They are parsed by applying the function \texttt{scan} to each
+  of them. It takes as arguments the options.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:rep}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optR, *optP, *optS, *optM)
+#+end_src
+#+begin_src latex
+  We import \texttt{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  Inside \texttt{scan} we retrieve the arguments passed, collect the
+  sequences, and analyze them.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:rep}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:rep}>>
+	  //<<Collect sequences, Ch.~\ref{ch:rep}>>
+	  //<<Analyze sequences, Ch.~\ref{ch:rep}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  The arguments are retrieved via reflection.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:rep}>>=
+  optR := args[0].(bool)
+  optP := args[1].(bool)
+  optS := args[2].(bool)
+  optM := args[3].(int)
+#+end_src
+#+begin_src latex
+  We store the sequences contained in the file.
+#+end_src
+#+begin_src go <<Collect sequences, Ch.~\ref{ch:rep}>>=
+  var sequences []*fasta.Sequence
+  scanner := fasta.NewScanner(r)
+  for scanner.ScanSequence() {
+	  sequence := scanner.Sequence()
+	  sequences = append(sequences, sequence)
+  }
+#+end_src
+#+begin_src latex
+  We concatenate the sequences and compute the enhanced suffix array. To
+  understand the relationship between the sequences known to the user
+  and the concatenated version we analyze, consider
+  $t=\texttt{AC\$AC\$A}$. Taken at face value, this contains the maximal
+  repeat \texttt{AC\$A}. In other words, there's nothing in the
+  unprocessed enhanced suffix array that stops a repeat from crossing
+  sequence borders. So we check the $\lcp$ array and trim values that
+  run over. Then we compute the maximal repeats, determine their minimum
+  length, and collect the repeats that conform to that minimum. They are
+  sorted by size and printed.
+#+end_src
+#+begin_src go <<Analyze sequences, Ch.~\ref{ch:rep}>>=
+  //<<Concatenate sequences, Ch.~\ref{ch:rep}>>
+  //<<Compute enhanced suffix array, Ch.~\ref{ch:rep}>>
+  //<<Check $\lcp$-values for run over, Ch.~\ref{ch:rep}>>
+  //<<Compute maximal repeats, Ch.~\ref{ch:rep}>>
+  //<<Determine minimum repeat length, Ch.~\ref{ch:rep}>>
+  //<<Collect repeats of minimum length, Ch.~\ref{ch:rep}>>
+  //<<Sort repeats by size, Ch.~\ref{ch:rep}>>
+  //<<Print repeats, Ch.~\ref{ch:rep}>>
+#+end_src
+#+begin_src latex
+  We concatenate the forward strands and, if requested, the reverse
+  strands, too.
+#+end_src
+#+begin_src go <<Concatenate sequences, Ch.~\ref{ch:rep}>>=
+  //<<Concatenate forward strands, Ch.~\ref{ch:rep}>>
+  if optR {
+	  //<<Concatenate reverse strands, Ch.~\ref{ch:rep}>>
+  }
+#+end_src
+#+begin_src latex
+  The sequence data is concatenated into a byte slice. Each sequence is
+  terminated by the zero byte as separator. Any match across sequence
+  boundaries would thus be flagged in the output as an unprintable
+  character.
+#+end_src
+#+begin_src go <<Concatenate forward strands, Ch.~\ref{ch:rep}>>=
+var cat []byte
+var ends []int
+for i, sequence := range sequences {
+	if i > 0 {
+		cat = append(cat, 0)
+	}
+	cat = append(cat, sequence.Data()...)
+	ends = append(ends, len(cat))
+}
+#+end_src
+#+begin_src latex
+  To simplify the analysis, we pretend for now the reverse strands are
+  just another batch of forward strands. They are appended in the same
+  order as the forward strand.
+#+end_src
+#+begin_src go <<Concatenate reverse strands, Ch.~\ref{ch:rep}>>=
+    for _, sequence := range sequences {
+	    sequence.ReverseComplement()
+	    cat = append(cat, 0)
+	    cat = append(cat, sequence.Data()...)
+	    ends = append(ends, len(cat))
+    }
+#+end_src
+#+begin_src latex
+  The enhanced suffix array consists of the suffix array proper and the
+  $\lcp$ array.
+#+end_src
+#+begin_src go <<Compute enhanced suffix array, Ch.~\ref{ch:rep}>>=
+  sa := esa.Sa(cat)
+  lcp := esa.Lcp(cat, sa)
+#+end_src
+#+begin_src latex
+  We import \texttt{esa}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "github.com/evolbioinf/esa"
+#+end_src
+#+begin_src latex
+  To check for out of bounds repeats, convert suffix positions to
+  sequence identifiers. As we shall need this conversion again when
+  printing the repeats, we delegate it to the function
+  \texttt{positionToSequence}. Any out of bound $\lcp$-value we do find
+  is trimmed to the correct length.
+#+end_src
+#+begin_src go <<Check $\lcp$-values for run over, Ch.~\ref{ch:rep}>>=
+  for i, p := range sa {
+	  seq := positionToSequence(p, ends)
+	  l := ends[seq] - p
+	  if p + lcp[i] > ends[seq] {
+		  lcp[i] = l
+	  }
+  }
+#+end_src
+#+begin_src latex
+  In the function \texttt{positionToSequence} we iterate across the
+  sequence ends until we find the interval containing the position.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:rep}>>=
+  func positionToSequence(p int, ends []int) int {
+	  var start, end, seq int
+	  for seq, end = range ends {
+		  if p >= start && p <= end {
+			  break
+		  }
+	  }
+	  return seq
+  }
+#+end_src
+#+begin_src latex
+  The maximal repeats are computed by implementing
+  Algorithm~\ref{alg:maxRep} to traverse the suffix tree of the
+  input. For this tree traversal we prepare the required variables
+  before walking across the $\lcp$ array.
+#+end_src
+#+begin_src go <<Compute maximal repeats, Ch.~\ref{ch:rep}>>=
+  //<<Prepare variables, Ch.~\ref{ch:rep}>>
+  //<<Iterate over $\lcp$ array, Ch.~\ref{ch:rep}>>
+#+end_src
+#+begin_src latex
+  A suffix tree consists of nodes. In the pseudocode of
+  Algorithm~\ref{alg:maxRep}, they consist of two fields, depth, $d$,
+  and left border, $\ell$. In our implementation we add the right
+  border, $r$, so that we can store all the nodes that signify maximal
+  repeats before printing them, rather than mixing printing and
+  traversal.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:rep}>>=
+  type node struct {
+	  d, l, r int
+  }
+#+end_src
+#+begin_src latex
+  The nodes are kept on a stack, which we implement as a slice~\cite[p. 92]{don16:go}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:rep}>>=
+  type stack []node
+#+end_src
+#+begin_src latex
+  We implement the three conventional stack functions, \texttt{top},
+  \texttt{pop}, and \texttt{push}.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:rep}>>=
+  func (s *stack) top() node { return (*s)[len(*s)-1] }
+  func (s *stack) push(n node) { *s = append(*s, n) }
+  func (s *stack) pop() node {
+	  n := (*s)[len(*s)-1]
+	  *s = (*s)[0:len(*s)-1]
+	  return n
+  }	
+#+end_src
+#+begin_src latex
+  As shown in Algorithm~\ref{alg:maxRep}, we append the final -1 to the
+  $\lcp$ array, denote its length as $n$, and create a stack onto which
+  we push the root node. We also create a slice for storing the nodes
+  that correspond to maximal repeats. The last significant variable,
+  $\delta$, is the position of the most recent left-diverse suffix.
+#+end_src
+#+begin_src go <<Prepare variables, Ch.~\ref{ch:rep}>>=
+  lcp = append(lcp, -1)
+  n := len(lcp)
+  s := new(stack)
+  root := node{d: 0, l: 1}
+  s.push(root)
+  var repeats []node
+  var delta int
+#+end_src
+#+begin_src latex
+  Each step in the iteration over the $\lcp$ array consists of two
+  parts, the while loop, and the if clauses.
+#+end_src
+#+begin_src go <<Iterate over $\lcp$ array, Ch.~\ref{ch:rep}>>=
+  for i := 1; i < n; i++ {
+	  l := i - 1
+	  //<<While loop, Ch.~\ref{ch:rep}>>
+	  //<<If clauses, Ch.~\ref{ch:rep}>>
+  }
+#+end_src
+#+begin_src latex
+  In the while loop we remove nodes from the stack until it is either
+  empty or the current $\lcp$ value is greater or equal to the depth of
+  the top node. The right border of these nodes is $i-1$. Left-diverse
+  nodes represent maximal repeats and are stored.
+#+end_src
+#+begin_src go <<While loop, Ch.~\ref{ch:rep}>>=
+  for len(*s) > 0 && lcp[i] < s.top().d {
+	  v := s.pop()
+	  l = v.l
+	  if delta > l && v.d > 0 {
+		  v.r = i - 1
+		  repeats = append(repeats, v)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  In the first if clause outside the while loop, we first make sure the
+  stack isn't empty. Then we ask whether the current $\lcp$ value is
+  greater than the depth of the top node. If so, we push a new node with
+  the left border of the most recently popped node.
+#+end_src
+#+begin_src go <<If clauses, Ch.~\ref{ch:rep}>>=
+  if len(*s) > 0 && lcp[i] > s.top().d {
+	  s.push(node{d: lcp[i], l: l})
+  }
+#+end_src
+#+begin_src latex
+  If the current suffix left-differs from its neighbor, we update
+  $\delta$. We avoid referencing the character to the left of the first
+  character and simply note a difference instead. We also ensure that
+  the sentinel character, 0, differs from all characters, even itself.
+#+end_src
+#+begin_src go <<If clauses, Ch.~\ref{ch:rep}>>=
+  if i >= n-1 { continue }
+  pos1 := sa[i-1] - 1
+  pos2 := sa[i] - 1
+  if pos1 < 0 || pos2 < 0 {
+	delta = i
+  } else if cat[pos1] == 0 || cat[pos2] == 0 {
+	  delta = i
+  } else if cat[pos1] != cat[pos2] {
+	  delta = i
+  }
+#+end_src
+#+begin_src latex
+  The minimum repeat length is either set by the user or is the maximum
+  repeat length. Now, the user may have requested repeats longer than
+  available, in which case we'd like to send a message. So to determine
+  the minimum repeat length we first compute the maximum repeat length.
+#+end_src
+#+begin_src go <<Determine minimum repeat length, Ch.~\ref{ch:rep}>>=
+  max := 0
+  for _, repeat := range repeats {
+	  if max < repeat.d {
+		  max = repeat.d
+	  }
+  }
+#+end_src
+#+begin_src latex
+  If the user set a minimum repeat length, we check this against the
+  maximum just determined. If the user requested a length greater than
+  the maximum, we reset the minimum to the maximum and send a
+  waring. Otherwise the maximum becomes the minimum.
+#+end_src
+#+begin_src go <<Determine minimum repeat length, Ch.~\ref{ch:rep}>>=
+  min := 0
+  if optM == 0 {
+	  min = max
+  } else {
+	  if optM <= max {
+		  min = optM
+	  } else {
+		  min = max
+		  fmt.Fprintf(os.Stderr, "there aren't any " +
+			  "repeats longer than %d\n", min)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "os"
+#+end_src
+#+begin_src latex
+  We collect the repeats of minimum length
+#+end_src
+#+begin_src go <<Collect repeats of minimum length, Ch.~\ref{ch:rep}>>=
+  var mRepeats = make([]node, 0)
+  for _, repeat := range repeats {
+	  if repeat.d >= min {
+		  mRepeats = append(mRepeats, repeat)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  To sort the repeats by descending length, we declare the type
+  \texttt{nodes},
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:rep}>>=
+  type nodes []node
+#+end_src
+#+begin_src latex
+  and make it sortable.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:rep}>>=
+func (n nodes) Len() int { return len(n) }
+func (n nodes) Less(i, j int) bool { return n[i].d > n[j].d }
+func (n nodes) Swap(i, j int) { n[i], n[j] = n[j], n[i] }
+#+end_src
+#+begin_src latex
+  Then we sort the repeats.
+#+end_src
+#+begin_src go <<Sort repeats by size, Ch.~\ref{ch:rep}>>=
+  sort.Sort(nodes(mRepeats))
+#+end_src
+#+begin_src latex
+  We import \ty{sort}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "sort"
+#+end_src
+#+begin_src latex
+  Repeats are printed in a table using a tab writer. This is set up
+  before we print the table header and iterate over the repeats of
+  minimum length. For each repeat, we convert the position of its first
+  instance from a coordinate in the concatenated sequence to a position
+  the user understands. After the last repeat, the table is printed.
+#+end_src
+#+begin_src go <<Print repeats, Ch.~\ref{ch:rep}>>=
+  //<<Setup tab writer, Ch.~\ref{ch:rep}>>
+  //<<Write table header, Ch.~\ref{ch:rep}>>
+  for _, repeat := range mRepeats {
+	  //<<Convert array position to user position, Ch.~\ref{ch:rep}>>
+	  //<<Write a repeat, Ch.~\ref{ch:rep}>>
+  }
+  //<<Print table, Ch.~\ref{ch:rep}>>
+#+end_src
+#+begin_src latex
+  A tab writer writes to a buffer, which we initialize to a column width
+  of 1, tabs of zero characters, and padding with two blanks.
+#+end_src
+#+begin_src go <<Setup tab writer, Ch.~\ref{ch:rep}>>=
+  var buf []byte
+  buffer := bytes.NewBuffer(buf)
+  w := new(tabwriter.Writer)
+  w.Init(buffer, 1, 0, 2, ' ', 0)
+#+end_src
+#+begin_src latex
+  We import \texttt{bytes} and \texttt{tabwriter}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "bytes"
+  "text/tabwriter"
+#+end_src
+#+begin_src latex
+  The table consists of four columns, length, count, sequence, and
+  positions. By default only one of the positions is printed, but the
+  user can request all of them, in which case we change the column
+  header \emph{Position} to plural.
+#+end_src
+#+begin_src go <<Write table header, Ch.~\ref{ch:rep}>>=
+  fmt.Fprint(w, "#\tLength\tCount\tSequence\tPosition")
+  if optP {
+	  fmt.Fprint(w, "s")
+  }
+  fmt.Fprint(w, "\n")
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  Given a suffix position, we need its strand, sequence identifier, and
+  position within that sequence. As we might want to calculate these
+  values for each instance of a repeat, we delegate this to the function
+  \texttt{position}. It takes as arguments a repeat position, its
+  length, the end positions, and whether or not the reverse strand was
+  included.
+#+end_src
+#+begin_src go <<Convert array position to user position, Ch.~\ref{ch:rep}>>=
+  strand, seqId, pos := position(sa[repeat.l], repeat.d, ends, optR)
+#+end_src
+#+begin_src latex
+  Given a position, we check whether it's on the forward or reverse
+  strands.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:rep}>>=
+  func position(p, l int, ends []int, rev bool) (byte, int, int) {
+	  seqId := positionToSequence(p, ends)
+	  strand := byte('f')
+	  if rev && p > ends[len(ends)/2-1] {
+		  strand = byte('r')
+		  //<<Determine position on reverse strand, Ch.~\ref{ch:rep}>>
+	  } else {
+		  //<<Determine position on forward strand, Ch.~\ref{ch:rep}>>
+	  }
+	  return strand, seqId, p
+  }
+#+end_src
+#+begin_src latex
+  On the reverse strand, a position is mapped to its forward equivalent
+  by subtracting it from the end. We also halve the sequence identifier.
+#+end_src
+#+begin_src go <<Determine position on reverse strand, Ch.~\ref{ch:rep}>>=
+  p = ends[seqId] - p - l
+  seqId /= 2
+#+end_src
+#+begin_src latex
+  On the forward strand, a position minus the start gives the absolute
+  position in that sequence. The start is either zero of follows the end
+  of its predecessor.
+#+end_src
+#+begin_src go <<Determine position on forward strand, Ch.~\ref{ch:rep}>>=
+  start := 0
+  if seqId > 0 {
+	  start = ends[seqId-1] + 1
+  }
+  p -= start
+#+end_src
+#+begin_src latex 
+  A repeat is written in three steps, its length and count, its
+  sequence, and its positions.
+#+end_src
+#+begin_src go <<Write a repeat, Ch.~\ref{ch:rep}>>=
+  //<<Write length and count, Ch.~\ref{ch:rep}>>
+  //<<Write sequence, Ch.~\ref{ch:rep}>>
+  //<<Write positions, Ch.~\ref{ch:rep}>>
+#+end_src
+#+begin_src latex
+  The count of a repeat is the length of the node interval.
+#+end_src
+#+begin_src go <<Write length and count, Ch.~\ref{ch:rep}>>=
+  count := repeat.r - repeat.l + 1
+  fmt.Fprintf(w, "\t%d\t%d", repeat.d, count)
+#+end_src
+#+begin_src latex
+  Repeats can be very long, so by default we write any repeat longer
+  than 13 residues as the first five residues, followed by three
+  dots, followed by the last five residues. However, the user can
+  request the full sequence.
+#+end_src
+#+begin_src go <<Write sequence, Ch.~\ref{ch:rep}>>=
+  p := sa[repeat.l]
+  seq := cat[p:p+repeat.d]
+  if optS || repeat.d <= 13 {
+	  fmt.Fprintf(w, "\t%s", seq)
+  } else {
+	  fmt.Fprintf(w, "\t%s", seq[0:5])
+	  fmt.Fprintf(w, "...")
+	  fmt.Fprintf(w, "%s", seq[repeat.d-5:repeat.d])
+  }
+#+end_src
+#+begin_src latex
+  A position in the concatenated sequence is converted to a string
+  consisting of sequence identifier, position, and strand. By default we
+  write a single position, but the user can request them all. The
+  formatting of individual positions is delegated to the function
+  \texttt{posStr}.
+#+end_src
+#+begin_src go <<Write positions, Ch.~\ref{ch:rep}>>=
+  str := posStr(strand, seqId+1, pos+1, len(sequences), optR)
+  fmt.Fprintf(w, "\t%s", str)
+  if optP {
+	  for i := repeat.l + 1; i <= repeat.r; i++ {
+		  strand, seqId, pos = position(sa[i], repeat.d, ends, optR)
+		  str = posStr(strand, seqId+1, pos+1, len(sequences), optR)
+		  fmt.Fprintf(w, " %s", str)
+	  }
+  }
+  fmt.Fprintf(w, "\n")
+#+end_src
+#+begin_src latex
+  The function \texttt{posStr} prints strand, sequence identifier, and
+  position as
+  \[
+  \mbox{f}|\mbox{r}i:p
+  \]
+  The strand information is dropped if only the forward strand was
+  analyzed, the sequence identifier is dropped if only one sequence was analyzed.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:rep}>>=
+  func posStr(strand byte, seq, pos, num int, rev bool) string {
+	  str := ""
+	  if rev { str += string(strand) }
+	  if num > 1 { str += strconv.Itoa(seq) }
+	  if rev || num > 1 { str += ":" }
+	  str += strconv.Itoa(pos)
+	  return str
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  The table of repeats is now written, but before we print the buffer,
+  we flush any remaining bytes from the writer.
+#+end_src
+#+begin_src go <<Print table, Ch.~\ref{ch:rep}>>=
+  w.Flush()
+  fmt.Printf("%s", buffer)
+#+end_src
+#+begin_src latex
+  The program is done, time for a test run.
+
+  \section*{Testing}
+  The testing outline has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<repeater_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:rep}>>
+  )
+
+  func TestRepeater(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:rep}>>
+  }
+#+end_src
+#+begin_src latex
+  Testing proceeds in three phases. We construct a set of test commands
+  and a list of files containing the results we want. Then we run the
+  commands.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:rep}>>=
+  var commands []*exec.Cmd
+  //<<Construct test commands, Ch.~\ref{ch:rep}>>
+  //<<Construct list of result files, Ch.~\ref{ch:rep}>>
+  for i, command := range commands {
+	  //<<Run test command, Ch.~\ref{ch:rep}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:rep}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct five test commands. One without any options, and one for
+  each of the four options.
+#+end_src
+#+begin_src go <<Construct test commands, Ch.~\ref{ch:rep}>>=
+  c := exec.Command("repeater", "test.fasta")
+  commands = append(commands, c)
+  c = exec.Command("repeater", "-m", "13", "test.fasta")
+  commands = append(commands, c)
+  c = exec.Command("repeater", "-r", "test.fasta")
+  commands = append(commands, c)
+  c = exec.Command("repeater", "-p", "test.fasta")
+  commands = append(commands, c)
+  c = exec.Command("repeater", "-s", "test.fasta")
+  commands = append(commands, c)
+#+end_src
+#+begin_src latex
+  There is one result file per command.
+#+end_src
+#+begin_src go <<Construct list of result files, Ch.~\ref{ch:rep}>>=
+  var results []string
+  for i, _ := range commands {
+	  name := "r" + strconv.Itoa(i+1) + ".txt"
+	  results = append(results, name)
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{strconv}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:rep}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  An individual command is run and the result we get compared to what we
+  want.
+#+end_src
+#+begin_src go <<Run test command, Ch.~\ref{ch:rep}>>=
+  get, err := command.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q\n", command)
+  }
+  want, err := ioutil.ReadFile(results[i])
+  if err != nil {
+	  t.Errorf("couldnt' open %q\n", results[i])
+  }
+  if !bytes.Equal(want, get) {
+	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{ioutil} and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:rep}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src
+

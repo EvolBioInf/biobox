@@ -1,0 +1,2 @@
+#  Length  Count  Sequence       Position
+   14      2      GACTC...TCTTT  2:5469
