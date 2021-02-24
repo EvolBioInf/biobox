@@ -45,24 +45,25 @@
 
   Gaps are scored with affine costs, that is, gap opening, $g_{\rm o}$,
   is distinguished from gap extension, $g_{\rm e}$. To accommodate these
-  affine gap costs, each entry in $p$, $p_{i,j}$, consists of four
-  subentries, $p_{i,j}^{\rm e}$, $p_{i,j}^{\rm f}$, $p_{i,j}^{\rm g}$,
-  and $p_{i,j}^{\rm v}$.
+  affine gap costs, each entry in $p$, $p_{ij}$, consists of four
+  subentries, $p_{ij}^{\rm e}$, $p_{ij}^{\rm f}$, $p_{ij}^{\rm g}$,
+  and $p_{ij}^{\rm v}$.
 
   The last entry,
-  $p_{i,j}^{\rm v}$, is the score of the subalignment of $q[1...i]$ and
-  $s[1...j]$. It is computed as the maximum of the other three entries.
+  $p_{ij}^{\rm v}$, is the score of the subalignment of $q[1...i]$ and
+  $s[1...j]$. It is computed as the maximum of the other three entries
+  \cite[p. 244]{gus97:alg}.
   \begin{equation}\label{eq:alMax}
-    p_{i,j}^{\rm v} = \mbox{max}\left(p_{i,j}^{\rm e},p_{i,j}^{\rm f},p_{i,j}^{\rm g}\right).
+    p_{ij}^{\rm v} = \mbox{max}\left(p_{ij}^{\rm e},p_{ij}^{\rm f},p_{ij}^{\rm g}\right).
   \end{equation}
-  The three terms on the left hand side are computed with respect to
+  The three terms on the right hand side are computed with respect to
   their vertical, horizontal, or diagonal neighbors:
   \begin{eqnarray*}
-    p_{i,j}^{\rm e} & = & \mbox{max}\left(p_{i-1,j}^{\rm e},
-    p_{i-1}^{\rm v}+g_{\rm o}\right)+g_{\rm e}\\
-    p_{i,j}^{\rm f} & = & \mbox{max}\left(p_{i,j-1}^{\rm f},
+    p_{ij}^{\rm e} & = & \mbox{max}\left(p_{i-1,j}^{\rm e},
+    p_{i-1,j}^{\rm v}+g_{\rm o}\right)+g_{\rm e}\\
+    p_{ij}^{\rm f} & = & \mbox{max}\left(p_{i,j-1}^{\rm f},
     p_{i,j-1}^{\rm v}+g_{\rm o}\right)+g_{\rm e}\\
-    p_{i,j}^{\rm g} & = & p_{i-1,j-1}^{\rm g} + \mbox{score}\left(q[i],s[j]\right)
+    p_{ij}^{\rm g} & = & p_{i-1,j-1}^{\rm g} + \mbox{score}\left(q[i],s[j]\right)
   \end{eqnarray*}
   In the last equation the \emph{score} of two residues is either
   match/mismatch, or taken from an explicit score matrix, for example
@@ -71,21 +72,23 @@
   For local alignment, the maximum in equation (\ref{eq:alMax}) includes
   zero,
   \[
-  p_{i,j}^{\rm v} = \mbox{max}\left(p_{i,j}^{\rm e},p_{i,j}^{\rm f},p_{i,j}^{\rm g},0\right).
+  p_{ij}^{\rm v} = \mbox{max}\left(p_{ij}^{\rm e},p_{ij}^{\rm f},p_{ij}^{\rm g},0\right).
   \]
 
   Initialization of $p$ also depends on the alignment type. For global
   it consists of one long and costly gap along the first column and
   first row.
   \begin{eqnarray*}
-    p_{0,0}^{\rm v} & = & 0\\
-    p_{i,0}^{\rm v} & = & p_{i,0}^{\rm f} = g_{\rm o} + ig_{\rm e}; i>0\\
-    p_{0,j}^{\rm v} & = & p_{0,j}^{\rm e} = g_{\rm o} + jg_{\rm e}; i>0
+    p_{00}^{\rm v} & = & 0\\
+    p_{i0}^{\rm v} & = & p_{i0}^{\rm e} = g_{\rm o} + ig_{\rm e}; i>0\\
+    p_{i0}^{\rm f} & = & p_{i0}^{\rm g} = -\infty\\
+    p_{0j}^{\rm v} & = & p_{0j}^{\rm e} = g_{\rm o} + jg_{\rm e}; j>0\\
+    p_{0j}^{\rm e} & = & p_{0j}^{\rm g} = -\infty
   \end{eqnarray*}
   For local and overlap alignment, the scores in the first column and
   first row are set to zero.
   \[
-  p_{i,0}^{\rm v}=p{0,j}^{\rm v}=0
+  p_{i0}^{\rm v}=p_{0,j}^{\rm v}=0
   \]
 
   To extract the actual alignment from $p$, we follow its path. For
@@ -98,12 +101,12 @@
   $s_{\rm a}$. Finally, if $p_{m,n}^{\rm v}=p_{m,n}^{\rm g}$, we move to
   $p_{m-1,n-1}$ and add $q[m]$ to $q_{\rm a}$ and $s[n]$ to $s_{\rm
     a}$. This is repeated until we reach $p_{0,0}$. Reversing $q_{\rm
-    a}$ and $s_{\rm a}$ gives us the alignment.
+    a}$ and $s_{\rm a}$ gives the alignment.
 
   In overlap alignments, end gaps are free, so the trace back starts at
   the maximum entry in the last row or column of $p$ and proceeds until
   the first row or column is reached. Local alignment starts at the
-  maximum entry anywhere in $p$ and ends where $p_{i,j}^{\rm v}=0$.
+  maximum entry anywhere in $p$ and ends where $p_{ij}^{\rm v}=0$.
 
   To summarize, an alignment is computed in three steps, matrix
   initialization, filling in, and trace back. The details of each step
@@ -366,14 +369,17 @@
   We initialize according to the recursions in the Introduction.
 #+end_src
 #+begin_src go <<Initialize global, Ch.~\ref{ch:al}>>=
-  p[0][0].v = 0
   for i := 1; i <= m; i++ {
-	  p[i][0].f = gapO + float64(i) * gapE
-	  p[i][0].v = p[i][0].f
+	  p[i][0].e = gapO + float64(i) * gapE
+	  p[i][0].v = p[i][0].e
+	  p[i][0].f = -math.MaxFloat64
+	  p[i][0].g = -math.MaxFloat64
   }
   for j := 1; j <= n; j++ {
-	  p[0][j].e = gapO + float64(j) * gapE
-	  p[0][j].v = p[0][j].e
+	  p[0][j].f = gapO + float64(j) * gapE
+	  p[0][j].v = p[0][j].f
+	  p[0][j].e = -math.MaxFloat64
+	  p[0][j].g = -math.MaxFloat64
   }
 #+end_src
 #+begin_src latex
@@ -404,12 +410,11 @@
 #+end_src
 #+begin_src latex
   The starting and end points of a trace back depend on the alignment
-  type. The rest is always the same. Global trace back begins begins in
-  the bottom right hand corner of the dynamic programming matrix
+  type. The rest is always the same. Global trace back begins in the
+  bottom right hand corner of the dynamic programming matrix
   (Figure~\ref{fig:dpm}). From there it proceeds until the cell in the
   top left hand corner is reached.
 #+end_src
-
 #+begin_src go <<Trace back global, Ch.~\ref{ch:al}>>=
   i := m
   j := n
@@ -421,8 +426,9 @@
   During each step of the trace back we move either horizontally,
   vertically, or diagonally, depending on which of the three neighboring
   cells contributed to the final entry in the current cell. If
-  $V(i,j)=E(i,j)$, we move horizontally, if $V(i,j)=F(i,j)$ vertically,
-  and if $V(i,j)=G(i,j)$ diagonally.
+  $p_{ij}^{\rm v}=p_{ij}^{\rm e}$, we move vertically, if $p_{ij}^{\rm
+    v}=p_{ij}^{\rm f}$ horizontally, and if $p_{ij}^{\rm v}=p_{ij}^{\rm
+    g}$ diagonally.
 #+end_src
 #+begin_src go <<Trace back, Ch.~\ref{ch:al}>>=
   if p[i][j].v == p[i][j].e {
@@ -502,7 +508,7 @@ fmt.Println(al)
   //<<Construct and print global, Ch.~\ref{ch:al}>>
 #+end_src
 #+begin_src latex
-  The trace back starts at $p_{i,j}$, where $i$ and $j$ remain to be
+  The trace back starts at $p_{ij}$, where $i$ and $j$ remain to be
   determined, and proceeds to the first row or column.
 #+end_src
 #+begin_src go <<Trace back overlap, Ch.~\ref{ch:al}>>=
@@ -609,8 +615,8 @@ fmt.Println(al)
 #+end_src
 #+begin_src latex
   As explained in the Introduction, in a local alignment the score,
-  $p_{i,j}^{\rm v}$, is formed as the maximum of $p_{i,j}^{\rm e}$,
-  $p_{i,j}^{\rm f}$, $p_{i,j}^{\rm g}$, and zero. Since global alignment
+  $p_{ij}^{\rm v}$, is formed as the maximum of $p_{ij}^{\rm e}$,
+  $p_{ij}^{\rm f}$, $p_{ij}^{\rm g}$, and zero. Since global alignment
   maximizes over the first three of these terms, we can use it here.
 #+end_src
 #+begin_src go <<Determine local entry, Ch.~\ref{ch:al}>>=
