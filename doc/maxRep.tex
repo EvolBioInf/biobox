@@ -7,7 +7,7 @@
 \STATE{$\delta\leftarrow 1$} \COMMENT{Position of most recent left-difference.}
 \FOR{$i\leftarrow 2$ \TO $n$} 
   \STATE{$\ell\leftarrow i-1$} \COMMENT{Left border of node.}
-  \WHILE{$\lcp[i]<\topp().d$}
+  \WHILE{stack not empty \AND $\lcp[i]<\topp().d$}
     \STATE{$v\leftarrow\pop()$}
     \STATE{$\ell\leftarrow v.\ell$}
     \STATE{$d\leftarrow v.d$}
@@ -16,7 +16,7 @@
       \STATE{report maximal repeat $m$ at $\sa[j], \ell\le j\le i-1$}
     \ENDIF
   \ENDWHILE
-  \IF{$\lcp[i]>\topp().d$}
+  \IF{stack not empty \AND $\lcp[i]>\topp().d$}
     \STATE{$\push(\lcp[i],\ell)$}
   \ENDIF
   \IF{$i < n$ \AND $t[\sa[i-1]-1]\ne t[sa[i]-1]$}
