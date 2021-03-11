@@ -79,11 +79,12 @@
   it consists of one long and costly gap along the first column and
   first row.
   \begin{eqnarray*}
-    p_{00}^{\rm v} & = & 0\\
+    p_{00}^{\rm v} & = & = p_{00}^{\rm e} + p_{00}^{\rm f} + p_{00}^{\rm
+      g} = 0\\
     p_{i0}^{\rm v} & = & p_{i0}^{\rm e} = g_{\rm o} + ig_{\rm e}; i>0\\
-    p_{i0}^{\rm f} & = & p_{i0}^{\rm g} = -\infty\\
-    p_{0j}^{\rm v} & = & p_{0j}^{\rm e} = g_{\rm o} + jg_{\rm e}; j>0\\
-    p_{0j}^{\rm e} & = & p_{0j}^{\rm g} = -\infty
+    p_{i0}^{\rm f} & = & p_{i0}^{\rm g} = -\infty; i>0\\
+    p_{0j}^{\rm v} & = & p_{0j}^{\rm f} = g_{\rm o} + jg_{\rm e}; j>0\\
+    p_{0j}^{\rm e} & = & p_{0j}^{\rm g} = -\infty; j>0
   \end{eqnarray*}
   For local and overlap alignment, the scores in the first column and
   first row are set to zero.
