@@ -473,26 +473,29 @@
   starting positions depend on the fact that we are dealing with a
   global alignment. The score has already been determined, the starting
   positions are zero. But the rest of the output procedure is
-  independent of the type of alignment we are dealing with.
+  independent of the type of alignment we are dealing with, so we give
+  it its own chunk.
 #+end_src
 #+begin_src go <<Construct and print global, Ch.~\ref{ch:al}>>=
   qs := 0
   ss := 0
   //<<Output alignment, Ch.~\ref{ch:al}>>
 #+end_src
-
+#+begin_src latex
+  To output an alignment, we create two sequences from the aligned query
+  and subject, reverse the alignments, and create a dedicated alignment
+  data structure. On this we set the line length entered by the user and
+  then print it.
+#+end_src
 #+begin_src go <<Output alignment, Ch.~\ref{ch:al}>>=
 qu := fasta.NewSequence(q.Header(), qa)
 su := fasta.NewSequence(s.Header(), sa)
 qu.Reverse()
 su.Reverse()
 al := util.NewAlignment(qu, su, mat,
-	m-1, n-1, qs, ss, score)
+	m, n, qs, ss, score)
 al.SetLineLength(ll)
 fmt.Println(al)
-#+end_src
-
-#+begin_src go <<Functions, Ch.~\ref{ch:al}>>=
 #+end_src
 
 #+begin_src latex

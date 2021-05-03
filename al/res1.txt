@@ -1,5 +1,5 @@
-Query   s1 (6 residues) 
-Subject s2 (7 residues) 
+Query   s1 (7 residues) 
+Subject s2 (8 residues) 
 Score   19 
 
 

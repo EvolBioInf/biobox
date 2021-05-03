@@ -1,5 +1,5 @@
-Query   o1       (99 residues) 
-Subject o2.fasta (95 residues) 
+Query   o1       (100 residues) 
+Subject o2.fasta (96 residues)  
 Score   62       
 
 

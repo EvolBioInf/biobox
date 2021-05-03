@@ -1,5 +1,5 @@
-Query   DMADH X78384.1 D.melanogaster Adh and Adh-dup genes.                         (4760 residues) 
-Subject DGADHDUP X60113.1 D.guanche Adh and Adh-dup genes for alcohol dehydrogenase. (4432 residues) 
+Query   DMADH X78384.1 D.melanogaster Adh and Adh-dup genes.                         (4761 residues) 
+Subject DGADHDUP X60113.1 D.guanche Adh and Adh-dup genes for alcohol dehydrogenase. (4433 residues) 
 Score   -3273                                                                        
 
 
