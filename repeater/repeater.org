@@ -70,7 +70,7 @@
     \end{center}
   \end{table}
   Table~\ref{tab:esa1} is in the customary vertical
-  orientation. However, getting from the array to the tree is easier if
+  orientation. However, it's easier to get from the array to the tree if
   we rotate it and omit the suffixes as shown in
   Table~\ref{tab:setup}. Notice that the order of entries in $\sa$ is
   the same as the order of leaves in the suffix tree. So by annotating
@@ -204,7 +204,7 @@
   in the order in which they occur in the tree. So we just monitor the
   last position at which a suffix differed from its neighbor. If that
   position is greater than the left border of the current node, the node
-  a maximal repeat, unless, of course, it's the root.
+  is a maximal repeat, unless, of course, it's the root.
 
   This reasoning is summarized in
   Algorithm~\ref{alg:maxRep}~\cite[p. 149]{ohl13:bio}. In its last
