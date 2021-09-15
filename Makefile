@@ -1,6 +1,3 @@
-export VERSION = $(shell bash ./scripts/version.sh) # The single, trailing blank is essential
-export DATE    = $(shell bash ./scripts/date.sh) #    The single, trailing blank is essential
-
 all:
 	make -C util
 	make -C al
@@ -15,6 +12,8 @@ all:
 	cp drawKt/drawKt bin
 	make -C drawSt
 	cp drawSt/drawSt bin
+	make -C fasta2tab
+	cp fasta2tab/fasta2tab bin
 	make -C getSeq
 	cp getSeq/getSeq bin
 	make -C keyMat
@@ -58,6 +57,7 @@ clean:
 	make clean -C doc
 	make clean -C drawKt
 	make clean -C drawSt
+	make clean -C fasta2tab
 	make clean -C getSeq
 	make clean -C keyMat
 	make clean -C mutator
@@ -82,6 +82,7 @@ test:
 	make test -C dnaDist
 	make test -C drawKt
 	make test -C drawSt
+	make test -C fasta2tab
 	make test -C getSeq
 	make test -C keyMat
 	make test -C mutator

@@ -1,0 +1,218 @@
+#+begin_src latex
+  \section*{Introduction}
+  A FASTA file contains one or more sequences in FASTA format. Each
+  sequence consists of a header line followed by multiple lines of
+  sequence data, for example
+  \begin{verbatim}
+  >Seq
+  TCTCA
+  CAAAA
+  \end{verbatim}
+  This format makes it easy for us to read sequences. However, it makes
+  it difficult to parse FASTA sequences as pairs consisting of a name
+  and a sequence. Such a key/value interpretation of sequence data is
+  easiest if it consists of a column of names and a column of
+  corresponding sequences. Our example data would then become
+  \begin{verbatim}
+  Seq        TCTCACAAAA
+  \end{verbatim}
+
+  The program \ty{fasta2tab} generates such a
+  table from FASTA-formatted input.
+  \section*{Implementation}
+  Our program outline contains hooks for imports, functions, and the
+  logic of the main function.
+#+end_src
+#+begin_src go <<fasta2tab.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:f2t}>>
+  )
+  //<<Functions, Ch.~\ref{ch:f2t}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:f2t}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare and parse the options,
+  and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:f2t}>>=
+  //<<Set usage, Ch.~\ref{ch:f2t}>>
+  //<<Declare options, Ch.~\ref{ch:f2t}>>
+  //<<Parse options, Ch.~\ref{ch:f2t}>>
+  //<<Parse files, Ch.~\ref{ch:f2t}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts, the actual usage message, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:f2t}>>=
+  u := "fasta2tab [-h] [option] [file]..."
+  p := "Convert sequences in FASTA to tabular format."
+  e := "fasta2tab foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:f2t}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare one option specific to this program, the column
+  delimiter. By default, this is the TAB character. In addition, the
+  user can ask for the version.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:f2t}>>=
+  var optD = flag.String("d", "\t", "field delimiter")
+  var optV = flag.Bool("v", false, "print program version & " +
+	  "other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:f2t}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-d} and \ty{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:f2t}>>=
+  flag.Parse()
+  //<<Respond to \ty{-d}, Ch.~\ref{ch:f2t}>>
+  //<<Respond to \ty{-v}, Ch.~\ref{ch:f2t}>>
+#+end_src
+#+begin_src latex
+  To get at the character passed as delimiter, we unquote it.
+#+end_src
+#+begin_src go <<Respond to \ty{-d}, Ch.~\ref{ch:f2t}>>=
+  delim, err := strconv.Unquote(`"` + *optD + `"`)
+  if err != nil {
+	  fmt.Fprintf(os.Stderr,
+		  "please enter delimiter in quotes\n")
+	  os.Exit(1)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{fmt}, and \ty{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:f2t}>>=
+  "strconv"
+  "fmt"
+  "os"
+#+end_src
+#+begin_src latex
+  In response to \ty{-v} we call \ty{PrintInfo} on our program.
+#+end_src
+#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:f2t}>>=
+  if *optV {
+	  util.PrintInfo("fasta2tab")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:f2t}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are the input files. We pass
+  them to the function \ty{ParseFiles}. It applies the function
+  \ty{scan} to every file. \ty{scan}, in turn, takes as argument the
+  delimiter.
+#+end_src
+#+begin_src go <<Parse files, Ch.~\ref{ch:f2t}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, delim)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the delimiter, iterate over the
+  sequences and print each one as the header, followed by the delimiter,
+  followed by the sequence.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:f2t}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  delim := args[0].(string)
+	  scanner := fasta.NewScanner(r)
+	  for scanner.ScanSequence() {
+		  s := scanner.Sequence()
+		  fmt.Printf("%s%s%s\n", s.Header(), delim,
+			  string(s.Data()))
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:f2t}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  Our program is written, let's test it.
+  \section*{Testing}
+  The outline for our testing code contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<fasta2tab_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:f2t}>>
+  )
+  func TestFasta2tab(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:f2t}>>
+  }
+#+end_src
+#+begin_src latex
+  We first construct the tests and then iterate over them to run each
+  one.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:f2t}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:f2t}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:f2t}>>
+  }
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:f2t}>>=
+  f := "test.fasta"
+  cmd := exec.Command("./fasta2tab", f)
+  tests = append(tests, cmd)
+  cmd = exec.Command("./fasta2tab", "-d", "\\t", f)
+  tests = append(tests, cmd)
+  cmd = exec.Command("./fasta2tab", "-d", "\\n", f)
+  tests = append(tests, cmd)
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:f2t}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  When running a test, we check we get what we want.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:f2t}>>=
+  get, err := test.Output()
+  if err != nil { t.Error(err.Error()) }
+  f = "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Error(err.Error()) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv} and \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:f2t}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src
+
+

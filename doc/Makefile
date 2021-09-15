@@ -1,4 +1,4 @@
-all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex shustring.tex simNorm.tex testMeans.tex repeater.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
+all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.tex fasta2tab.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex shustring.tex simNorm.tex testMeans.tex repeater.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
@@ -18,6 +18,8 @@ drawKt.tex: ../drawKt/drawKt.org
 	bash ../scripts/org2nw ../drawKt/drawKt.org   | noweave -n -x | sed 's/_test/\\_test/g' > drawKt.tex
 drawSt.tex: ../drawSt/drawSt.org
 	bash ../scripts/org2nw ../drawSt/drawSt.org   | noweave -n -x | sed 's/_test/\\_test/g' > drawSt.tex
+fasta2tab.tex: ../fasta2tab/fasta2tab.org
+	bash ../scripts/org2nw ../fasta2tab/fasta2tab.org   | noweave -n -x | sed 's/_test/\\_test/g' > fasta2tab.tex
 getSeq.tex: ../getSeq/getSeq.org
 	bash ../scripts/org2nw ../getSeq/getSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > getSeq.tex
 keyMat.tex: ../keyMat/keyMat.org

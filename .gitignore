@@ -13,6 +13,8 @@ doc/cchar.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
 doc/drawKt.tex
+doc/drawSt.tex
+doc/fasta2tab.tex
 doc/getSeq.tex
 doc/keyMat.tex
 doc/mutator.tex
@@ -38,6 +40,7 @@ cutSeq/cutSeq
 dnaDist/dnaDist
 drawKt/drawKt
 drawSt/drawSt
+fasta2tab/fasta2tab
 getSeq/getSeq
 keyMat/keyMat
 mutator/mutator
