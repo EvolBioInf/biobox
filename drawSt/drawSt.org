@@ -911,7 +911,7 @@
 #+begin_src latex
   The program \ty{drawSt} is finished, so we test it next.
 
-  \section{Testing}
+  \section*{Testing}
   Our testing outline has hooks for imports and the testing logic.
 #+end_src
 #+begin_src go <<drawSt_test.go>>=
