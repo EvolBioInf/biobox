@@ -72,14 +72,15 @@ clean:
 	make clean -C simNorm
 	make clean -C testMeans
 	make clean -C util
+	make clean -C var
 	make clean -C watterson
 	make clean -C wrapSeq
-	make clean -C var
 test:
 	make test -C al
 	make test -C cchar
 	make test -C cutSeq
 	make test -C dnaDist
+	make test -C drawKt
 	make test -C drawSt
 	make test -C getSeq
 	make test -C keyMat
