@@ -37,6 +37,7 @@ cchar/cchar
 cutSeq/cutSeq
 dnaDist/dnaDist
 drawKt/drawKt
+drawSt/drawSt
 getSeq/getSeq
 keyMat/keyMat
 mutator/mutator

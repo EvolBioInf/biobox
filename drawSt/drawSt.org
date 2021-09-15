@@ -1,0 +1,983 @@
+#+begin_src latex
+  \section*{Introduction}
+  When you read a novel, you might like to look up the pages where a
+  particular character is mentioned. So you leaf through the book and
+  scan the pages for the character's name. If it's a long novel, this
+  takes longer than if its a short novel. But regardless of the novel's
+  length, this would be easier if it had an index. Most novels don't,
+  but most textbooks do. To look up a word in a textbook, just find it
+  in its index. In other words, by using an index, searching a text
+  becomes independent of its length.
+
+  A suffix tree is a perfect index in the sense that any word can be
+  looked up in it, not just particular terms considered important by an
+  author. Figure~\ref{fig:stConv} shows the suffix tree of the text
+  \[
+  t=\texttt{TTAAAATAT}
+  \]
+  The program \texttt{drawSt} takes as input a FASTA-formatted sequence
+  and draws its suffix tree.
+
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{cccccccccc}
+	1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+	\ty{T} & \ty{T} & \ty{A} & \ty{A} & \ty{A} & \ty{A} & \ty{T} &
+	\ty{A} & \ty{T} & \ty{\$}
+      \end{tabular}
+    \end{center}
+    \begin{center}
+      \input{stree}
+    \end{center}
+    \caption{Suffix tree of t=\texttt{TTAAAATAT\$}.}\label{fig:stConv}
+  \end{figure}
+
+  Each leaf in the suffix tree in Figure~\ref{fig:stConv} is labeled by
+  a number. This refers to the starting position of the suffix obtained
+  by concatenating the characters on the path from the root to that
+  leaf. For example, leaf 7 has the path label \texttt{TAT\$}, the
+  suffix starting at position 7. This also means the tree has as many
+  leaves as there are suffixes---and by the same token characters---in
+  $t$. The last character, $\texttt{\$}$, is a sentinel that mismatches
+  every ordinary character to ensure that all suffixes end in a
+  mismatch, and hence a leaf.  Each internal node is also labeled by a
+  circled number, the length of its path label, also known as the node's
+  depth.
+
+  As explained in Chapter~\ref{ch:rep}, suffix trees are computed by
+  traversing their alphabetically ordered suffixes, their suffix
+  array. Table~\ref{tab:sa} shows the suffix array of $t$, $\sa$. If you
+  read it top to bottom, you get the same list of suffixes as reading
+  the leaves of the suffix tree left to right. Far left is the 10,
+  followed by 3, then 4, and so on.
+
+  The transformation of a suffix array to a suffix tree requires an
+  auxiliary array of the lengths of the matching prefixes of $\suf[i]$
+  and $\suf[i-1]$. This array is called the longest common prefix array,
+  $\lcp$, and is also shown in Table~\ref{tab:sa}. For example,
+  $\suf[4]=\texttt{AATAT\$}$ matches $\suf[3]=\texttt{AAATAT\$}$ in the
+  first two nucleotides, hence $\lcp[4]=2$.
+
+  \begin{table}
+    \caption{Suffix array of $t=\texttt{TTAAAATAT\$}$.}\label{tab:sa}
+    \begin{center}
+    \begin{tabular}{cccl}
+      \hline
+      $i$ & $\sa[i]$ & $\lcp[i]$ & $\suf[i]$\\\hline
+      \input{sa}
+      \hline
+    \end{tabular}
+    \end{center}
+  \end{table}
+
+  A suffix tree is computed by finding the intervals in $\sa$
+  corresponding to its internal nodes. For example, the root corresponds
+  to interval $[1..10]$, the node colored in red to the interval
+  $[2..4]$. These intervals are augmented by their depths, $d$, to give
+  nodes of the form $d-[\ell..r]$. Figure~\ref{fig:stInt} shows this
+  interval version of the suffix tree in Figure~\ref{fig:stConv}. Its
+  shape is that of the suffix tree in Figre~\ref{fig:stConv} stripped of
+  its leaves. \texttt{DrawSt} can also draw suffix trees in the interval
+  style.
+
+  \begin{figure}
+    \begin{center}
+      \input{streeI.tex}
+    \end{center}
+    \caption{Suffix tree of $t=\texttt{TTAAAATAT\$}$ in interval
+      notation.}\label{fig:stInt}
+  \end{figure}
+
+  We compute the interval tree using
+  Algorithm~\ref{alg:st}~\cite[p. 94]{ohl13:bio}. Nodes are written as
+  quartets $d, \ell, r, c$, where $d$ is the depth, $\ell$ and $r$ the
+  left and right interval borders, and $c$ the child. An as yet unknown
+  right border is $-1$, no child is $\bot$. This interval tree is then
+  converted to the full suffix tree.
+  \begin{algorithm}
+    \caption{Algorithm for computing suffix
+      tree~\cite[p. 94]{ohl13:bio}.}\label{alg:st}
+    \begin{algorithmic}
+      \input{algSt}
+    \end{algorithmic}
+  \end{algorithm}
+
+  Apart from the trees in Figures~\ref{fig:stConv} and \ref{fig:stInt},
+  \texttt{drawSt} can also produce suffix trees in the
+  Newick\footnote{\texttt{evolution.genetics.washington.edu/phylip/newick\_doc.html}}
+  notation used for phylogenies. Figure~\ref{fig:stNwk}A shows the
+  Newick tree string of the. This string can be converted to a proper
+  tree (Figure~\ref{fig:stNwk}B. Now it isn't just the branch order that
+  carries meaning, but also the branch lengths, as they are proportional
+  to the length of the path label.
+  \begin{figure}
+    \begin{center}
+      \textbf{A}\\
+      \tt
+      (10:1,(((3:5,4:4,5:4):1,(8:1,6:3):1):1,(9:1,(2:7,7:2,1:9):1):1):1);
+    \end{center}
+    \begin{center}
+      \textbf{B}\\
+      \input{stNwk}
+    \end{center}
+  \caption{Suffix tree drawn like a phylogeny. (\textbf{A}) Newick
+    notation; (\textbf{B}) drawn as tree; the scale corresponds to one character.}\label{fig:stNwk}
+  \end{figure}
+
+  \section*{Implementation}
+  The program outline contains hooks for imports, variables, types,
+  methods, functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<drawSt.go>>=
+  package main
+  import (
+	  //<<Imports, Ch.~\ref{ch:dst}>>
+  )
+  //<<Variables, Ch.~\ref{ch:dst}>>
+  //<<Types, Ch.~\ref{ch:dst}>>
+  //<<Methods, Ch.~\ref{ch:dst}>>
+  //<<Functions, Ch.~\ref{ch:dst}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare and parse the options,
+  and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:dst}>>=
+  //<<Set usage, Ch.~\ref{ch:dst}>>
+  //<<Declare options, Ch.~\ref{ch:dst}>>
+  //<<Parse options, Ch.~\ref{ch:dst}>>
+  //<<Parse input files, Ch.~\ref{ch:dst}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts, the actual usage message, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:dst}>>=
+  m := "drawSt [-h] [options] [files]"
+  p := "Draw suffix tree."
+  e := "drawSt foo.fasta"
+  clio.Usage(m, p, e)
+#+end_src
+#+begin_src latex
+  We import \texttt{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dst}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  By default, the program specifies the tree in \LaTeX{} using the
+  conventional notation of Figure~\ref{fig:stConv}. We declare options
+  for the two alternative formats, interval notation (\ty{-i},
+  Figure~\ref{fig:stInt}), and Newick notation (\ty{-n},
+  Figure~\ref{fig:stNwk}A). The user can also print the node depth
+  (\ty{-d}), label the nodes (\ty{-l}), change the default x- and
+  y-units (\ty{-x} \& \ty{-y}), add a sentinel character, and print the
+  program version (\ty{-v}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:dst}>>=
+  var optI = flag.Bool("i", false, "interval notation, LaTeX")
+  var optN = flag.Bool("n", false, "Newick notation, plain text")
+  var optD = flag.Bool("d", false, "show node depth")
+  var optL = flag.Bool("l", false, "label nodes")
+  var optX = flag.Float64("x", 1, "x-unit in LaTeX")
+  var optY = flag.Float64("y", 1.5, "y-unit in LaTeX")
+  var optS = flag.Bool("s", false, "add sentinel character")
+  var optV = flag.Bool("v", false, "print program version & " +
+	  "other information")
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dst}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:dst}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("drawSt")
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dst}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are interpreted as input
+  files, which get parsed using the function \ty{scan}. It takes as
+  arguments the seven options specifying the tree format.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:dst}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optI, *optN, *optD, *optL, *optX,
+	  *optY, *optS)
+#+end_src
+#+begin_src latex
+  In \texttt{scan}, we retrieve the options before iterating over the
+  sequences in the file.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve options, Ch.~\ref{ch:dst}>>
+	  //<<Iterate over sequences, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dst}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  The seven options just passed are retrieved by reflection.
+#+end_src
+#+begin_src go <<Retrieve options, Ch.~\ref{ch:dst}>>=
+  optI := args[0].(bool)
+  optN := args[1].(bool)
+  optD := args[2].(bool)
+  optL := args[3].(bool)
+  optX := args[4].(float64)
+  optY := args[5].(float64)
+  optS := args[6].(bool)
+#+end_src
+#+begin_src latex
+  For each sequence, we extract the sequence data, compute the suffix
+  tree, and draw it.
+#+end_src
+#+begin_src go <<Iterate over sequences, Ch.~\ref{ch:dst}>>=
+  scanner := fasta.NewScanner(r)
+  for scanner.ScanSequence() {
+	  sequence := scanner.Sequence()
+	  data := sequence.Data()
+	  //<<Compute suffix tree, Ch.~\ref{ch:dst}>>
+	  //<<Draw suffix tree, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dst}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  A suffix tree consists of nodes, which in turn consist of a depth, a
+  left border, and a right border. The tree topology is established
+  through references to a child node and a sibling. In a conventional
+  suffix tree (Figure~\ref{fig:stConv}), each incoming edge of a node
+  has a label. We don't store the label but compute it whenever
+  required. To do that, we need to know not only the current node's
+  depth, but also its parent's, and hence include a pointer to parent. A
+  node also has an ID for easy reference and a level in the tree.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:dst}>>=
+  type node struct {
+	  d, l, r, id, level int
+	  child, sib, parent *node
+  }
+#+end_src
+#+begin_src latex
+  For easy printing of nodes we implement \texttt{String}.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:dst}>>=
+  func (v *node) String() string {
+	  if v == nil {
+		  return "!"
+	  }
+	  s := fmt.Sprintf("%d-[%d..%d]", v.d, v.l, v.r)
+	  return s
+  }
+#+end_src
+#+begin_src latex
+  A new node is constructed as a function of its depth, left and right
+  borders, and child node.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func newNode(d, l, r int, child *node) *node {
+	  n := new(node)
+	  n.d = d
+	  n.l = l
+	  n.r = r
+	  n.id = nodeId
+	  nodeId++
+	  if child != nil {
+		  n.child = child
+		  child.parent = n
+	  }
+	  return n
+  }
+#+end_src
+#+begin_src latex
+  The node identifier is kept in a global variable.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:dst}>>=
+  var nodeId int
+#+end_src
+#+begin_src latex
+  According to Algorithm~\ref{alg:st}, the nodes are kept on a stack,
+  which we implement as a slice of node pointers~\cite[p. 92]{don16:go}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:dst}>>=
+  type stack []*node
+#+end_src
+#+begin_src latex
+  We implement the three canonical stack functions, push, pop, and top.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:dst}>>=
+  func (s *stack) push(n *node) { *s = append(*s, n) }
+  func (s *stack) pop() *node {
+	  n := (*s)[len(*s)-1]
+	  *s = (*s)[0:len(*s)-1]
+	  return n
+  }
+  func (s *stack) top() *node { return (*s)[len(*s)-1] }
+#+end_src
+#+begin_src latex
+  To compute the suffix tree, we first prepare the data. The basis for
+  our suffix tree is the enhanced suffix array consisting of the suffix
+  array proper and the lcp array. The lcp array gets a -1 appended to
+  ensure all nodes are eventually popped from the stack in the while
+  loop of Algorithm~\ref{alg:st}.  We also initialize the focal node,
+  $v$, and the stack, onto which we push the root. Then we traverse the
+  lcp array.
+#+end_src
+#+begin_src go <<Compute suffix tree, Ch.~\ref{ch:dst}>>=
+  //<<Prepare sequence data, Ch.~\ref{ch:dst}>>
+  sa := esa.Sa(data)
+  lcp := esa.Lcp(data, sa)
+  lcp = append(lcp, -1)
+  n := len(lcp)
+  var v *node
+  root := newNode(0, 0, -1, nil)
+  stack := new(stack)
+  stack.push(root)
+  //<<Traverse lcp array, Ch.~\ref{ch:dst}>>
+#+end_src
+#+begin_src latex
+  If the user requested a sentinel character, we append that to the
+  sequence.
+#+end_src
+#+begin_src go <<Prepare sequence data, Ch.~\ref{ch:dst}>>=
+  if optS {
+	  data = append(data, '$')
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{esa}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dst}>>=
+  "github.com/evolbioinf/esa"
+#+end_src 
+#+begin_src latex
+  Algorithm~\ref{alg:st} says that for each value in the lcp array,
+  nodes with depths greater $\lcp[i]$ are popped from the stack. If the
+  top node's depth is then less than $\lcp[i]$, a new node is pushed.
+#+end_src
+#+begin_src go <<Traverse lcp array, Ch.~\ref{ch:dst}>>=
+  for i := 1; i < n; i++ {
+	  l := i - 1
+	  for len(*stack) > 0 && lcp[i] < stack.top().d {
+		  //<<Pop node, Ch.~\ref{ch:dst}>>
+	  }
+	  if len(*stack) > 0 && lcp[i] > stack.top().d {
+		  //<<Push node, Ch.~\ref{ch:dst}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  When popping nodes from the stack, we check whether they are children
+  of the top node. Since adding a child is an operation we need
+  repeatedly, we delegate it to a method.
+#+end_src
+#+begin_src go <<Pop node, Ch.~\ref{ch:dst}>>=
+  stack.top().r = i - 1
+  v = stack.pop()
+  l = v.l
+  if len(*stack) > 0 && lcp[i] <= stack.top().d {
+	  p := stack.top()
+	  p.addChild(v)
+	  v = nil
+  }
+#+end_src 
+#+begin_src latex
+  When adding a child to a node, we first assign the child's parent
+  link. Then we either assign the child to the parent's child link, or
+  insert it in the correct position among its siblings. This position is
+  either on the left of its siblings, in between them, or to their
+  right.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:dst}>>=
+  func (p *node) addChild(c *node) {
+	  c.parent = p
+	  if p.child == nil {
+		  p.child = c
+	  } else {
+		  //<<Insert child on the left of siblings?, Ch.~\ref{ch:dst}>>
+		  //<<Insert child between siblings?, Ch.~\ref{ch:dst}>>
+		  //<<Insert child on the right of siblings?, Ch.~\ref{ch:dst}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  If the child's left border is to the left of its first sibling, the
+  new child becomes the first sibling. This child has now been taken
+  care of, so the function returns.
+#+end_src
+#+begin_src go <<Insert child on the left of siblings?, Ch.~\ref{ch:dst}>>=
+  w := p.child
+  if c.l < w.l {
+	  p.child = c
+	  c.sib = w
+	  return
+  }
+#+end_src
+#+begin_src latex
+  If the new child's left border is between that of two siblings, it is
+  inserted between them.
+#+end_src
+#+begin_src go <<Insert child between siblings?, Ch.~\ref{ch:dst}>>=
+  for w.sib != nil {
+	  if c.l > w.r && c.l < w.sib.l {
+		  c.sib = w.sib
+		  w.sib = c
+		  return
+	  }
+	  w = w.sib
+  }
+#+end_src
+#+begin_src latex
+  If the child is still not assigned, it becomes the last sibling.
+#+end_src
+#+begin_src go <<Insert child on the right of siblings?, Ch.~\ref{ch:dst}>>=
+  w.sib = c
+#+end_src
+#+begin_src latex
+  After removing nodes from the stack, we might also push a new node.
+#+end_src	
+#+begin_src go <<Push node, Ch.~\ref{ch:dst}>>=
+  w := newNode(lcp[i], l, -1, v)
+  stack.push(w)
+  v = nil
+#+end_src
+#+begin_src latex
+  There are three tree formats, conventional (Figure~\ref{fig:stConv}),
+  interval (Figure~\ref{fig:stInt}), and Newick
+  (Figure~\ref{fig:stNwk}). If we are not drawing an interval tree, we
+  need to add leaves and node levels to our tree.
+#+end_src
+#+begin_src go <<Draw suffix tree, Ch.~\ref{ch:dst}>>=
+  if !optI {
+	  //<<Add leaves, Ch.~\ref{ch:dst}>>
+	  //<<Add levels, Ch.~\ref{ch:dst}>>
+  }
+  if optI {
+	  //<<Print interval tree, Ch.~\ref{ch:dst}>>
+  } else if optN {
+	  //<<Print Newick tree, Ch.~\ref{ch:dst}>>
+  } else {
+	  //<<Print conventional tree, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  We add the node levels, for which we need a preorder traversal. Since
+  we won't reuse this, we write it as a simple recursion.
+#+end_src
+#+begin_src go <<Add levels, Ch.~\ref{ch:dst}>>=
+  preorder(root)
+#+end_src
+#+begin_src latex
+  A node's level is that of its parent plus one.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func preorder(v *node) {
+	  if v != nil {
+		  if v.parent != nil {
+			  v.level = v.parent.level + 1
+		  }
+		  preorder(v.child)
+		  preorder(v.sib)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Adding leaves requires another tree traversal. This time, we delegate
+  it to a reusable function, \texttt{traverse}. \ty{traverse} takes as
+  argument the root of a tree and a function it applies to each node, in
+  this case \texttt{addLeaves}. \texttt{AddLeaves} in turn takes as
+  argument the suffix array.
+#+end_src
+#+begin_src go <<Add leaves, Ch.~\ref{ch:dst}>>=
+  traverse(root, addLeaves, sa)
+#+end_src
+#+begin_src latex
+  To make \texttt{traverse} useful in diverse traversals, it takes a
+  variadic variable consisting of empty interfaces. These and the
+  current node are the arguments of the function applied to every
+  node. We add leaves in a post order traversal, so we implement this
+  variant.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func traverse(v *node, fn nodeAction, args ...interface{}) {
+	  if v != nil {
+		  traverse(v.child, fn, args...)
+		  traverse(v.sib, fn, args...)
+		  fn(v, args...)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We define the type of this function, \texttt{nodeAction}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:dst}>>=
+  type nodeAction func(*node, ...interface{})
+#+end_src
+#+begin_src latex
+  If we are dealing with a leaf of the interval tree, all elements of
+  its interval become leaves.  Otherwise, we have to compare its interval
+  to that of its children.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func addLeaves(p *node, args ...interface{}) {
+	  sa := args[0].([]int)
+	  l := len(sa)
+	  if p.child == nil {
+		  for i := p.l; i <= p.r; i++ {
+			  c := newNode(l - sa[i], i, i, nil)
+			  p.addChild(c)
+		  }
+	  } else {
+		  //<<Compare parent interval to child intervals, Ch.~\ref{ch:dst}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Any part of an internal node's interval not found in its children is
+  filled with leaves. We discover these gaps by considering the left,
+  middle and right parts of the parent's interval.
+#+end_src
+#+begin_src go <<Compare parent interval to child intervals, Ch.~\ref{ch:dst}>>=
+  //<<Add leaves on the left, Ch.~\ref{ch:dst}>>
+  //<<Add leaves in the middle, Ch.~\ref{ch:dst}>>
+  //<<Add leaves on the right, Ch.~\ref{ch:dst}>>
+#+end_src
+#+begin_src latex
+  We fill the gap between the parent's left border and the first
+  child's.
+#+end_src
+#+begin_src go <<Add leaves on the left, Ch.~\ref{ch:dst}>>=
+  for i := p.l; i < p.child.l; i++ {
+	  c := newNode(l - sa[i], i, i, nil)
+	  p.addChild(c)
+  }
+#+end_src
+#+begin_src latex
+  We fill the gaps between siblings.
+#+end_src
+#+begin_src go <<Add leaves in the middle, Ch.~\ref{ch:dst}>>=
+  v := p.child
+  for v.sib != nil {
+	  x := v.sib.l
+	  for i := v.r+1; i < x; i++ {
+		  c := newNode(l - sa[i], i, i, nil)
+		  p.addChild(c)
+	  }
+	  v = v.sib
+  }
+#+end_src
+#+begin_src latex
+  We fill the gap between the right border of the last sibling and the
+  parent's right border.
+#+end_src
+#+begin_src go <<Add leaves on the right, Ch.~\ref{ch:dst}>>=
+  for i := v.r+1; i <= p.r; i++ {
+	  c := newNode(l - sa[i], i, i, nil)
+	  p.addChild(c)
+  }
+#+end_src
+#+begin_src latex
+  The tree is now ready to be drawn. For a string of length $n$, it has
+  $n$ leaves in the x-dimension and $n$ characters in the
+  y-dimension. So we could try to fit our suffix tree into an $n\times
+  n$ square. And while the $x$-dimension really is a function of $n$, it
+  turns out that the $y$-dimension is better taken from the maximum node
+  level.
+
+  For the conventional tree (Figure~\ref{fig:stConv}), we print the
+  picture header, the edges, the nodes, and the picture footer. The
+  picture header takes as arguments the picture dimensions. The
+  x-dimension is equal to the lengrh of the input string times the
+  x-scale factor. The y-dimension is equal to the negative of the
+  largest node level times the y-scale factor.
+#+end_src
+#+begin_src go <<Print conventional tree, Ch.~\ref{ch:dst}>>=
+  l := len(data)
+  x := float64(l) * optX
+  m := maxNodeLevel(root, 0)
+  y := float64(m) * optY
+  fmt.Printf("\\begin{pspicture}(%.2g,%.2g)(%.2g,%.2g)\n",
+	  0.0, -y, x, 0.0)
+  fmt.Printf("\\psset{xunit=%.3g, yunit=%.3g}\n", optX, optY)
+  traverse(root, drawCedge, sa, data)
+  traverse(root, drawCnode, sa, optL, optD)
+  fmt.Printf("\\end{pspicture}\n")
+#+end_src
+#+begin_src latex
+  We find the maximum node level by recursion.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func maxNodeLevel(v *node, m int) int {
+	  if v != nil {
+		  if v.level > m {
+			  m = v.level
+		  }
+		  m = maxNodeLevel(v.child, m)
+		  m = maxNodeLevel(v.sib, m)
+	  }
+	  return m
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dst}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  Nodes are drawn in three steps, the arguments are retrieved, the node
+  is drawn and labeled.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func drawCnode(v *node, args ...interface{}) {
+	  //<<Retrieve conventional node arguments, Ch.~\ref{ch:dst}>>
+	  //<<Write conventional node, Ch.~\ref{ch:dst}>>
+	  //<<Label conventional node, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  We retrieve the arguments just passed by reflection.
+#+end_src
+#+begin_src go <<Retrieve conventional node arguments, Ch.~\ref{ch:dst}>>=
+  sa := args[0].([]int)
+  nodeLabel := args[1].(bool)
+  depth := args[2].(bool)
+#+end_src
+#+begin_src latex
+  The x-coordinate of a node is the middle of its interval, the
+  y-coordinate the node level. Nodes are either dots or boxes around a
+  node identifier.
+#+end_src
+#+begin_src go <<Write conventional node, Ch.~\ref{ch:dst}>>=
+  x := float64(v.l + v.r) / 2.0
+  if nodeLabel {
+	  fmt.Printf("\\rput(%.3g,%d){\\rnode{%d}{" +
+		  "\\psframebox[linecolor=lightgray]{%d}}}",
+		  x, -v.level, v.id, v.id)
+  } else {
+	  fmt.Printf("\\dotnode(%.3g,%d){%d}\n",
+		  x, -v.level, v.id)
+  }
+#+end_src
+#+begin_src latex
+  Leaves are labeled by the suffix position. Internal nodes might be
+  labeled by their string depth, which we place in a box to distinguish
+  it from the labels of nodes and leaves.
+#+end_src
+#+begin_src go <<Label conventional node, Ch.~\ref{ch:dst}>>=
+  if v.child == nil {
+	  fmt.Printf("\\nput{-90}{%d}{%d}\n",
+		  v.id, sa[v.l]+1)
+  } else if depth {
+	  fmt.Printf("\\nput{0}{%d}{" +
+		  "\\ovalnode[linecolor=lightgray]{%d}{%d}}\n",
+		  v.id, v.id, v.d)
+  }
+#+end_src
+#+begin_src latex
+  For each node that isn't the root, we draw an edge to its parent. This
+  is labeled with a substring of the input string. The starting point of
+  the label is the starting point of the suffix minus the parent's
+  depth. The length of the label is the current depth minus the parent's
+  depth.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func drawCedge(v *node, args ...interface{}) {
+	  if v.parent == nil { return }
+	  sa := args[0].([]int)
+	  seq := args[1].([]byte)
+	  start := sa[v.l] + v.parent.d
+	  l := v.d - v.parent.d
+	  label := string(seq[start:start+l])
+	  //<<Print edge label, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  To print the edge label, we prepare it and then place it.
+#+end_src
+#+begin_src go <<Print edge label, Ch.~\ref{ch:dst}>>=
+  //<<Prepare edge label, Ch.~\ref{ch:dst}>>
+  //<<Place edge label, Ch.~\ref{ch:dst}>>
+#+end_src
+#+begin_src latex
+  We abridge long edge labels using interval notation. The resulting
+  label may contain a dollar character, the classical terminator
+  symbol. As the dollar is part of the \LaTeX{} syntax, we escape it.
+#+end_src
+#+begin_src go <<Prepare edge label, Ch.~\ref{ch:dst}>>=
+  ll := len(label)
+  if ll > 5 {
+	  label = label[:1] + "..." + label[ll-1:ll]
+  }
+  label = strings.Replace(label, "$", "\\$", 1)
+#+end_src
+#+begin_src latex
+  We place the label in the center of a text path along a line from the
+  parent to the child.
+#+end_src
+#+begin_src go <<Place edge label, Ch.~\ref{ch:dst}>>=
+  x1 := float64(v.parent.l + v.parent.r) / 2.0
+  y1 := -v.parent.level
+  x2 := float64(v.l + v.r) / 2.0
+  y2 := -v.level
+  tp := "\\pstextpath[c]{\\psline[linecolor=lightgray](%.3g,%d)" +
+	  "(%.3g,%d)}{\\texttt{%s}}\n"
+  fmt.Printf(tp, x1, y1, x2, y2, label)
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dst}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  We are done with the conventional tree (Figure~\ref{fig:stConv}) and
+  move to the interval tree (Figure~\ref{fig:stInt}).  We print this as
+  a ps-tree with node separation of 2 points and level separation of 1
+  cm.
+#+end_src
+#+begin_src go <<Print interval tree, Ch.~\ref{ch:dst}>>=
+  fmt.Printf("\\psset{nodesep=2pt, levelsep=1cm}\n")
+  printIntervals(root)
+#+end_src
+#+begin_src latex
+  The function \ty{printIntervals} is recursive. Inside it, we
+  distinguish between leaves and internal nodes of the interval tree.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func printIntervals(i *node) {
+	  if i == nil { return }
+	  //<<Is $i$ a leaf? Ch.~\ref{ch:dst}>>
+	  //<<Is $i$ an internal node? Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  If $i$ is a leaf, we print its ps-tree representation.
+#+end_src
+#+begin_src go <<Is $i$ a leaf? Ch.~\ref{ch:dst}>>=
+  if i.child == nil {
+	  s := "\\Tr{$%d-[%d...%d]$}\n"
+	  fmt.Printf(s, i.d, i.l+1, i.r+1)
+  }
+#+end_src
+#+begin_src latex
+  If $i$ is an internal node, we open it and add children and siblings
+  to the subtree rooted on it.
+#+end_src
+#+begin_src go <<Is $i$ an internal node? Ch.~\ref{ch:dst}>>=
+  //<<Open internal node, Ch.~\ref{ch:dst}>>
+  //<<Add child to internal node, Ch.~\ref{ch:dst}>>
+  //<<Add sibling to internal node, Ch.~\ref{ch:dst}>>
+#+end_src
+#+begin_src latex
+  If the current node has children, it is an internal node and the root
+  of a subtree.
+#+end_src
+#+begin_src go <<Open internal node, Ch.~\ref{ch:dst}>>=
+  if i.child != nil {
+	  s := "\\pstree{\\Tr{$%d-[%d...%d]$}}{\n"
+	  fmt.Printf(s, i.d, i.l+1, i.r+1)
+  }
+#+end_src
+#+begin_src latex
+  We follow the child link and note whether or not the subtree is
+  closed.
+#+end_src
+#+begin_src go <<Add child to internal node, Ch.~\ref{ch:dst}>>=
+  printIntervals(i.child)
+  closed := false
+  if i.child != nil {
+	  fmt.Printf("}\n")
+	  closed = true
+  }
+#+end_src
+#+begin_src latex
+  We follow the child link and if we end up with an as yet open internal
+  node, we close that.
+#+end_src
+#+begin_src go <<Add sibling to internal node, Ch.~\ref{ch:dst}>>=
+  printIntervals(i.sib)
+  if i.child != nil && !closed {
+	  fmt.Printf("}\n")
+  }
+#+end_src
+#+begin_src latex
+  The interval tree is finished and we get to the third and last tree
+  version, Newick (Figure~\ref{fig:stNwk}A). To write the tree in that
+  format, we follow the explanation given in the keyword tree package,
+  \ty{kt}\footnote{\texttt{github.com/evolbioinf/kt}}. We call a new
+  traversal function with the suffix array as argument, for labeling the
+  leaves.
+#+end_src
+#+begin_src go <<Print Newick tree, Ch.~\ref{ch:dst}>>=
+  printNewick(root, sa)
+#+end_src
+#+begin_src latex
+  In the implementation, we test whether a node is \emph{not} the first
+  child, whether it's a leaf, whether it's an internal node, and whether
+  it's the root.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func printNewick(v *node, args ...interface{}) {
+	  if v == nil { return }
+	  sa := args[0].([]int)
+	  //<<Is $v$ not a first child? Ch.~\ref{ch:dst}>>
+	  //<<Is $v$ a leaf? Ch.~\ref{ch:dst}>>
+	  //<<Is $v$ an internal node? Ch.~\ref{ch:dst}>>
+	  //<<Is $v$ the root? Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  Nodes subsequent to the first child are preceded by commas.
+#+end_src
+#+begin_src go <<Is $v$ not a first child? Ch.~\ref{ch:dst}>>=
+  if v.parent != nil && v.parent.child.id != v.id {
+	  fmt.Printf(",")
+  }
+#+end_src
+#+begin_src latex
+  Leaves are labeled.
+#+end_src
+#+begin_src go <<Is $v$ a leaf? Ch.~\ref{ch:dst}>>=
+  if v.child == nil {
+	label(v, sa)
+  }
+#+end_src
+#+begin_src latex
+  A node label consists of the starting position of the corresponding
+  suffix and a branch length.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dst}>>=
+  func label(v *node, sa []int) {
+	  fmt.Printf("%d", sa[v.l] + 1)
+	  //<<Branch length, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  The branch length consists of the number of characters on the incoming
+  edge.
+#+end_src
+#+begin_src go <<Branch length, Ch.~\ref{ch:dst}>>=
+  if v.parent != nil {
+	  l := v.d - v.parent.d
+	  fmt.Printf(":%d", l)
+  }
+#+end_src
+#+begin_src latex
+  Internal nodes are enclosed in brackets and come with the length of
+  the edge to the parent.
+#+end_src
+#+begin_src go <<Is $v$ an internal node? Ch.~\ref{ch:dst}>>=
+  if v.child != nil { fmt.Printf("(") }
+  printNewick(v.child, sa)
+  printNewick(v.sib, sa)
+  if v.child != nil {
+	  fmt.Printf(")")
+	  //<<Branch length, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  The root is denoted by a semicolon and a newline.
+#+end_src
+#+begin_src go <<Is $v$ the root? Ch.~\ref{ch:dst}>>=
+  if v.parent == nil {
+	  fmt.Printf(";\n")
+  }
+#+end_src
+#+begin_src latex
+  The program \ty{drawSt} is finished, so we test it next.
+
+  \section{Testing}
+  Our testing outline has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<drawSt_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:dst}>>
+  )
+
+  func TestDrawSt(t *testing.T) {
+	  //<<Testing logic, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  We test in two steps. First we construct the tests, then we iterate
+  over them and run them.
+#+end_src
+#+begin_src go <<Testing logic, Ch.~\ref{ch:dst}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:dst}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:dst}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dst}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We test the three trees that \ty{drawSt} can draw: conventional
+  (Figure~\ref{fig:stConv}), interval (Figure~\ref{fig:stInt}), and
+  Newick (Figure~\ref{fig:stNwk}A). Every time we use the sequence
+  \ty{TTAAAATAT} with sentinel.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:dst}>>=
+  file := "test.fasta"
+  cmd := exec.Command("./drawSt", "-s", file)
+  tests = append(tests, cmd)
+  cmd = exec.Command("./drawSt", "-s", "-i", file)
+  tests = append(tests, cmd)
+  cmd = exec.Command("./drawSt", "-s", "-n", file)
+  tests = append(tests, cmd)
+#+end_src
+#+begin_src latex
+  When running a test, we compare the output we get with the output we
+  want.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:dst}>>=
+  get, err := test.Output()
+  if err != nil { t.Error(err.Error()) }
+  file = "res" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(file)
+  if err != nil { t.Error(err.Error()) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n",
+		  string(get), string(want))
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dst}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

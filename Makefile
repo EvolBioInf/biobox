@@ -13,6 +13,8 @@ all:
 	cp dnaDist/dnaDist bin
 	make -C drawKt
 	cp drawKt/drawKt bin
+	make -C drawSt
+	cp drawSt/drawSt bin
 	make -C getSeq
 	cp getSeq/getSeq bin
 	make -C keyMat
@@ -55,6 +57,7 @@ clean:
 	make clean -C dnaDist
 	make clean -C doc
 	make clean -C drawKt
+	make clean -C drawSt
 	make clean -C getSeq
 	make clean -C keyMat
 	make clean -C mutator
@@ -77,6 +80,7 @@ test:
 	make test -C cchar
 	make test -C cutSeq
 	make test -C dnaDist
+	make test -C drawSt
 	make test -C getSeq
 	make test -C keyMat
 	make test -C mutator

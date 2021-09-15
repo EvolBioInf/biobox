@@ -1,0 +1,22 @@
+\REQUIRE{$\sa$} \COMMENT{suffix array}
+\REQUIRE{$\lcp$} \COMMENT{-1 appended}
+\REQUIRE{$n$}   \COMMENT{length of $\lcp$ array}
+\ENSURE{Suffix tree in interval notation}
+\STATE{$v\leftarrow \bot$}
+\STATE{$\mbox{push}(0, 1, -1, \bot)$} \COMMENT{push root onto stack}
+\FOR{$i\leftarrow 2$ \TO $n$}
+  \STATE{$\ell\leftarrow i-1$}
+  \WHILE{stack not empty \AND $\lcp[i] < \mbox{top}().d$}
+    \STATE{$\mbox{top}().r\leftarrow i-1$}
+    \STATE{$v\leftarrow\mbox{pop}()$}
+    \STATE{$\ell\leftarrow v.\ell$}
+    \IF{stack not empty \AND $\lcp[i]\le\mbox{top}().d$}
+      \STATE{$\mbox{top}().\mbox{addChild}(v)$}
+      \STATE{$v\leftarrow\bot$}
+    \ENDIF
+  \ENDWHILE
+  \IF{stack not empty \AND $\lcp[i] > \mbox{top}().d$}
+    \STATE{$\mbox{push}(\lcp[i],\ell,-1,v)$}
+    \STATE{$v\leftarrow\bot$}
+  \ENDIF
+\ENDFOR

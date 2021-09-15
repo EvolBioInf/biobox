@@ -1,4 +1,4 @@
-all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex shustring.tex simNorm.tex testMeans.tex repeater.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
+all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex shustring.tex simNorm.tex testMeans.tex repeater.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
@@ -16,6 +16,8 @@ dnaDist.tex: ../dnaDist/dnaDist.org
 	bash ../scripts/org2nw ../dnaDist/dnaDist.org   | noweave -n -x | sed 's/_test/\\_test/g' > dnaDist.tex
 drawKt.tex: ../drawKt/drawKt.org
 	bash ../scripts/org2nw ../drawKt/drawKt.org   | noweave -n -x | sed 's/_test/\\_test/g' > drawKt.tex
+drawSt.tex: ../drawSt/drawSt.org
+	bash ../scripts/org2nw ../drawSt/drawSt.org   | noweave -n -x | sed 's/_test/\\_test/g' > drawSt.tex
 getSeq.tex: ../getSeq/getSeq.org
 	bash ../scripts/org2nw ../getSeq/getSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > getSeq.tex
 keyMat.tex: ../keyMat/keyMat.org
@@ -51,4 +53,4 @@ watterson.tex: ../watterson/watterson.org
 wrapSeq.tex: ../wrapSeq/wrapSeq.org
 	bash ../scripts/org2nw ../wrapSeq/wrapSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > wrapSeq.tex
 clean:
-	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex repeater.tex revComp.tex shustring simNorm.tex testMeans.tex util.tex var.tex watterson.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 
+	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex repeater.tex revComp.tex shustring simNorm.tex testMeans.tex util.tex var.tex watterson.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 
