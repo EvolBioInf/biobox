@@ -1,0 +1,213 @@
+#+begin_src latex
+  \section*{Introduction}
+  In procaryotes, proteins are encoded by stretches of DNA that start
+  with an initiation codon, \ty{ATG}, and end with a stop codon,
+  \ty{TAA}, \ty{TAG}, or \ty{TGA}. Such a stretch of DNA is called an
+  open reading frame, or ORF. The program \ty{simOrf} simulates the
+  lengths of open reading frames in random DNA. This is done by drawing
+  random codons and counting the steps until a stop codon is
+  encountered. Our program \ty{simOrf} implements this method. Its
+  outline contains hooks for impports, functions, and the logic of the
+  main function.
+#+end_src
+#+begin_src go <<simOrf.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:so}>>
+  )
+
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:so}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and simulate the ORFs.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:so}>>=
+  //<<Set usage, Ch.~\ref{ch:so}>>
+  //<<Declare options, Ch.~\ref{ch:so}>>
+  //<<Parse options, Ch.~\ref{ch:so}>>
+  //<<Simulate ORFs, Ch.~\ref{ch:so}>>
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:so}>>=
+  u := "simOrf [-h] [option]..."
+  p := "Simulate the lengths of open reading frames in random DNA."
+  e := "simOrf -n 5"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  The user can set the number of ORF-lengths printed and the seed for
+  the random number generator. Seeds are always long integers. (S)he can
+  also get the version.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:so}>>=
+  var optN = flag.Int("n", 10, "number of ORFs")
+  var optS = flag.Int64("s", 0, "seed for random number " +
+	  "generator; default: internal")
+  var optV = flag.Bool("v", false, "print program version & " +
+	  "other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-s} and \ty{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:so}>>=
+  flag.Parse()
+  //<<Respond to \ty{-s}, Ch.~\ref{ch:so}>>
+  //<<Respond to \ty{-v}, Ch.~\ref{ch:so}>>
+#+end_src
+#+begin_src latex
+  The seed for the random number generator is either given by the user
+  or taken as the number of nanoseconds elapsed in the UNIX epoche.
+#+end_src
+#+begin_src go <<Respond to \ty{-s}, Ch.~\ref{ch:so}>>=
+  seed := *optS
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{time}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
+  "time"
+#+end_src
+#+begin_src latex
+  If requested, we print the version.
+#+end_src
+#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:so}>>=
+  if *optV {
+	  util.PrintInfo("simOrf")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  To simulate the ORF lengths, we first seed the random number generator
+  and then generate the ORF lengths.
+#+end_src
+#+begin_src go <<Simulate ORFs, Ch.~\ref{ch:so}>>=
+  //<<Seed random number generator, Ch.~\ref{ch:so}>>
+  //<<Generate ORF lengths, Ch.~\ref{ch:so}>>
+#+end_src
+#+begin_src latex
+  The random number generator is seeded from a source.
+#+end_src
+#+begin_src go <<Seed random number generator, Ch.~\ref{ch:so}>>=
+  source := rand.NewSource(seed)
+  r := rand.New(source)
+#+end_src
+#+begin_src latex
+  We import \ty{rand}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
+  "math/rand"
+#+end_src
+#+begin_src latex
+  To generate an ORF length, we keep picking random numbers as long as
+  they are greater than the probability of finding a stop, which is
+  $3/64$.
+#+end_src
+#+begin_src go <<Generate ORF lengths, Ch.~\ref{ch:so}>>=
+  pr := 3.0 / 64.0
+  for i := 0; i < *optN; i++ {
+	  c := 1
+	  for x := r.Float64(); x > pr; x = r.Float64() {
+		  c++
+	  }
+	  fmt.Println(c)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We are done with \ty{simOrf}, so let's test it.
+  \section*{Testing}
+  The outline of our testing program contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<simOrf_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:so}>>
+  )
+
+  func TestSimOrf(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:so}>>
+  }
+#+end_src
+#+begin_src latex
+  We test in two steps. First, we generate the tests and store them in a
+  slice of commands. Then we iterate over them and run each one.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:so}>>=
+  var tests []*exec.Cmd
+  //<<Generate tests, Ch.~\ref{ch:so}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:so}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:so}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We generate two tests, each with a seed so we can control the output.
+#+end_src
+#+begin_src go <<Generate tests, Ch.~\ref{ch:so}>>=
+  cmd := exec.Command("./simOrf", "-s", "23")
+  tests = append(tests, cmd)
+  cmd = exec.Command("./simOrf", "-s", "23", "-n", "20")
+  tests = append(tests, cmd)
+#+end_src
+#+begin_src latex
+  We run a test and check we get what we want, which we have stored in
+  results files.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:so}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Error(err.Error())
+  }
+  f := "r" + strconv.Itoa(i + 1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil {
+	  t.Error(err.Error())
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:so}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

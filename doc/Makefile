@@ -1,4 +1,4 @@
-all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.tex fasta2tab.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex shustring.tex simNorm.tex testMeans.tex repeater.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
+all: al.tex bioboxDoc.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.tex fasta2tab.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex shustring.tex simNorm.tex simOrf.tex testMeans.tex repeater.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
 	latex bioboxDoc
 	bibtex bioboxDoc
 	latex bioboxDoc
@@ -44,6 +44,8 @@ shustring.tex: ../shustring/shustring.org
 	bash ../scripts/org2nw ../shustring/shustring.org | noweave -n -x | sed 's/_test/\\_test/g' > shustring.tex
 simNorm.tex: ../simNorm/simNorm.org
 	bash ../scripts/org2nw ../simNorm/simNorm.org | noweave -n -x | sed 's/_test/\\_test/g' > simNorm.tex
+simOrf.tex: ../simOrf/simOrf.org
+	bash ../scripts/org2nw ../simOrf/simOrf.org | noweave -n -x | sed 's/_test/\\_test/g' > simOrf.tex
 testMeans.tex: ../testMeans/testMeans.org
 	bash ../scripts/org2nw ../testMeans/testMeans.org | noweave -n -x | sed 's/_test/\\_test/g' > testMeans.tex	
 util.tex: ../util/util.org
@@ -55,4 +57,4 @@ watterson.tex: ../watterson/watterson.org
 wrapSeq.tex: ../wrapSeq/wrapSeq.org
 	bash ../scripts/org2nw ../wrapSeq/wrapSeq.org | noweave -n -x | sed 's/_test/\\_test/g' > wrapSeq.tex
 clean:
-	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex repeater.tex revComp.tex shustring simNorm.tex testMeans.tex util.tex var.tex watterson.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 
+	rm -f al.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.tex fasta2tab.tex getSeq.tex keyMat.tex mutator.tex naiveMatcher.tex numAl.tex pam.tex ranseq.tex randomizeSeq.tex repeater.tex revComp.tex shustring simNorm.tex simOrf.tex testMeans.tex util.tex var.tex watterson.tex wrapSeq.tex *.pdf *.aux *.bbl *.blg *.dvi *.log *.toc 

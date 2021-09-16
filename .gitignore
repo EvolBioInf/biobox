@@ -27,6 +27,7 @@ doc/repeater.tex
 doc/revComp.tex
 doc/shustring.tex
 doc/simNorm.tex
+doc/simOrf.tex
 doc/testMeans.tex
 doc/util.tex
 doc/var.tex
@@ -53,6 +54,7 @@ repeater/repeater
 revComp/revComp
 shustring/shustring
 simNorm/simNorm
+simOrf/simOrf
 testMeans/testMeans
 var/var
 watterson/watterson
