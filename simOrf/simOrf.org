@@ -62,12 +62,26 @@
   "flag"
 #+end_src
 #+begin_src latex
-  We parse the options and respond to \ty{-s} and \ty{-v}.
+  We parse the options and respond to \ty{-v} and \ty{-s}.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:so}>>=
   flag.Parse()
-  //<<Respond to \ty{-s}, Ch.~\ref{ch:so}>>
   //<<Respond to \ty{-v}, Ch.~\ref{ch:so}>>
+  //<<Respond to \ty{-s}, Ch.~\ref{ch:so}>>
+#+end_src
+#+begin_src latex
+  If requested, we print the version.
+#+end_src
+#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:so}>>=
+  if *optV {
+	  util.PrintInfo("simOrf")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The seed for the random number generator is either given by the user
@@ -84,20 +98,6 @@
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
   "time"
-#+end_src
-#+begin_src latex
-  If requested, we print the version.
-#+end_src
-#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:so}>>=
-  if *optV {
-	  util.PrintInfo("simOrf")
-  }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   To simulate the ORF lengths, we first seed the random number generator
