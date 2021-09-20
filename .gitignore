@@ -17,6 +17,7 @@ doc/drawSt.tex
 doc/fasta2tab.tex
 doc/getSeq.tex
 doc/keyMat.tex
+doc/mum2plot.tex
 doc/mutator.tex
 doc/naiveMatcher.tex
 doc/numAl.tex
@@ -44,6 +45,7 @@ drawSt/drawSt
 fasta2tab/fasta2tab
 getSeq/getSeq
 keyMat/keyMat
+mum2plot/mum2plot
 mutator/mutator
 naiveMatcher/naiveMatcher
 numAl/numAl

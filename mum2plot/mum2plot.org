@@ -1,0 +1,313 @@
+#+begin_src latex
+  \section*{Introduction}
+  MUMmer is a software package for quickly aligning pairs of
+  genomes~\cite{kur04:ver}. Its output consists of the coordinates of
+  exact matches between the two input genomes. The matches are written
+  in two lists, one for the forward, the other for the reverse
+  strand. Each list is opened by a header line that looks like a FASTA
+  header (Table~\ref{tab:mum}A). The header of the reverse list ends in
+  the word ``Reverse''.
+
+  \begin{table}
+      \caption{Example output from MUMmer (\textbf{A}); after
+	transformation with \ty{mum2plot} (\textbf{B})}\label{tab:mum}
+    \begin{center}
+      \begin{tabular}{c|c}
+	\textbf{A} & \textbf{B}\\
+	\begin{tabular}{rrr}
+	  \multicolumn{3}{l}{> s1}\\
+    128 &       42 &        45\\
+    129 &      163 &        51\\
+    75 &       114 &        56\\
+  \multicolumn{3}{l}{> s1 Reverse}\\
+    253 &    50 &        20\\
+    253 &    57 &        21\\
+    305 &    60 &        20
+	\end{tabular} &
+	\begin{tabular}{rrrr}
+	  128 & 42 & 172 & 86\\
+  129 & 163 & 179 & 213\\
+  75 & 114 & 130 & 169\\
+  253 & 50 & 272 & 31\\
+  253 & 57 & 273 & 37\\
+  305 & 60 & 324 & 41\\
+	\end{tabular}
+  \end{tabular}
+    \end{center}
+  \end{table}
+
+  Each entry in the two match lists consists of the starting point of a
+  line and its length. For example, the first line starts at $x_1=128,
+  y_1=42$ and has $\ell=45$. In the forward list, the implied end point
+  of this line is $x_2=x_1+\ell-1=172$ and $y_2=y_1+\ell-1=86$. Reverse
+  matches lean in the opposite direction, so the x-coordinate of their
+  end-points is $x_2=x_1-\ell+1$.
+
+  The program \ty{mum2plot} converts MUMmer output to quartets
+  $(x_1,y_2,x_2,y_2)$. Thus the data in Table~\ref{tab:mum}A becomes
+  Table~\ref{fig:mum}B, which can be plotted with \ty{pipePlot} to give
+  Figure~\ref{fig:mum}.
+
+  \begin{figure}
+    \begin{center}
+      \scalebox{0.3}{\rotatebox{-90}{\includegraphics{mummer.ps}}}
+    \end{center}
+    \caption{A plot of the MUMmer data shown in Table~\ref{tab:mum}A
+      after it was transformed to the data in Table~\ref{tab:mum}B using
+    \ty{mum2plot | pipePlot}.}\label{fig:mum}
+  \end{figure}
+
+  \section*{Implementation}
+  The outline of \ty{mum2plot} contains hooks for imports, functions,
+  and the logic of the main function.
+#+end_src
+#+begin_src go <<mum2plot.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:m2p}>>
+  )
+  //<<Functions, Ch.~\ref{ch:m2p}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:m2p}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:m2p}>>=
+  //<<Set usage, Ch.~\ref{ch:m2p}>>
+  //<<Declare options, Ch.~\ref{ch:m2p}>>
+  //<<Parse options, Ch.~\ref{ch:m2p}>>
+  //<<Parse input files, Ch.~\ref{ch:m2p}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts. The actual usage message, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:m2p}>>=
+  u := "mum2plot [-h -v] [file]..."
+  p := "Convert MUMmer output to x/y coordinates."
+  e := "mummer -b -c s1.fasta s2.fasta | mum2plot | pipePlot"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare only the version option.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:m2p}>>=
+  var optV = flag.Bool("v", false, "print program & " +
+	  "other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:m2p}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("mum2plot")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as file names. Each
+  file is parsed with the function \ty{scan}.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:m2p}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan} we create a scanner to go through the file
+  line-wise. We shall need to know whether are in the reverse list, so
+  we reserve a variable for that.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:m2p}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  sc := bufio.NewScanner(r)
+	  reverse := false
+	  for sc.Scan() {
+		  //<<Deal with line, Ch.~\ref{ch:m2p}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{bufio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
+  "io"
+  "bufio"
+#+end_src
+#+begin_src latex
+  We split each line into its fields and decide whether we are dealing
+  with a header or with data. If we are dealing with a header, we need
+  to decide the strand of the list we are currently reading.
+#+end_src
+#+begin_src go <<Deal with line, Ch.~\ref{ch:m2p}>>=
+  fields := strings.Fields(sc.Text())
+  if fields[0][0] == '>' {
+	  //<<Decide strand, Ch.~\ref{ch:m2p}>>
+  } else {
+	  //<<Deal with data, Ch.~\ref{ch:m2p}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  If a header ends in \ty{Reverse}, we are in the reverse list,
+  otherwise we aren't. We also accept lower case \ty{reverse} as a
+  marker.
+#+end_src
+#+begin_src go <<Decide strand, Ch.~\ref{ch:m2p}>>=
+  suf := fields[len(fields)-1]
+  if suf == "Reverse" || suf == "reverse" {
+	  reverse = true
+  } else {
+	  reverse = false
+  }
+#+end_src
+#+begin_src latex
+  The first thing we do with a data line is to check the number of
+  fields it contains. Then we extract its start coordinates and
+  length. From that we compute its end coordinates and print them.
+#+end_src
+#+begin_src go <<Deal with data, Ch.~\ref{ch:m2p}>>=
+  //<<Check number of fields, Ch.~\ref{ch:m2p}>>
+  //<<Extract start coordinates and length, Ch.~\ref{ch:m2p}>>
+  //<<Compute end coordinates, Ch.~\ref{ch:m2p}>>
+  //<<Print coordinates, Ch.~\ref{ch:m2p}>>
+#+end_src
+#+begin_src latex
+  The data line should contain three fields. If it doesn't, we bail and
+  say why.
+#+end_src
+#+begin_src go <<Check number of fields, Ch.~\ref{ch:m2p}>>=
+  if len(fields) != 3 {
+	  log.Fatal("malformed input")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
+  "log"
+#+end_src
+#+begin_src latex
+  We convert the start position and length from strings to integers.
+#+end_src
+#+begin_src go <<Extract start coordinates and length, Ch.~\ref{ch:m2p}>>=
+  x1, err := strconv.Atoi(fields[0])
+  if err != nil { log.Fatal(err) }
+  y1, err := strconv.Atoi(fields[1])
+  if err !=  nil { log.Fatal(err) }
+  le, err := strconv.Atoi(fields[2])
+  if err != nil { log.Fatal(err) }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  We compute the end coordinates depending on the list we're reading.
+#+end_src
+#+begin_src go <<Compute end coordinates, Ch.~\ref{ch:m2p}>>=
+  x2 := x1 + le - 1
+  if reverse {
+	  x2 = x1 - le + 1
+  }
+  y2 := y1 + le - 1
+#+end_src
+#+begin_src latex
+  Each line corresponds a quartet of numbers, $(x_1,y_1,x_2,y_2)$.
+#+end_src
+#+begin_src go <<Print coordinates, Ch.~\ref{ch:m2p}>>=
+  fmt.Printf("%d\t%d\t%d\t%d\n", x1, y1, x2, y2)
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We've finished writing \ty{mum2plot}, so let's test it.
+  \section*{Testing}
+  The outline of our testing program contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<mum2plot_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:m2p}>>
+  )
+
+  func TestMum2plot(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:m2p}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct one test and run it.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:m2p}>>=
+  //<<Construct test, Ch.~\ref{ch:m2p}>>
+  //<<Run test, Ch.~\ref{ch:m2p}>>
+#+end_src
+#+begin_src latex
+  We run \ty{mum2plot} on a small file with MUMmer output,
+  \ty{test.mum}.
+#+end_src
+#+begin_src go <<Construct test, Ch.~\ref{ch:m2p}>>=
+  test := exec.Command("./mum2plot",  "test.mum")
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:m2p}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We run the test and check we get what we want, which is stored in
+  \ty{r.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:m2p}>>=
+  get, err := test.Output()
+  if err != nil { t.Error(err.Error()) }
+  want, err := ioutil.ReadFile("r.txt")
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{ioutil} and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:m2p}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src
+
+
