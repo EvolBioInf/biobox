@@ -1,0 +1,410 @@
+#+begin_src latex
+  \section*{Introduction}
+  The output of BLAST consist of lines of matches between a query and a
+  subject. For example, let's say we have four protein sequences,
+  $\{p_1,p_2,p_3,p_4\}$, and we carry out an all against all BLAST
+  run. Table~\ref{tab:b2d} shows the results of this run. We can see
+  that each protein is, of course, homologus to itself. In addition,
+  $p_1$, $p_2$, and $p_3$ also belong to a protein family, while $p_4$
+  doesn't, we call it a singleton. Within the protein family, $p_1$ and
+  $p_2$ are connected by a reciprocal hit, $p_1\leftrightarrow p_2$,
+  while for $p_1$ and $p_3$ there is only $p_3\rightarrow p_1$ and no
+  $p_1\rightarrow p_3$.
+
+  \begin{table}
+    \caption{Example BLAST results.}\label{tab:b2d}
+    \begin{center}
+      \begin{tabular}{cc}
+	\hline
+	Query & Subject\\\hline
+	$p_1$ & $p_1$\\
+	$p_1$ & $p_2$\\
+	$p_2$ & $p_1$\\
+	$p_2$ & $p_2$\\
+	$p_3$ & $p_1$\\
+	$p_3$ & $p_3$\\
+	$p_4$ & $p_4$\\\hline
+      \end{tabular}
+    \end{center}
+  \end{table}
+
+  The way we have just talked about the relationships between our
+  proteins is the language of graphs. Graphs are commonly written in the
+  dot notation, and Figure~\ref{fig:b2d}A shows the relationship among
+  our four example proteins in this notation. When rendered with the
+  program \ty{neato}, which is part of the free GraphViz package, we get
+  Figure~\ref{fig:b2d}B, an explicit graph of the homology relationships
+  among our four proteins. The program \ty{blast2dot} reads BLAST output
+  and writes the homology relationships it contains as \ty{neato} input.
+
+
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{cc}
+	\textbf{A} & \textbf{B}\\
+	\begin{minipage}{7cm}
+  \begin{verbatim}
+  graph G {
+  node [style=filled, color=lightsalmon]
+	  p1 -- p2 [dir=both]
+	  p3 -- p1 [dir=forward]
+  node [style=filled, color=lightgray]
+	  p4
+  }
+  \end{verbatim}
+	\end{minipage}
+  &
+  \raisebox{-1cm}{\scalebox{0.5}{\includegraphics{b2d}}}
+      \end{tabular}
+      \end{center}
+      \caption{The homology relationships of Table~\ref{tab:b2d} written
+	in dot notation (\textbf{A}) and rendered with \ty{neato}
+	(\textbf{B}).}\label{fig:b2d}
+  \end{figure}
+
+  \section*{Implementation}
+  The outline of \ty{blast2dot} contains hooks for imports, functions,
+  and the logic of the main function.
+#+end_src
+#+begin_src go <<blast2dot.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:b2d}>>
+  )
+
+  //<<Functions, Ch.~\ref{ch:b2d}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:b2d}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare and parse the options,
+  and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:b2d}>>=
+  //<<Set usage, Ch.~\ref{ch:b2d}>>
+  //<<Declare options, Ch.~\ref{ch:b2d}>>
+  //<<Parse options, Ch.~\ref{ch:b2d}>>
+  //<<Parse input files, Ch.~\ref{ch:b2d}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  program's purpose, and an example command.;
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:b2d}>>=
+  u := "blast2dot [-h] [option]... [file]..."
+  p := "Convert BLAST output to dot code " +
+	  "for plotting with neato or circo (GraphViz)."
+  e := "blast2dot foo.bl > foo.dot"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:b2d}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We may be interested only in the gene families. So by default we don't
+  include singletons in the output, but the user can chose to do
+  so. (S)he can also ask for the version.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:b2d}>>=
+  var optS = flag.Bool("s", false, "include singletons")
+  var optV = flag.Bool("v", false, "print program version & " +
+	  "and other information")
+#+end_src
+#+begin_src latex
+  We include \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:b2d}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options, and respond to \ty{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:b2d}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("blast2dot")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:b2d}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. These are parsed with the function \ty{scan}, which
+  takes as argument the \ty{-s} option.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:b2d}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optS)
+#+end_src
+#+begin_src latex
+  In \ty{scan} we retrieve the \ty{-s} option, read the accessions, and
+  reserve space for them in the variable \ty{accessions}. This is a map
+  between the accession string and an integer we shall later use as an
+  index. We also store the relationships between the accessions in the
+  variable \ty{families}. It is a map of maps to associate a query with
+  all the subjects it is homologous to. The information stored in these
+  two variables is then converted to a match matrix. Based on that, we
+  write the graph.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:b2d}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  optS := args[0].(bool)
+	  accessions := make(map[string]int)
+	  families := make(map[string]map[string]bool)
+	  n := 1
+	  sc := bufio.NewScanner(r)
+	  //<<Read accessions, Ch.~\ref{ch:b2d}>>
+	  //<<Construct match matrix, Ch.~\ref{ch:b2d}>>
+	  //<<Write graph, Ch.~\ref{ch:b2d}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{bufio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:b2d}>>=
+  "io"
+  "bufio"
+#+end_src
+#+begin_src latex
+  We read the query and subject accessions. Each new query is assigned a
+  new index number. We also store the match.
+#+end_src
+#+begin_src go <<Read accessions, Ch.~\ref{ch:b2d}>>=
+  for sc.Scan() {
+	  line := sc.Text()
+	  fields := strings.Fields(line)
+	  query := fields[0]
+	  sbjct := fields[1]
+	  if accessions[query] == 0 {
+		  accessions[query] = n
+		  n++
+	  }
+	  //<<Store match, Ch.~\ref{ch:b2d}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:b2d}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  If we are not dealing with a hit to self, the subject
+  is stored in its matching family.
+#+end_src
+#+begin_src go <<Store match, Ch.~\ref{ch:b2d}>>=
+  if query != sbjct {
+	  if families[query] == nil {
+		  families[query] = make(map[string]bool)
+	  }
+	  qm := families[query]
+	  qm[sbjct] = true
+  }
+#+end_src
+#+begin_src latex
+  The match matrix is an $n\times n$ matrix of boolean entries. If
+  $m_{i,j}$ is true, query $i$ matches subject $j$. We allocate this
+  matrix. The indexes we have in hand range over the interval
+  $(1,n)$. However, we need indexes over the interval $(0,n-1)$, so we
+  adjust them. Then we fill the match matrix.
+#+end_src
+#+begin_src go <<Construct match matrix, Ch.~\ref{ch:b2d}>>=
+  mm := make([][]bool, n)
+  for i := 0; i < n; i++ {
+	mm[i] = make([]bool, n)
+  }
+  //<<Adjust indexes, Ch.~\ref{ch:b2d}>>
+  //<<Fill match matrix, Ch.~\ref{ch:b2d}>>
+#+end_src
+#+begin_src latex
+  We reduce each accession index by one.
+#+end_src
+#+begin_src go <<Adjust indexes, Ch.~\ref{ch:b2d}>>=
+  for k, v := range accessions {
+	  accessions[k] = v - 1
+  }
+#+end_src
+#+begin_src latex
+  Every cell in the match matrix that corresponds to a BLAST hit is set
+  to true.
+#+end_src
+#+begin_src go <<Fill match matrix, Ch.~\ref{ch:b2d}>>=
+  for q, m := range families {
+	  i := accessions[q]
+	  for s, _ := range m {
+		  j := accessions[s]
+		  mm[i][j] = true
+	  }
+  }
+#+end_src
+#+begin_src latex
+  To write the graph, we need to go from an index to an accession, so we
+  store the accessions in a string slice that embodies this
+  mapping. Then we write the three parts of the graph, the header, the
+  body, and the footer.
+#+end_src
+#+begin_src go <<Write graph, Ch.~\ref{ch:b2d}>>=
+  //<<Map indexes to accessions, Ch.~\ref{ch:b2d}>>
+  //<<Write header, Ch.~\ref{ch:b2d}>>
+  //<<Write body, Ch.~\ref{ch:b2d}>>
+  //<<Write footer, Ch.~\ref{ch:b2d}>>
+#+end_src
+#+begin_src latex
+  There are $n$ accessions, so we store them at their correct positions
+  in a slice of that size.
+#+end_src
+#+begin_src go <<Map indexes to accessions, Ch.~\ref{ch:b2d}>>=
+  names := make([]string, n)
+  for k, v := range accessions {
+	  names[v] = k
+  }
+#+end_src
+#+begin_src latex
+  In the header we explain in a comment that the graph was generated
+  with \ty{blast2dot} and how to render it. Then we open it.
+#+end_src
+#+begin_src go <<Write header, Ch.~\ref{ch:b2d}>>=
+  fmt.Println("# Graph written by blast2dot.")
+  fmt.Println("# Render: neato|circo foo.dot")
+  fmt.Println("graph G {")
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:b2d}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  The graph body consists of the gene families and, if requested, the
+  singletons.
+#+end_src
+#+begin_src go <<Write body, Ch.~\ref{ch:b2d}>>=
+  //<<Write gene families, Ch.~\ref{ch:b2d}>>
+  if optS {
+	  //<<Write singletons, Ch.~\ref{ch:b2d}>>
+  }
+#+end_src
+#+begin_src latex
+  The members of gene families are plotted in nodes filled in light
+  salmon. Then we go through the match matrix and write the
+  query/subject pairs.
+#+end_src
+#+begin_src go <<Write gene families, Ch.~\ref{ch:b2d}>>=
+  fmt.Println("node [style=filled, color=lightsalmon]")
+  for i, v := range mm {
+	  for j, _ := range v {
+		  if i != j && mm[i][j] {
+			  //<<Write query/subject pair, Ch.~\ref{ch:b2d}>>
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  A query/subject par can be reciprocal or one-sided. To avoid
+  duplications, we set the cells we are done with to false.
+#+end_src
+#+begin_src go <<Write query/subject pair, Ch.~\ref{ch:b2d}>>=
+  fmt.Printf("\t%s -- %s[dir=", names[i], names[j])
+  if mm[j][i] {
+	  fmt.Printf("both]\n")
+	  mm[j][i] = false
+  } else {
+	  fmt.Printf("forward]\n")
+  }
+  mm[i][j] = false
+#+end_src
+#+begin_src latex
+  The singletons are those accessions that are not part of a gene
+  family. Their nodes are filled light gray.
+#+end_src
+#+begin_src go <<Write singletons, Ch.~\ref{ch:b2d}>>=
+  fmt.Println("node [style=filled, color=lightgray]")
+  for k, _ := range accessions {
+	  if families[k] == nil {
+		  fmt.Printf("\t%s\n", k)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The footer just closes the curly bracket opened in the first line of
+  the graph.
+#+end_src
+#+begin_src go <<Write footer, Ch.~\ref{ch:b2d}>>=
+  fmt.Println("}")
+#+end_src
+#+begin_src latex
+  We have finished writing \ty{blast2dot}, so let's test it.
+  \section*{Testing}
+  Our testing code has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<blast2dot_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:b2d}>>
+  )
+
+  func TestBlast2dot(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:b2d}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct the tests and run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:b2d}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:b2d}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:b2d}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:b2d}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct two tests, one without singletons, one with.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:b2d}>>=
+  f := "test.bl"
+  cmd := exec.Command("./blast2dot", f)
+  tests = append(tests, cmd)
+  cmd = exec.Command("./blast2dot", "-s", f)
+  tests = append(tests, cmd)
+#+end_src
+#+begin_src latex
+  We run the tests and compare what we get with what we want, which is
+  stored in files like \ty{r1.dot}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:b2d}>>=
+  get, err := test.Output()
+  if err != nil { t.Error(err.Error()) }
+  f = "r" + strconv.Itoa(i + 1) + ".dot"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Error(err.Error()) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n",
+		  string(get), string(want))
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:b2d}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src
+

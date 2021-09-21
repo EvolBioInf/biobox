@@ -9,6 +9,7 @@ doc/bioboxDoc.pdf
 doc/bioboxDoc.toc
 doc/bioboxDoc.ps
 doc/al.tex
+doc/blast2dot.tex
 doc/cchar.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
@@ -38,6 +39,7 @@ doc/wrapSeq.tex
 
 # Programs
 al/al
+blast2dot/blast2dot
 cchar/cchar
 cutSeq/cutSeq
 dnaDist/dnaDist

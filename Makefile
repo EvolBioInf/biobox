@@ -1,4 +1,4 @@
-progs = al cchar cutSeq dnaDist drawKt drawSt fasta2tab getSeq keyMat mum2plot mutator naiveMatcher numAl pam \
+progs = al blast2dot cchar cutSeq dnaDist drawKt drawSt fasta2tab getSeq keyMat mum2plot mutator naiveMatcher numAl pam \
 randomizeSeq ranseq repeater revComp rpois shustring simNorm testMeans watterson wrapSeq
 
 all:

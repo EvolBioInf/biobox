@@ -1,0 +1,7 @@
+# Graph written by blast2dot.
+# Render: neato|circo foo.dot
+graph G {
+node [style=filled, color=lightsalmon]
+	p1 -- p2[dir=both]
+	p3 -- p1[dir=forward]
+}
