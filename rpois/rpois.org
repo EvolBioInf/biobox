@@ -5,7 +5,7 @@
   takes as input the mean number of occurrences, $\mu$, and returns the
   corresponding $N$. This is computed by drawing random numbers until
   their product, $u_1u_2...u_m\le e^{-\mu}$. Then $N\leftarrow
-  m-1$~\cite[p. 137]{knu98:acp2}.
+  m-1$~\cite[p. 137]{knu98:ar2}.
   \section*{Implementation}
   Our program outline contains hooks for imports and the logic of the
   main function.
