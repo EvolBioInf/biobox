@@ -26,6 +26,7 @@ doc/randomizeSeq.tex
 doc/ranseq.tex
 doc/repeater.tex
 doc/revComp.tex
+doc/rpois.tex
 doc/shustring.tex
 doc/simNorm.tex
 doc/simOrf.tex
@@ -54,6 +55,7 @@ randomizeSeq/randomizeSeq
 ranseq/ranseq
 repeater/repeater
 revComp/revComp
+rpois/rpois
 shustring/shustring
 simNorm/simNorm
 simOrf/simOrf

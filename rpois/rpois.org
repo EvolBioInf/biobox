@@ -1,0 +1,198 @@
+#+begin_src latex
+  \section*{Introduction}
+  The Poisson distribution gives the number of occurrences per unit time,
+  $N$, of an event that can occur at any moment. The program \ty{rpois}
+  takes as input the mean number of occurrences, $\mu$, and returns the
+  corresponding $N$. This is computed by drawing random numbers until
+  their product, $u_1u_2...u_m\le e^{-\mu}$. Then $N\leftarrow
+  m-1$~\cite[p. 137]{knu98:acp2}.
+  \section*{Implementation}
+  Our program outline contains hooks for imports and the logic of the
+  main function.
+#+end_src
+#+begin_src go <<rpois.go>>=
+  package main
+  import (
+	  //<<Imports, Ch.~\ref{ch:rpo}>>
+  )
+
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:rpo}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, and compute the random variable.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:rpo}>>=
+  //<<Set usage, Ch.~\ref{ch:rpo}>>
+  //<<Declare options, Ch.~\ref{ch:rpo}>>
+  //<<Parse options, Ch.~\ref{ch:rpo}>>
+  //<<Compute random variable, Ch.~\ref{ch:rpo}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts, the actual usage message, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:rpo}>>=
+  u := "rpois [-h] [option]..."
+  p := "Draw Poisson-distributed random number."
+  e := "rpois -m 2"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rpo}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  The user can set the mean number of events, \ty{-m}, and the seed for
+  the random number generator, \ty{-s}, which is a long integer. (S)he
+  can also ask for the version.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:rpo}>>=
+  var optM = flag.Float64("m", 1, "mean")
+  var optS = flag.Int64("s", 0, "seed for random number generator; " +
+	  "default: internal")
+  var optV = flag.Bool("v", false, "print program version & " +
+	  "other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rpo}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v} and \ty{-s}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:rpo}>>=
+  flag.Parse()
+  //<<Respond to \ty{-v}, Ch.~\ref{ch:rpo}>>
+  //<<Respond to \ty{-s}, Ch.~\ref{ch:rpo}>>
+#+end_src
+#+begin_src latex
+  If requested to do so, we print information about \ty{rpois}.
+#+end_src
+#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:rpo}>>=
+  if *optV {
+	  util.PrintInfo("rpois")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rpo}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  If the user didn't set a seed, we take the number of nanoseconds since
+  the beginning of the UNIX epoch. Then we seed the generator.
+#+end_src
+#+begin_src go <<Respond to \ty{-s}, Ch.~\ref{ch:rpo}>>=
+  seed := *optS
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  source := rand.NewSource(seed)
+  r := rand.New(source)
+#+end_src
+#+begin_src latex
+  We import \ty{time} and \ty{rand}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rpo}>>=
+  "time"
+  "math/rand"
+#+end_src
+#+begin_src latex
+  Wit the preliminaries taken care of, we compute the random variable
+  and print it.
+#+end_src
+#+begin_src go <<Compute random variable, Ch.~\ref{ch:rpo}>>=
+  t := math.Exp(- *optM)
+  N := 0
+  pr := 1.0
+  un := r.Float64()
+  pr *= un
+  for pr >= t {
+	  un = r.Float64()
+	  pr *= un
+	  N++
+  }
+  fmt.Println(N)
+#+end_src
+#+begin_src latex
+  We import \ty{math} and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rpo}>>=
+  "math"
+  "fmt"
+#+end_src
+#+begin_src latex
+  Our little program is written, so we test it.
+  \section*{Testing}
+  The testing program has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<rpois_test.go>>=
+  package main
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:rpo}>>
+  )
+
+  func TestRpois(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:rpo}>>
+  }
+#+end_src
+#+begin_src latex
+  We set up the tests and run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:rpo}>>=
+  var tests []*exec.Cmd
+  //<<Set up tests, Ch.~\ref{ch:rpo}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:rpo}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:rpo}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We set up five tests, which means we set up a slice of five seeds and
+  construct the tests from them. We also set up a slice of the five
+  results we want.
+#+end_src
+#+begin_src go <<Set up tests, Ch.~\ref{ch:rpo}>>=
+  seeds := []int{ 1, 2, 3, 4, 5 }
+  for i := 0; i < len(seeds); i++ {
+	  s := strconv.Itoa(seeds[i])
+	  cmd := exec.Command("./rpois", "-s", s)
+	  tests = append(tests, cmd)
+  }
+  want := []string{ "3", "0", "3", "0", "3" }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:rpo}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  In an individual test we check we get what we want. The string we get
+  is terminated by a newline, which we cut off.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:rpo}>>=
+  get, err := test.Output()
+  get = get[0:len(get)-1]
+  if err != nil {
+	  t.Error(err.Error())
+  }
+  if string(get) != want[i] {
+	  t.Errorf("get: %s\nwant: %s\n",
+		  get, want[i])
+  }
+#+end_src

@@ -1,6 +1,6 @@
 src = al.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.tex fasta2tab.tex \
 	getSeq.tex keyMat.tex mum2plot.tex mutator.tex naiveMatcher.tex numAl.tex \
-	pam.tex ranseq.tex randomizeSeq.tex shustring.tex simNorm.tex simOrf.tex \
+	pam.tex ranseq.tex randomizeSeq.tex rpois.tex shustring.tex simNorm.tex simOrf.tex \
 	testMeans.tex repeater.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
 
 all: $(src) bioboxDoc.pdf
