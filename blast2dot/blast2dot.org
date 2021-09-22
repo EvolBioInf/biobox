@@ -90,13 +90,13 @@
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
-  program's purpose, and an example command.;
+  program's purpose, and an example command.
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:b2d}>>=
   u := "blast2dot [-h] [option]... [file]..."
   p := "Convert BLAST output to dot code " +
 	  "for plotting with neato or circo (GraphViz)."
-  e := "blast2dot foo.bl > foo.dot"
+  e := "blast2dot -C lightgray -c lightsalmon foo.bl > foo.dot"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -107,11 +107,17 @@
 #+end_src
 #+begin_src latex
   We may be interested only in the gene families. So by default we don't
-  include singletons in the output, but the user can chose to do
-  so. (S)he can also ask for the version.
+  include singletons in the output, but the user can chose to do so
+  (\ty{-s}). (S)he can also set the color of the gene families (\ty{-c})
+  and the singletons (\ty{-C}), and ask for the version (\ty{-v}). As
+  \ty{-C} is alphabetically less than \ty{-c}, we add the hint where to
+  find color names to \ty{-C}.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:b2d}>>=
   var optS = flag.Bool("s", false, "include singletons")
+  var optC = flag.String("c", "", "color of gene families")
+  var optCC = flag.String("C", "", "color of singletons; color names: " +
+	  "www.graphviz.org/doc/info/colors.html")
   var optV = flag.Bool("v", false, "print program version & " +
 	  "and other information")
 #+end_src
@@ -122,13 +128,16 @@
   "flag"
 #+end_src
 #+begin_src latex
-  We parse the options, and respond to \ty{-v}.
+  We parse the options, and respond to \ty{-v}. Moreover, if the user
+  set a color for the singletons with \ty{-C}, the implication is that
+  singletons should be printed and we set \ty{-s} to true.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:b2d}>>=
   flag.Parse()
   if *optV {
 	  util.PrintInfo("blast2dot")
   }
+  if *optCC != "" { *optS = true }
 #+end_src
 #+begin_src latex
   We import \ty{util}.
@@ -138,15 +147,17 @@
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are taken as the names of
-  input files. These are parsed with the function \ty{scan}, which
-  takes as argument the \ty{-s} option.
+  input files. These are parsed with the function \ty{scan}, which takes
+  as argument the options that determine the appearance of the graph,
+  singletons (\ty{-s}), family color (\ty{-c}), and singleton color
+  (\ty{-C}).
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:b2d}>>=
   files := flag.Args()
-  clio.ParseFiles(files, scan, *optS)
+  clio.ParseFiles(files, scan, *optS, *optC, *optCC)
 #+end_src
 #+begin_src latex
-  In \ty{scan} we retrieve the \ty{-s} option, read the accessions, and
+  In \ty{scan} we retrieve the options, read the accessions, and
   reserve space for them in the variable \ty{accessions}. This is a map
   between the accession string and an integer we shall later use as an
   index. We also store the relationships between the accessions in the
@@ -157,7 +168,7 @@
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:b2d}>>=
   func scan(r io.Reader, args ...interface{}) {
-	  optS := args[0].(bool)
+	  //<<Retrieve options, Ch.~\ref{ch:b2d}>>
 	  accessions := make(map[string]int)
 	  families := make(map[string]map[string]bool)
 	  n := 1
@@ -166,6 +177,14 @@
 	  //<<Construct match matrix, Ch.~\ref{ch:b2d}>>
 	  //<<Write graph, Ch.~\ref{ch:b2d}>>
   }
+#+end_src
+#+begin_src latex
+  We retrieve the options by type assertion.
+#+end_src
+#+begin_src go <<Retrieve options, Ch.~\ref{ch:b2d}>>=
+  optS := args[0].(bool)
+  optC := args[1].(string)
+  optCC := args[2].(string)
 #+end_src
 #+begin_src latex
   We import \ty{io} and \ty{bufio}.
@@ -294,12 +313,14 @@
   }
 #+end_src
 #+begin_src latex
-  The members of gene families are plotted in nodes filled in light
-  salmon. Then we go through the match matrix and write the
-  query/subject pairs.
+  The members of gene families are plotted in nodes that may be
+  tinted. Once the node color is specified, we go through the match
+  matrix and write the query/subject pairs.
 #+end_src
 #+begin_src go <<Write gene families, Ch.~\ref{ch:b2d}>>=
-  fmt.Println("node [style=filled, color=lightsalmon]")
+  if optC != "" {
+	  fmt.Printf("node [style=filled, color=%s]\n", optC)
+  }
   for i, v := range mm {
 	  for j, _ := range v {
 		  if i != j && mm[i][j] {
@@ -324,10 +345,12 @@
 #+end_src
 #+begin_src latex
   The singletons are those accessions that are not part of a gene
-  family. Their nodes are filled light gray.
+  family. Again, their nodes may or may not be tinted.
 #+end_src
 #+begin_src go <<Write singletons, Ch.~\ref{ch:b2d}>>=
-  fmt.Println("node [style=filled, color=lightgray]")
+  if optCC != "" {
+	  fmt.Printf("node [style=filled, color=%s]\n", optCC)
+  }
   for k, _ := range accessions {
 	  if families[k] == nil {
 		  fmt.Printf("\t%s\n", k)
@@ -375,13 +398,15 @@
   "os/exec"
 #+end_src
 #+begin_src latex
-  We construct two tests, one without singletons, one with.
+  We construct two tests, one without singletons, one with. In both
+  cases we color the nodes.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:b2d}>>=
   f := "test.bl"
-  cmd := exec.Command("./blast2dot", f)
+  cmd := exec.Command("./blast2dot", "-c", "lightsalmon", f)
   tests = append(tests, cmd)
-  cmd = exec.Command("./blast2dot", "-s", f)
+  cmd = exec.Command("./blast2dot", "-c", "lightsalmon",
+	  "-C", "lightgray", f)
   tests = append(tests, cmd)
 #+end_src
 #+begin_src latex
