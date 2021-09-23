@@ -1,0 +1,13 @@
+# Graph written by ranDot.
+# Render: dot|neato|circo foo.dot
+graph G {
+	1
+	5
+	7
+	3 -- 2
+	8 -- 4
+	9 -- 3
+	9 -- 6
+	9 -- 10
+	10 -- 3
+}

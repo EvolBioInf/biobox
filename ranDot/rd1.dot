@@ -1,0 +1,13 @@
+graph G {
+      node [style=filled, color=lightsalmon]
+	3 -- 5
+	4 -- 9
+	6 -- 3
+	6 -- 4
+	7 -- 5
+	10 -- 4
+	node [style=filled, color=lightgray]
+	1
+	2
+	8
+}

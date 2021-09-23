@@ -1,0 +1,403 @@
+#+begin_src latex
+  \section*{Introduction}
+  When studying graphs, it's convenient to have a ready source of graph
+  data. The program \ty{ranDot} generates random graphs in dot notation,
+  which can then be rendered by the programs of the free package
+  GraphViz\footnote{\ty{graphviz.org}}. Graphs may be undirected
+  (Figure~\ref{fig:rd}A) or directed (Figure~\ref{fig:rd}B).
+
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{c|c}
+	\textbf{A} & \textbf{B}\\
+      \scalebox{0.5}{\includegraphics{rd1}} &
+      \scalebox{0.5}{\includegraphics{rd2}}
+      \end{tabular}
+    \end{center}
+    \caption{Two random graphs; undirected (\textbf{A}) and directed
+      (\textbf{B}).}\label{fig:rd}
+  \end{figure}
+
+  The user of \ty{ranDot} can set the number of nodes, the probability of an edge
+  between pairs of nodes, and the color of nodes, depending on whether
+  they are connected or not. For example, in Figures~\ref{fig:rd}A and B
+  the connected nodes are shown in light salmon, unconnected---or
+  singleton---nodes in light gray. The colors and their names are listed
+  on the GraphViz web site:
+  \begin{center}
+  \texttt{www.graphviz.org/doc/info/colors.html}
+  \end{center}
+  \section*{Implementation}
+  The outline of \ty{ranDot} has hooks for imports and the main
+  function.
+#+end_src
+#+begin_src go <<ranDot.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:rd}>>
+  )
+
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:rd}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare and parse the options,
+  construct the graph, and print it.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:rd}>>=
+  //<<Set usage, Ch.~\ref{ch:rd}>>
+  //<<Declare options, Ch.~\ref{ch:rd}>>
+  //<<Parse options, Ch.~\ref{ch:rd}>>
+  //<<Construct graph, Ch.~\ref{ch:rd}>>
+  //<<Print graph, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{ranDot}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:rd}>>=
+  u := "ranDot [-h] [option]..."
+  p := "Draw random graph in dot notation."
+  e := "ranDot -c lightsalmon -C lightgray -d"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rd}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare eight options:
+  \begin{enumerate}
+  \item \ty{-n} size of graph
+  \item \ty{-p} edge probability
+  \item \ty{-d} directed edges
+  \item \ty{-S} allow edge to self
+  \item \ty{-c} color of connected nodes
+  \item \ty{-C} color of singletons
+  \item \ty{-s} seed of random number generator
+  \item \ty{-v}
+  \end{enumerate}
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:rd}>>=
+  var optN = flag.Int("n", 10, "number of nodes")
+  var optP = flag.Float64("p", 0.05, "edge probability")
+  var optD = flag.Bool("d", false, "directed edges")
+  var optSS = flag.Bool("S", false, "allow edge to self")
+  var optC = flag.String("c", "", "color of connected nodes")
+  var optCC = flag.String("C", "", "color of singleton nodes; " +
+	  "color names: www.graphviz.org/doc/info/colors.html")
+  var optS = flag.Int64("s", 0, "seed for random number generator " +
+	  "(default internal)")
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rd}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to the version (\ty{-v}) and the seed
+  (\ty{-s}).
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:rd}>>=
+  flag.Parse()
+  //<<Respond to \ty{-v}, Ch.~\ref{ch:rd}>>
+  //<<Respond to \ty{-s}, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  If requested, we print the version.
+#+end_src
+#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:rd}>>=
+  if *optV {
+	  util.PrintInfo("ranDot")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rd}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  If the user didn't set a seed, we take the number of nanoseconds since
+  the beginning of the UNIX epoch. Then we seed the random number
+  generator.
+#+end_src
+#+begin_src go <<Respond to \ty{-s}, Ch.~\ref{ch:rd}>>=
+  seed := *optS
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  source := rand.NewSource(seed)
+  r := rand.New(source)
+#+end_src
+#+begin_src latex
+  We import \ty{time} and \ty{rand}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rd}>>=
+  "time"
+  "math/rand"
+#+end_src
+#+begin_src latex
+  A graph consists of nodes and edges, which we construct in two
+  separate steps.
+#+end_src
+#+begin_src go <<Construct graph, Ch.~\ref{ch:rd}>>=
+  //<<Construct nodes, Ch.~\ref{ch:rd}>>
+  //<<Construct edges, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  We store the  $n$ nodes as an integer slice, where the value is the
+  name of the node,  $1,2,...,n$.
+#+end_src
+#+begin_src go <<Construct nodes, Ch.~\ref{ch:rd}>>=
+  n := *optN
+  nodes := make([]int, n)
+  for i := 0; i < n; i++ {
+	  nodes[i] = i + 1
+  }
+#+end_src
+#+begin_src latex
+  The edges are represented by an $n\times n$ matrix of boolean
+  variables. If a cell, $m_{i,j}$, is true, there is an edge
+  $v_i-v_j$. After its construction, we fill the matrix.
+#+end_src
+#+begin_src go <<Construct edges, Ch.~\ref{ch:rd}>>=
+  edges := make([][]bool, n)
+  for i := 0; i < n; i++ {
+	  edges[i] = make([]bool, n)
+  }
+  //<<Fill edge matrix, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  We go through the edge matrix and draw a random number for each
+  cell. If the random number is less or equal to the probability of an
+  edge, we set the cell to true. Self-referential edges are on the main
+  diagonal. They are a special case, we set them only if asked to do so.
+#+end_src
+#+begin_src go <<Fill edge matrix, Ch.~\ref{ch:rd}>>=
+  for i := 0; i < n; i++ {
+	  for j := 0; j < n; j++ {
+		  if i == j && !*optSS { continue }
+		  if r.Float64() <= *optP {
+			  edges[i][j] = true
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The graph is printed in three portions, header, body, and footer.
+#+end_src
+#+begin_src go <<Print graph, Ch.~\ref{ch:rd}>>=
+  //<<Print header, Ch.~\ref{ch:rd}>>
+  //<<Print body, Ch.~\ref{ch:rd}>>
+  //<<Print footer, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  In the header, we say in a comment that the graph was produced with
+  \ty{ranDot} and how to render it. Then we open it.
+#+end_src
+#+begin_src go <<Print header, Ch.~\ref{ch:rd}>>=
+  fmt.Println("# Graph written by ranDot.")
+  fmt.Println("# Render: dot|neato|circo foo.dot")
+  fmt.Println("graph G {")
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rd}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We allow the user to color-code connected nodes and singletons. So we
+  print them separately, first the singletons, then the connected
+  nodes. If the singletons are colored, but the connected nodes aren't,
+  we reset the style so that the connected nodes are drawn in the
+  default style.
+#+end_src
+#+begin_src go <<Print body, Ch.~\ref{ch:rd}>>=
+  if *optCC != "" {
+	  fmt.Printf("node [style=filled, color=%s]\n", *optCC)
+  }
+  //<<Print singleton nodes, Ch.~\ref{ch:rd}>>
+  if *optCC != "" && *optC == "" {
+	  fmt.Printf("node [style=\"\", color=\"\"]\n")
+  }
+  if *optC != "" {
+	  fmt.Printf("node [style=filled, color=%s]\n", *optC)
+  }
+  //<<Print connected nodes, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  We reserve space for the singletons and mark them. Then we print
+  them.
+#+end_src
+#+begin_src go <<Print singleton nodes, Ch.~\ref{ch:rd}>>=
+  singletons := make([]bool, n)
+  //<<Mark singletons, Ch.~\ref{ch:rd}>>
+  for i := 0; i < n; i++ {
+	  if singletons[i] {
+		  fmt.Printf("\t%d\n", nodes[i])
+	  }
+  }
+#+end_src
+#+begin_src latex
+  To mark the singletons, we set start by setting every node to
+  singleton status. Then we traverse the edge matrix and set connected
+  by an edge to false.
+#+end_src
+#+begin_src go <<Mark singletons, Ch.~\ref{ch:rd}>>=
+  for i := 0; i < n; i++ { singletons[i] = true }
+  for i := 0; i < n; i++ {
+	  for j := 0; j < n; j++ {
+		  if edges[i][j] {
+			  singletons[i] = false
+			  singletons[j] = false
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We visit every entry in the edge matrix and write a node pair whenever
+  we find an edge. Once we've written an edge, we delete it.
+#+end_src
+#+begin_src go <<Print connected nodes, Ch.~\ref{ch:rd}>>=
+  for i := 0; i < n; i++ {
+	  for j := 0; j < n; j++ {
+		  if  edges[i][j] {
+			  //<<Write node pair, Ch.~\ref{ch:rd}>>
+			  edges[i][j] = false
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The edge connecting a node pair may be directed, depending on
+  \ty{-d}. If directed, it may be reciprocal or just forward. For
+  reciprocal edges re delete the partner to avoid duplications.
+#+end_src
+#+begin_src go <<Write node pair, Ch.~\ref{ch:rd}>>=
+  fmt.Printf("\t%d -- %d", nodes[i], nodes[j])
+  if *optD {
+	  fmt.Printf("[dir=")
+	  if edges[j][i] {
+		  fmt.Printf("both]")
+		  edges[j][i] = false
+	  } else {
+		  fmt.Printf("forward]")
+	  }
+  }
+  fmt.Printf("\n")
+#+end_src
+#+begin_src latex
+  The footer simply closes the curly bracket opened at the beginning of
+  the graph.
+#+end_src
+#+begin_src go <<Print footer, Ch.~\ref{ch:rd}>>=
+  fmt.Println("}")
+#+end_src
+#+begin_src latex
+  We are finished writing \ty{ranDot}, now comes the test.
+  \section*{Testing}
+  Our testing program has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<ranDot_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:rd}>>
+  )
+
+  func TestRanDot(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:rd}>>
+  }
+#+end_src
+#+begin_src latex
+  We test \ty{ranDot} in twp steps. First, we construct the tests,
+  then we loop over them and run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:rd}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:rd}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:rd}>>
+  }
+#+end_src
+#+begin_src latex
+  We first test the options with arguments, then those without.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:rd}>>=
+  //<<Test options with arguments, Ch.~\ref{ch:rd}>>
+  //<<Test options without arguments, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  There are five options with arguments. We just concatenate them,
+  starting with the seed for the random number generator. This means
+  each test runs with a seed, which makes it reproducible. Whenever we
+  have constructed the next argument list, we construct the
+  corresponding test and add it to the list of tests.
+#+end_src
+#+begin_src go <<Test options with arguments, Ch.~\ref{ch:rd}>>=
+  var test *exec.Cmd
+  args := []string{"-s", "13"}
+  //<<Add test, Ch.~\ref{ch:rd}>>
+  args = append(args, "-C", "lightgray")
+  //<<Add test, Ch.~\ref{ch:rd}>>
+  args = append(args, "-c", "lightsalmon")
+  //<<Add test, Ch.~\ref{ch:rd}>>
+  args = append(args, "-n", "11")
+  //<<Add test, Ch.~\ref{ch:rd}>>
+  args = append(args, "-p", "0.5")
+  //<<Add test, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:rd}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We add a new test to the list of tests.
+#+end_src
+#+begin_src go <<Add test, Ch.~\ref{ch:rd}>>=
+  test = exec.Command("./ranDot", args...)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We test the two options without arguments.
+#+end_src
+#+begin_src go <<Test options without arguments, Ch.~\ref{ch:rd}>>=
+  args = append(args, "-S")
+  //<<Add test, Ch.~\ref{ch:rd}>>
+  args = append(args, "-d")
+  //<<Add test, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  When we run a test, we check we get what we want, which is saved in
+  numbered files \ty{r1.dot}, \ty{r2.dot}, and so on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:rd}>>=
+  get, err := test.Output()
+  if err != nil { t.Error(err.Error()) }
+  f := "r" + strconv.Itoa(i+1) + ".dot"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Error(err.Error()) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:rd}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

@@ -1,0 +1,15 @@
+# Graph written by ranDot.
+# Render: dot|neato|circo foo.dot
+graph G {
+node [style=filled, color=lightgray]
+	1
+	5
+	7
+node [style="" color=""]
+	3 -- 2
+	8 -- 4
+	9 -- 3
+	9 -- 6
+	9 -- 10
+	10 -- 3
+}

@@ -8,6 +8,9 @@ doc/*.log
 doc/bioboxDoc.pdf
 doc/bioboxDoc.toc
 doc/bioboxDoc.ps
+doc/rd*.ps
+
+# LaTeX files of individual programs
 doc/al.tex
 doc/blast2dot.tex
 doc/cchar.tex
@@ -24,6 +27,7 @@ doc/naiveMatcher.tex
 doc/numAl.tex
 doc/pam.tex
 doc/randomizeSeq.tex
+doc/ranDot.tex
 doc/ranseq.tex
 doc/repeater.tex
 doc/revComp.tex
@@ -54,6 +58,7 @@ naiveMatcher/naiveMatcher
 numAl/numAl
 pam/pam
 randomizeSeq/randomizeSeq
+ranDot/ranDot
 ranseq/ranseq
 repeater/repeater
 revComp/revComp
@@ -69,3 +74,4 @@ wrapSeq/wrapSeq
 # Miscellaneous
 drawKt/ktWrapper*
 drawKt/kt.tex
+ranDot/*.sh
