@@ -1,9 +1,12 @@
 #+begin_src latex
   \section*{Introduction}
   Given a stet of aligned DNA sequences, \texttt{dnaDist} computes their
-  pairwise distances. Two measures are implemented, known by their
+  pairwise distances. Perhaps the simplest distance measure is the raw
+  mismatch count, and \ty{dnaDist} implements that, as well as the
+  number of mismatches per base. The mismatches per base are allow
+  computation of two classical distance measures, known by their
   inventors' names, Jukes-Cantor~\cite{juk69:evo} and
-    Kimura~\cite{kim80:sim}.
+  Kimura~\cite{kim80:sim}.
 
   When computing the Jukes-Cantor distance, all mutations are treated
   the same, regardless of the base changed. Let $\pi$ be the
@@ -87,7 +90,7 @@
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:dna}>>=
   u := "dnaDist [-h] [options] [file(s)]"
-  p := "Calculate pairwise distances between DNA sequences."
+  p := "Calculate distances between DNA sequences."
   e := "dnaDist foo.fasta"
   clio.Usage(u, p, e)
 #+end_src
@@ -98,20 +101,23 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  We declare four options: \texttt{-v} to print the program version,
-  \texttt{-k} to compute Kimura instead of Jukes-Cantor distances, and
-  \texttt{-b} to specify the number of bootstrap replicates, by default
-  none. Bootstrapping requires random numbers, and their generator can
-  be seeded via \texttt{-s} to generate exact repeats.
+  We declare six options: \texttt{-v} to print the program version,
+  \ty{-r} to give the raw mismatch count, \ty{-u} for the uncorrected
+  distances, \texttt{-k} to compute Kimura instead of Jukes-Cantor
+  distances, and \texttt{-b} to specify the number of bootstrap
+  replicates, by default none. Bootstrapping requires random numbers,
+  and their generator can be seeded via \texttt{-s} to generate exact
+  repeats.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:dna}>>=
   var optV = flag.Bool("v", false, "print version " +
 	  "program information")
-  var optK = flag.Bool("k", false, "Kimura distances (default: " +
-	  "Jukes-Cantor)")
+  var optR = flag.Bool("r", false, "raw mismatches")
+  var optU = flag.Bool("u", false, "uncorrected mismatches")
+  var optK = flag.Bool("k", false, "Kimura distances (default: Jukes-Cantor)")
   var optB = flag.Int("b", 0, "number of bootstrap replicates")
-  var optS = flag.Int("s", 0, "seed for random number generator; " +
-	  "default: internal")
+  var optS = flag.Int("s", 0, "seed for random number generator " +
+	  "(default: internal)")
 #+end_src
 #+begin_src latex
   We import \texttt{flag}.
@@ -198,13 +204,13 @@ if *optB < 0 {
   We parse the input files using the function \texttt{parseFiles}. It
   takes as input the names of the input files, a function applied to
   each of these files, and the arguments of that function. These
-  arguments are the values of \texttt{-k} and \texttt{-b}, the random
+  arguments are the values of \ty{-b}, \ty{-r}, \ty{-u}, \texttt{-k}, the random
   number generator, and a matrix for looking up transitions.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:dna}>>=
   files := flag.Args()
   ts := util.NewTransitionTab()
-  clio.ParseFiles(files, scan, *optB, *optK, ran, ts)
+  clio.ParseFiles(files, scan, *optB, *optR, *optU, *optK, ran, ts)
 #+end_src
 #+begin_src latex
   In the function \texttt{scan}, we retrieve the options just passed,
@@ -226,16 +232,19 @@ if *optB < 0 {
   "io"
 #+end_src
 #+begin_src latex
-  The values of four options were passed, whether or not to use Kimura
-  distances (\texttt{-k}), the number of bootstrap replicates
-  (\texttt{-b}), the random number generator, and the transition
-  table. We retrieve them by type assertion.
+  The values of six options were passed, the number of bootstrap
+  replicates (\ty{-b}), raw distances (\ty{-r}), uncorrected
+  mismatches (\ty{-u}), Kimura distances (\texttt{-k}), the random
+  number generator, and the transition table. We retrieve them by type
+  assertion.
 #+end_src
 #+begin_src go <<Retrieve options, Ch.~\ref{ch:dna}>>=
   optB := args[0].(int)
-  optK := args[1].(bool)
-  ran  := args[2].(*rand.Rand)
-  ts   := args[3].(util.TransitionTab)
+  optR := args[1].(bool)
+  optU := args[2].(bool)
+  optK := args[3].(bool)
+  ran  := args[4].(*rand.Rand)
+  ts   := args[5].(util.TransitionTab)
 #+end_src
 #+begin_src latex
   When reading the input file, the sequences are stored in a slice of
@@ -362,7 +371,7 @@ if *optB < 0 {
 #+begin_src go <<With bootstrap, Ch.~\ref{ch:dna}>>=
   for i := 0; i < optB; i++ {
 	  //<<Bootstrap indexes, Ch.~\ref{ch:dna}>>
-	  distMat(dm, msa, pol, ind, optK, ts)
+	  distMat(dm, msa, pol, ind, optR, optU, optK, ts)
 	  printDist(dm, sa)
 	  //<<Reset distance matrix, Ch.~\ref{ch:dna}>>
   }
@@ -383,7 +392,8 @@ if *optB < 0 {
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:dna}>>=
   func distMat(dm [][]cell, msa [][]byte, pol []bool,
-	  ind []int, optK bool, ts util.TransitionTab) {
+	  ind []int, optR, optU, optK bool,
+	  ts util.TransitionTab) {
 	  m := len(msa)
 	  n := len(msa[0])
 	  //<<Count transitions and transversions, Ch.~\ref{ch:dna}>>
@@ -438,7 +448,11 @@ if *optB < 0 {
   distances by equation~(\ref{eq:jc}).
 #+end_src
 #+begin_src go <<Choose distance type, Ch.~\ref{ch:dna}>>=
-  if optK {
+  if optR {
+	  dm[i][j].d = float64(dm[i][j].a + dm[i][j].b)
+  } else if optU {
+	  dm[i][j].d = a + b
+  } else if optK {
 	  dm[i][j].d = -math.Log((1-2*a-b) * math.Sqrt(1-2*b)) / 2
   } else {
 	  p := a + b
@@ -513,9 +527,9 @@ if *optB < 0 {
 #+end_src
 #+begin_src go <<Check for negative zeros, Ch.~\ref{ch:dna}>>=
   if math.Signbit(dm[i][j].d) {
-	  fmt.Fprintf(w, "%.6f\t", 0.0)
+	  fmt.Fprintf(w, "%.6g\t", 0.0)
   } else {
-	  fmt.Fprintf(w, "%.6f\t", dm[i][j].d)
+	  fmt.Fprintf(w, "%.6g\t", dm[i][j].d)
   }
 #+end_src
 #+begin_src latex
@@ -537,7 +551,7 @@ if *optB < 0 {
   for i, _ := range ind {
 	  ind[i] = i
   }
-  distMat(dm, msa, pol, ind, optK, ts)
+  distMat(dm, msa, pol, ind, optR, optU, optK, ts)
   printDist(dm, sa)
 #+end_src
 #+begin_src latex
