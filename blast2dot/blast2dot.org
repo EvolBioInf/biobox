@@ -95,8 +95,9 @@
 #+begin_src go <<Set usage, Ch.~\ref{ch:b2d}>>=
   u := "blast2dot [-h] [option]... [file]..."
   p := "Convert BLAST output to dot code " +
-	  "for plotting with neato or circo (GraphViz)."
-  e := "blast2dot -C lightgray -c lightsalmon foo.bl > foo.dot"
+	  "for plotting with GraphViz programs " +
+	  "like dot, neato, or circo."
+  e := "blast2dot -C lightgray -c lightsalmon foo.bl | neato -T x11"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -118,7 +119,7 @@
   var optC = flag.String("c", "", "color of gene families")
   var optCC = flag.String("C", "", "color of singletons; color names: " +
 	  "www.graphviz.org/doc/info/colors.html")
-  var optV = flag.Bool("v", false, "print program version & " +
+  var optV = flag.Bool("v", false, "print program version " +
 	  "and other information")
 #+end_src
 #+begin_src latex
@@ -293,7 +294,7 @@
 #+end_src
 #+begin_src go <<Write header, Ch.~\ref{ch:b2d}>>=
   fmt.Println("# Graph written by blast2dot.")
-  fmt.Println("# Render: neato|circo foo.dot")
+  fmt.Println("# Render: dot|neato|circo foo.dot")
   fmt.Println("graph G {")
 #+end_src
 #+begin_src latex
@@ -345,11 +346,15 @@
 #+end_src
 #+begin_src latex
   The singletons are those accessions that are not part of a gene
-  family. Again, their nodes may or may not be tinted.
+  family. Again, their nodes may or may not be tinted. If their nodes
+  are not tinted, but those of the gene families were, we reset the node
+  style to default.
 #+end_src
 #+begin_src go <<Write singletons, Ch.~\ref{ch:b2d}>>=
   if optCC != "" {
 	  fmt.Printf("node [style=filled, color=%s]\n", optCC)
+  } else if optC != "" {
+	  fmt.Println("nod [style=\"\", color=\"\"]")
   }
   for k, _ := range accessions {
 	  if families[k] == nil {
