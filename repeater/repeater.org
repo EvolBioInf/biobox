@@ -738,15 +738,15 @@ func (n nodes) Swap(i, j int) { n[i], n[j] = n[j], n[i] }
 #+end_src
 #+begin_src latex
   On the reverse strand, a position is mapped to its forward equivalent
-  by subtracting it from the end. We also halve the sequence identifier.
+  by subtracting it from the end. We also adjust the sequence identifier.
 #+end_src
 #+begin_src go <<Determine position on reverse strand, Ch.~\ref{ch:rep}>>=
   p = ends[seqId] - p - l
-  seqId /= 2
+  seqId -= len(ends) / 2
 #+end_src
 #+begin_src latex
   On the forward strand, a position minus the start gives the absolute
-  position in that sequence. The start is either zero of follows the end
+  position in that sequence. The start is either zero or follows the end
   of its predecessor.
 #+end_src
 #+begin_src go <<Determine position on forward strand, Ch.~\ref{ch:rep}>>=
