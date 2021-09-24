@@ -106,12 +106,12 @@
   to the header.
 #+end_src
 #+begin_src go <<Reverse or reverse-complement? Ch.~\ref{ch:rev}>>=
+  seq.AppendToHeader(" - reverse")
   if optR {
 	  seq.Reverse()
-	  seq.AppendToHeader(" - REVERSE")
   } else {
 	  seq.ReverseComplement()
-	  seq.AppendToHeader(" - REVERSE_COMPLEMENT")
+	  seq.AppendToHeader("_complement")
   }
 #+end_src
 #+begin_src latex
