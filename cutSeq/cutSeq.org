@@ -112,7 +112,7 @@
 #+end_src
 #+begin_src latex
   On the command line, regions are separated by commas, and positions by
-  hyphens.
+  hyphens. We check a region before appending it.
 #+end_src
 #+begin_src go <<Parse regions from command line, Ch.~\ref{ch:cut}>>=
   re := strings.Split(*optR, ",")
@@ -121,6 +121,7 @@
 	  r := *new(region)
 	  r.start, _ = strconv.Atoi(y[0])
 	  r.end, _ = strconv.Atoi(y[1])
+	  //<<Check region, Ch.~\ref{ch:cut}>>
 	  regions = append(regions, r)
   }
 #+end_src
@@ -130,6 +131,18 @@
 #+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
   "strings"
   "strconv"
+#+end_src
+#+begin_src latex
+  A sensible regions should have a positive start position that is no
+  greater than the end. Otherwise, we ignore that region and warn the
+  user.
+#+end_src
+#+begin_src go <<Check region, Ch.~\ref{ch:cut}>>=
+  if r.start < 0 || r.start > r.end {
+	  fmt.Fprintf(os.Stderr, "ignoring (%d, %d)\n",
+		  r.start, r.end)
+	  continue
+  }
 #+end_src
 #+begin_src latex
   When parsing a file, we open it, scan it, and close it again.
@@ -155,7 +168,9 @@
   "log"
 #+end_src
 #+begin_src latex
-  The file of regions is scanned using a \texttt{Scanner}.
+  The file of regions is scanned using a \texttt{Scanner}. As with the
+  regions read from the command line, we check each region for
+  reasonableness.
 #+end_src
 #+begin_src go <<Scan file, Ch.~\ref{ch:cut}>>=
   sc := bufio.NewScanner(file)
@@ -166,6 +181,7 @@
 	  e, _ := strconv.Atoi(f[1])
 	  r.start = s
 	  r.end = e
+	  //<<Check region, Ch.~ref{ch:cut}>>
 	  regions = append(regions, r)
   }
 #+end_src
@@ -248,10 +264,12 @@
 #+end_src
 #+begin_src latex
   The joined header and sequence is constructed in one pass over the
-  slice of regions.
+  slice of regions. But before we apply a region to a sequence, we
+  make sure it doesn't overrun the sequence.
 #+end_src
 #+begin_src go <<Construct joined header and sequence, Ch.~\ref{ch:cut}>>=
   for i, r := range regions {
+	  //<<Ensure region doesn't overrun sequence, Ch.~\ref{ch:cut}>>
 	  s := r.start
 	  e := r.end
 	  if i > 0 {
@@ -262,14 +280,27 @@
   }
 #+end_src
 #+begin_src latex
+  If the region overruns the sequence, we curtail it to the sequence end
+  and warn the user.
+#+end_src
+#+begin_src go <<Ensure region doesn't overrun sequence, Ch.~\ref{ch:cut}>>=
+  sl := len(seq.Data())
+  if r.end > sl {
+	  fmt.Fprintf(os.Stderr, "curtailing (%d, %d) to (%d, %d)\n",
+		  r.start, r.end, r.start, sl)
+	  r.end = sl
+  }
+#+end_src
+#+begin_src latex
   Printing the cut-out regions separately is simpler, we just iterate
-  over the slice of regions.
+  over the slice of regions. Again, we ensure there's no overrun.
 #+end_src
 #+begin_src go <<Print separate regions, Ch.~\ref{ch:cut}>>=
   for _, r := range regions {
-	  h := seq.Header() + " "
+	  //<<Ensure region doesn't overrun sequence, Ch.~\ref{ch:cut}>>
 	  s := r.start
 	  e := r.end
+	  h := seq.Header() + " "
 	  h = h + strconv.Itoa(s) + ".." + strconv.Itoa(e)
 	  ns := fasta.NewSequence(h, seq.Data()[s-1:e])
 	  fmt.Println(ns)
