@@ -29,6 +29,7 @@ doc/pam.tex
 doc/randomizeSeq.tex
 doc/ranDot.tex
 doc/ranseq.tex
+doc/rep2plot.tex
 doc/repeater.tex
 doc/revComp.tex
 doc/rpois.tex
@@ -60,6 +61,7 @@ pam/pam
 randomizeSeq/randomizeSeq
 ranDot/ranDot
 ranseq/ranseq
+rep2plot/rep2plot
 repeater/repeater
 revComp/revComp
 rpois/rpois

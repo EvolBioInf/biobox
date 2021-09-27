@@ -1,0 +1,393 @@
+#+begin_src latex
+  \section*{Introduction}
+  The program \ty{repeater} (Chapter~\ref{ch:rep}) prints repeats within
+  or between sequences. For example, here is the \ty{repeater} command
+  for comparing the forward and reverse (\ty{-r}) strands of the
+  \emph{Adh} locus in the fruit flies \emph{Drosohpila melanogaster} and
+  \emph{D. guanche} by plotting all matches (\ty{-p}) with a minimum
+  length of 12 (\ty{-m}):
+  \begin{verbatim}
+  $ cat dmAdhAdhdup.fasta dgAdhAdhdup.fasta | repeater -m 12 -r -p | head
+  #  Length  Count  Sequence       Positions
+     37      2      AGCAA...GAGTG  f1:3292 f2:3287
+     37      2      CACTC...TTGCT  r2:3287 r1:3292
+     27      2      ATTTG...ATGTT  r1:3949 r2:3741
+     27      2      AACAT...CAAAT  f1:3949 f2:3741
+     26      2      CTTAC...AAGTT  r1:2569 r2:2529
+     26      2      GTGGT...TAGTT  r2:2370 r1:2410
+     26      2      AACTT...GTAAG  f2:2529 f1:2569
+     26      2      AACTA...ACCAC  f2:2370 f1:2410
+     23      2      ACCTC...TTCAT  r1:3865 r2:3657
+  ...
+  \end{verbatim}
+  Each match has a length, a count of at least two, the sequence, and at
+  least two positions. So, the first match is 37 nucleotides long and
+  starts on the forward strand of sequence 1 at position 3292 and on the
+  forward straind of sequence 2 on position 3287. Such a match can be
+  read as a segment in a dot plot. If we write its start and end
+  positions $(x_1, y_1, x_2, y_2)$, we get $(3292,3287,3328,3323)$. The
+  program \ty{rep2plot} transforms \ty{repeater} output to such
+  segments, which can then be rendered with \ty{pipePlot}
+  (Chapter~\ref{ch:pp})) to give Figure~\ref{fig:ppAdh}.
+
+  \begin{figure}
+    \begin{center}
+      \scalebox{0.5}{\includegraphics{ppAdh}}
+    \end{center}
+    \caption{Segment plot of the matches between the \emph{Adh} loci in
+      \emph{Drosophila melanogaster} amd
+      \emph{D. guanche}.\label{fig:ppAdh}
+  \end{figure}
+
+  There is one slight complication, though. DNA is double-stranded. So
+  each matching string occurs twice, on the forward and on the reverse
+  strand, where repeater also gives the forward coordinates. For
+  example, the second match in our list is identical to the first, bar
+  the strand. We'd like to avoid printing each segment twice and do this
+  by grouping duplicates through sorting, which makes it easy to remove
+  them.
+#+end_src
+#+begin_src latex
+  \section*{Implementation}
+  The outline of \ty{rep2plot} has hooks for imports, types, methods,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<rep2plot.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:r2p}>>
+  )
+  //<<Types, Ch.~\ref{ch:r2p}>>
+  //<<Methods, Ch.~\ref{ch:r2p}>>
+  //<<Functions, Ch.~\ref{ch:r2p}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:r2p}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:r2p}>>=
+  //<<Set usage, Ch.~\ref{ch:r2p}>>
+  //<<Delcare options, Ch.~\ref{ch:r2p}>>
+  //<<Parse options, Ch.~\ref{ch:r2p}>>
+  //<<Parse input files, Ch.~\ref{ch:r2p}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:r2p}>>=
+  u := "rep2plot [-h -v] [file]..."
+  p := "Convert repeater output to pipePlot input."
+  e := "cat f1.fasta f2.fasta | repeater -m 12 -r -p | " +
+	  "rep2plot | pipePlot"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  The help option, \ty{-h}, is always implied, so we only declare the
+  version, \ty{-v}.
+#+end_src
+#+begin_src go <<Delcare options, Ch.~\ref{ch:r2p}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:r2p}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("rep2plot")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as input files. We
+  scan them with the function \ty{scan}.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:r2p}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan)
+#+end_src
+#+begin_src latex
+  Inside scan we iterate across the input and ignore hashed lines. The
+  remaining lines are converted to segments, which are printed after
+  we've collected all of them. So we declare a variable for
+  segments. And since segments are built from x- and y-positions, we
+  also declare variables for them. Each position is either on the
+  forward strand or not, and we reserve space for that information, too.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:r2p}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  var xp, yp []int
+	  var xf, yf []bool
+	  var segments []Segment
+	  sc := bufio.NewScanner(r)
+	  for sc.Scan() {
+		  line := sc.Text()
+		  if line[0] == '#' { continue }
+		  //<<Convert line to segments, Ch.~\ref{ch:r2p}>>
+	  }
+	  //<<Print segments, Ch.~\ref{ch:r2p}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{bufio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
+  "io"
+  "bufio"
+#+end_src
+#+begin_src latex
+  A segment consists of a pair of points, which we denote by a quartet
+  of integers.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:r2p}>>=
+  type Segment struct {
+	x1, y1, x2, y2 int
+  }
+#+end_src
+#+begin_src latex
+  We split the line into its fields, extract the match length, and
+  analyze the matches. Since matches consist of position and strand
+  variables, we reset their storage beforehand.
+#+end_src
+#+begin_src go <<Convert line to segments, Ch.~\ref{ch:r2p}>>=
+  fields := strings.Fields(line)
+  ml, err := strconv.Atoi(fields[0])
+  if err != nil { log.Fatal(err) }
+  matches := fields[3:]
+  //<<Reset coordinate variables, Ch.~\ref{ch:r2p}>>
+  for _, match := range matches {
+	  //<<Extract x- and y-coordinates, Ch.~\ref{ch:r2p}>>
+  }
+  //<<Construct segments, Ch.~\ref{ch:r2p}>>
+#+end_src
+#+begin_src latex
+  We import \ty{strings}, \ty{strconv}, and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
+  "strings"
+  "strconv"
+  "log"
+#+end_src
+#+begin_src latex
+  There are four coordinate variables denoting position and strand on
+  the x- and y-axes.
+#+end_src
+#+begin_src go <<Reset coordinate variables, Ch.~\ref{ch:r2p}>>=
+  xp = xp[:0]
+  yp = yp[:0]
+  xf = xf[:0]
+  yf = yf[:0]
+#+end_src
+#+begin_src latex
+  As we saw in the Introduction, a match consists of a strand, a
+  sequence ID, and a position, which is separated by a colon. We
+  interpret a position on the first sequence as an x-coordinate, on the
+  second sequence as a y-coordinate.
+#+end_src
+#+begin_src go <<Extract x- and y-coordinates, Ch.~\ref{ch:r2p}>>=
+  sa := strings.Split(match, ":")
+  p, err := strconv.Atoi(sa[1])
+  if err != nil { log.Fatal(err) }
+  if match[1] == '1' {
+	  //<<Record position on x-axis, Ch.~\ref{ch:r2p}>>
+  } else {
+	  //<<Record position on y-axis, Ch.~\ref{ch:r2p}>>
+  }
+#+end_src
+#+begin_src latex
+  We record the position and the strandedness of a point on the x-axis.
+#+end_src
+#+begin_src go <<Record position on x-axis, Ch.~\ref{ch:r2p}>>=
+  xp = append(xp, p)
+  if match[0] == 'f' {
+	  xf = append(xf, true)
+  } else {
+	  xf = append(xf, false)
+  }
+#+end_src
+#+begin_src latex
+  We do the same for a point on the y-axis.
+#+end_src
+#+begin_src go <<Record position on y-axis, Ch.~\ref{ch:r2p}>>=
+  yp = append(yp, p)
+  if match[0] == 'f' {
+	  yf = append(yf, true)
+  } else {
+	  yf = append(yf, false)
+  }
+#+end_src
+#+begin_src latex
+  We have now established a set of positions on the x- and y-axes and
+  their strandedness. We also know the length of the match. So we are
+  now ready to construct the segments. We do this by forming all pairs
+  of x- and y-positions.
+#+end_src
+#+begin_src go <<Construct segments, Ch.~\ref{ch:r2p}>>=
+  var x2, y2 int
+  for i, x1 := range xp {
+	  for j, y1 := range yp {
+		  y2 = y1 + ml - 1
+		  //<<Find $x_2$, Ch.~\ref{ch:r2p}>>
+		  s := Segment{x1: x1, y1: y1, x2: x2, y2: y2}
+		  segments = append(segments, s)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  If the positions of a match of length $\ell$ are both located on the
+  forward strand or both are on the reverse strand, $x_2\leftarrow
+  x_1+\ell-1$. Such a match is a forward-leaning segment. Otherwise, the
+  match leans backward, that is, $x_2\leftarrow x_1$ and $x_1\leftarrow
+  x_1 + \ell - 1$.
+#+end_src
+#+begin_src go <<Find $x_2$, Ch.~\ref{ch:r2p}>>=
+  if (xf[i] && yf[j]) || (!xf[i] && !yf[j]) {
+	  x2 = x1 + ml - 1
+  } else {
+	  x2 = x1
+	  x1 = x1 - ml + 1
+  }
+#+end_src
+#+begin_src latex
+  We print the segments as four tab-delimited columns that we align
+  using a tab writer. But recall that each segment may appear twice, so
+  we remove any duplicates before we print.
+#+end_src
+#+begin_src go <<Print segments, Ch.~\ref{ch:r2p}>>=
+  //<<Set up tab writer, Ch.~\ref{ch:r2p}>>
+  //<<Remove duplicated segments, Ch.~\ref{ch:r2p}>>
+  for _, s := range segments {
+	  fmt.Fprintf(w, "%d\t%d\t%d\t%d\n", s.x1, s.y1,
+		  s.x2, s.y2)
+  }
+  w.Flush()
+  fmt.Printf("%s", buffer)
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We set up a tab writer with blank-separated columns.
+#+end_src
+#+begin_src go <<Set up tab writer, Ch.~\ref{ch:r2p}>>=
+  var buf []byte
+  buffer := bytes.NewBuffer(buf)
+  w := new(tabwriter.Writer)
+  w.Init(buffer, 1, 0, 2, ' ', 0)
+#+end_src
+#+begin_src latex
+  We import \ty{bytes} and \ty{tabwriter}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
+  "bytes"
+  "text/tabwriter"
+#+end_src
+#+begin_src latex
+  To remove duplicate segments, we sort them and squeeze the duplicates
+  from the slice.
+#+end_src
+#+begin_src go <<Remove duplicated segments, Ch.~\ref{ch:r2p}>>=
+  sort.Sort(SegmentSlice(segments))
+  j := 1
+  for i := 1; i < len(segments); i++ {
+	  if segments[i-1].x1 != segments[i].x1 ||
+		  segments[i-1].y1 != segments[i].y1 ||
+		  segments[i-1].x2 != segments[i].x2 ||
+		  segments[i-1].y2 != segments[i].y2 {
+		  segments[j] = segments[i]
+		  j++
+	  }
+  }
+  segments = segments[:j]
+#+end_src
+#+begin_src latex
+  We import \ty{sort}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
+  "sort"
+#+end_src
+#+begin_src latex
+  We declare the type \ty{SegmentSlice}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:r2p}>>=
+  type SegmentSlice []Segment
+#+end_src
+#+begin_src latex
+  We make \ty{SegmentSlice} sortable by attaching the methods \ty{Len},
+  \ty{Swap}, and \ty{Less}.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:r2p}>>=
+  func (s SegmentSlice) Len() int { return len(s) }
+  func (s SegmentSlice) Less(i, j int) bool {
+	  return s[i].x1 < s[j].x1
+  }
+  func (s SegmentSlice) Swap(i, j int) {
+	  s[i], s[j] = s[j], s[i]
+  }
+#+end_src
+#+begin_src latex
+  We've finished \ty{rep2plot}, time to test it.
+  \section*{Testing}
+  The outline of our testing program has hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<rep2plot_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:r2p}>>
+  )
+
+  func TestRep2plot(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:r2p}>>
+  }
+#+end_src
+#+begin_src latex
+  We apply \ty{rep2plot} to test data in \ty{test.txt} and compare what
+  we get with what we want, which is in \ty{r.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:r2p}>>=
+  test := exec.Command("./rep2plot", "test.txt")
+  get, err := test.Output()
+  if err != nil { t.Error(err.Error()) }
+  want, err := ioutil.ReadFile("r.txt")
+  if err != nil { t.Error(err.Error()) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:r2p}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
