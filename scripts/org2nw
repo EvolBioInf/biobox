@@ -6,6 +6,8 @@ s/^#+begin_src *[sS][hH] *<</<</
 s/^#+begin_src *[aA][wW][kK] *<</<</
 s/^#+begin_src *[gG][oO] *<</<</
 s/^#+begin_src *[hH][tT][mM][lL] *<</<</
+s/^#+begin_src *[rR] *<</<</
+s/^#+begin_src *[tT][eE][xX][tT] *<</<</
 s/\/\/ *<</<</
 /^#+end/d
 /^\*/d
