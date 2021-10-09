@@ -27,6 +27,7 @@ doc/mutator.tex
 doc/naiveMatcher.tex
 doc/numAl.tex
 doc/pam.tex
+doc/plotLine.tex
 doc/randomizeSeq.tex
 doc/ranDot.tex
 doc/ranseq.tex
@@ -59,6 +60,7 @@ mutator/mutator
 naiveMatcher/naiveMatcher
 numAl/numAl
 pam/pam
+plotLine/plotLine
 randomizeSeq/randomizeSeq
 ranDot/ranDot
 ranseq/ranseq
