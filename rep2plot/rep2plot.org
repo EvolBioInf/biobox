@@ -35,8 +35,8 @@
       \scalebox{0.5}{\includegraphics{ppAdh}}
     \end{center}
     \caption{Segment plot of the matches between the \emph{Adh} loci in
-      \emph{Drosophila melanogaster} amd
-      \emph{D. guanche}.\label{fig:ppAdh}
+      \emph{Drosophila melanogaster} and
+      \emph{D. guanche}.}\label{fig:ppAdh}
   \end{figure}
 
   There is one slight complication, though. DNA is double-stranded. So
