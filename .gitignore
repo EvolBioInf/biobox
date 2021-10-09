@@ -1,4 +1,5 @@
 */*.go
+!util/util.go
 bin/*
 doc/bioboxDoc.aux
 doc/bioboxDoc.bbl
