@@ -80,3 +80,4 @@ wrapSeq/wrapSeq
 drawKt/ktWrapper*
 drawKt/kt.tex
 ranDot/*.sh
+plotLine/template.txt

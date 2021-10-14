@@ -3,8 +3,9 @@
   The program \ty{plotLine} plots lines using the R-package
   ggplot2~\cite{wic16:ggp}. It takes as input either two or three
   columns of data. The first two columns are the x- and y-coordinates,
-  the optional third column is the group. Figure~\ref{fig:plot}A shows
-  some example data for two groups and Figure~\ref{fig:plot}B its plot.
+  the optional third column is the group. Figure~\ref{fig:pl}A shows
+  some example data for two groups, g1 and g2, and
+  Figure~\ref{fig:pl}B its plot.
 
   \begin{figure}
     \begin{center}
@@ -12,8 +13,8 @@
 	\textbf{A} & \textbf{B}\\
 	\begin{tabular}{lll}
 	  0 & 0 & g1\\
-	  1 & 1 & g1\\
 	  2 & 2 & g1\\
+	  4 & 4 & g1\\
 	  0 & 2 & g2\\
 	  2 & 4 & g2\\
 	  4 & 8 & g2
@@ -23,12 +24,12 @@
       \end{tabular}
     \end{center}
     \caption{Example data (\textbf{A}) plotted with \ty{plotLine}
-      (\textbf{B}).}\label{fig:plot}
+      (\textbf{B}).}\label{fig:pl}
   \end{figure}
 
   \section*{Implementation}
-  The outline of \ty{plotLine} has hooks for imports, types, functions,
-  and the logic of the main function.
+  The outline of \ty{plotLine} has hooks for imports, types, variables,
+  functions, and the logic of the main function.
 #+end_src
 #+begin_src go <<plotLine.go>>=
   package main
@@ -37,6 +38,7 @@
 	  //<<Imports, Ch.~\ref{ch:pl}>>
   )
   //<<Types, Ch.~\ref{ch:pl}>>
+  //<<Variables, Ch.~\ref{ch:pl}>>
   //<<Functions, Ch.~\ref{ch:pl}>>
   func main() {
 	  //<<Main function, Ch.~\ref{ch:pl}>>
@@ -99,7 +101,7 @@
 #+end_src
 #+begin_src latex
   The user can set the base size of the plot, and opt for dots only or
-  lines with dots.
+  lines with dots instead just lines, the default.
 #+end_src
 #+begin_src go <<Declare plot type options, Ch.~\ref{ch:pl}>>=
   var optS = flag.Int("s", 0, "base size")
@@ -107,36 +109,28 @@
   var optDD = flag.Bool("D", false, "dots with lines")
 #+end_src
 #+begin_src latex
-  The user can set the graphical device, and set the width and height of
-  the plot it produces. Among the graphical devices supported by R, we
-  recognize five:
-  \begin{itemize}
-  \item postscript (p)
-  \item PDF (P)
-  \item x11 (x)
-  \item quartz (q)
-  \item windows (w)
-  \end{itemize}
+  The user can set the graphical device and the width and height of the
+  plot it produces. Among the graphical devices supported by R, we offer
+  only postscript as an alternative to the default x11.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
-  var optG = flag.String("g", "x", "graphical device, " +
-	  "first character of x11, ps, PDF, quartz, windows")
+  var optP = flag.String("p", "", "postscript file")
   var optW = flag.Float64("w", 0.0, "width in cm")
   var optHH = flag.Float64("H", 0.0, "height in cm")
 #+end_src
 #+begin_src latex
-  The R script used for plotting is not accessible to the user. However,
-  the user can opt to have it printed to a file.
+  The R script used for plotting is usually hidden from the
+  user. However, (s)he can opt to have it printed to a file.
 #+end_src
 #+begin_src go <<Declare script options, Ch.~\ref{ch:pl}>>=
-  var optR = flag.String("r", "", "file for R script")
+  var optR = flag.String("r", "", "R script")
 #+end_src
 #+begin_src latex
-  We parse the options and respond to \ty{-v}, as this might terminate
-  the program. Then we collect the values of options that are straight
-  forward in the variable \ty{args}. What remains are the more complex
-  options \ty{-X}, \ty{-Y}, \ty{-g}, and \ty{-l}. We respond to each one
-  of these in turn.
+  We parse the options and respond to \ty{-v} first, as this might
+  terminate the program. Then we collect the values of simple options in
+  the variable \ty{args}. What remains are the more complex options x-
+  and y-range (\ty{-X} and \ty{-Y}), and log-scale (\ty{-l}). We respond
+  to each one of these in turn.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:pl}>>=
   flag.Parse()
@@ -145,11 +139,10 @@
   //<<Collect option values, Ch.~\ref{ch:pl}>>
   //<<Respond to \ty{-X}, Ch.~\ref{ch:pl}>>
   //<<Respond to \ty{-Y}, Ch.~\ref{ch:pl}>>
-  //<<Respond to \ty{-g}, Ch.~\ref{ch:pl}>>
   //<<Respond to \ty{-l}, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
-  We respond to \ty{-v} by printing a standardized message.
+  We respond to \ty{-v} by printing information about \ty{plotLine}.
 #+end_src
 #+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:pl}>>=
   if *optV {
@@ -171,10 +164,11 @@
   }
 #+end_src
 #+begin_src latex
-  We collect the option values that require no further analysis,
-  \ty{-x}, \ty{-y}, \ty{-H}, \ty{-w}, \ty{-s}, \ty{-r}, \ty{-d}, and
-  \ty{-D}. Since R takes height and width in inches, we convert the cm
-  read.
+  We collect the option values that require no, or only little, further
+  analysis, \ty{-x}, \ty{-y}, \ty{-H}, \ty{-w}, \ty{-s}, \ty{-r},
+  \ty{-d}, \ty{-D}, and \ty{-p}. R takes plot height and width in
+  inches, but \ty{plotLine} works in cm. So we convert from cm to inch
+  by dividing by 2.54.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:pl}>>=
   args.Xlab = *optX
@@ -185,6 +179,7 @@
   args.Script = *optR
   args.Dots = *optD
   args.DotsLines = *optDD
+  args.Ps = *optP
 #+end_src
 #+begin_src latex
   We add the corresponding fields to the structure \ty{Args}.
@@ -193,13 +188,13 @@
   Xlab, Ylab string
   Height, Width float64
   Size int
-  Script string
+  Script, Ps string
   Dots, DotsLines bool
 #+end_src
 #+begin_src latex
   The \ty{-X} option contains the x-range as a string where start and
-  end are separated by a colon. If the user didn't set a range,
-  \ty{Xrange} keeps its default value, false.
+  end are separated by a colon. If the user didn't set a range, the
+  boolean field \ty{Xrange} keeps its default value, false.
 #+end_src
 #+begin_src go <<Respond to \ty{-X}, Ch.~\ref{ch:pl}>>=
   sa := strings.Split(*optXX, ":")
@@ -248,63 +243,9 @@
   Yrange bool
 #+end_src
 #+begin_src latex
-  Among the graphical devices, we first deal with the screen devices,
-  then with the file devices.
-#+end_src
-#+begin_src go <<Respond to \ty{-g}, Ch.~\ref{ch:pl}>>=
-  switch *optG {
-	  //<<Deal with screen devices, Ch.~\ref{ch:pl}>>
-	  //<<Deal with file devices, Ch.~\ref{ch:pl}>>
-  }
-#+end_src
-#+begin_src latex
-  We go through the two file devices.
-#+end_src
-#+begin_src go <<Deal with file devices, Ch.~\ref{ch:pl}>>=
-  case "p":
-  args.Graph = "postscript"
-  case "P":
-  args.Graph = "pdf"
-#+end_src
-#+begin_src latex
-  We add the field \ty{Graph} to \ty{Args}.
-#+end_src
-#+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
-  Graph string
-#+end_src
-#+begin_src latex
-  The screen devices also contain the default, X11. And given that file
-  and screen devices are treated differently in R, we also not whether
-  or not they are screen devices.
-#+end_src
-#+begin_src go <<Deal with screen devices, Ch.~\ref{ch:pl}>>=
-  case "q":
-  args.Graph = "quartz"
-  args.Screen = true
-  case "w":
-  args.Graph = "windows"
-  args.Screen = true
-  default:
-  args.Graph = "X11"
-  args.Screen = true
-#+end_src
-#+begin_src latex
-  We add the field \ty{Screen} to \ty{Args}.
-#+end_src
-#+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
-  Screen bool
-#+end_src
-#+begin_src latex
-  If the user submitted an unknown graphical device, there is probably
-  something wrong and we bail with a friendly message.
-#+end_src
-#+begin_src go <<Respond to unknown graphical device, Ch.~\ref{ch:pl}>>=
-  log.Fatalf("%s refers to an unknown " +
-	  "graphical device\n", *optG)
-#+end_src
-#+begin_src latex
   The log-option is a small integer, where 0 denotes linear, 1
-  x-log, 2 y-log, and 3 xy-log.
+  x-log, 2 y-log, and 3 xy-log. We accept upper and lower case x and y,
+  and bail if an unknown log-code was submitted.
 #+end_src
 #+begin_src go <<Respond to \ty{-l}, Ch.~\ref{ch:pl}>>=
   if *optL == "x" || *optL == "X" {
@@ -314,6 +255,8 @@
   } else if ok, err := regexp.MatchString(`^[xX][yY]$`, *optL);
   err == nil && ok {
 	  args.Log = 3
+  } else if *optL != "" {
+	  log.Fatalf("don't know -l %s\n", *optL)
   }
 #+end_src
 #+begin_src latex
@@ -338,17 +281,18 @@
   The remaining tokens on the command line are taken as input
   files. These are parsed with the function \ty{ParseFiles}, which
   subjects each file to the function \ty{scan}. \ty{scan}, in turn,
-  takes as argument the arguments we just collected.
+  takes as argument the variable \ty{args} we just filled.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:pl}>>=
   files := flag.Args()
   clio.ParseFiles(files, scan, args)
 #+end_src
 #+begin_src latex
-  Inside \ty{scan}, we retrieve the options, read the data, construct
-  the R script, construct the R command that runs the script, pipe the
-  data into it, and run it. Then we delete the R script again, unless
-  the user wrote it to a specific file.
+  Inside \ty{scan}, we retrieve the variable \ty{args} by type
+  assertion, read the data, construct the R script, construct the R
+  command that runs the script, pipe the data into it, and run it. Then
+  we delete the R script again, unless the user wrote it to a specific
+  file.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pl}>>=
   func scan(r io.Reader, a ...interface{}) {
@@ -371,10 +315,8 @@
 #+end_src
 #+begin_src latex
   While reading the data, we determine the number of columns from the
-  first row. The number of columns influences the plotting later, so we
-  save it with the other arguments. If the number of columns isn't 2 or
-  3, something has gone wrong and we stop reading. We'll respond more
-  fully to this case in a moment, when we construct the R script.
+  first row. This influences the plotting later, so we save it with the
+  other arguments. We also check the number of columns at this point.
 #+end_src
 #+begin_src go <<Read data, Ch.~\ref{ch:pl}>>=
   var data []string
@@ -384,8 +326,8 @@
 	  if first {
 		  first = false
 		  args.Ncol = len(strings.Fields(sc.Text()))
+		  //<<Check number of columns, Ch.~\ref{ch:pl}>>
 	  }
-	  if args.Ncol < 2 || args.Ncol > 3 { break }
 	  data = append(data, sc.Text())
   }
 #+end_src
@@ -402,16 +344,23 @@
   Ncol int
 #+end_src
 #+begin_src latex
+  If the data has the wrong number of columns, there's bound to be
+  something wrong, so we bail with a friendly message.
+#+end_src
+#+begin_src go <<Check number of columns, Ch.~\ref{ch:pl}>>=
+  if args.Ncol < 2 && args.Ncol > 3 {
+	  m := "there should be 2 or 3 columns " +
+		  "in the input, but you have %d\n"
+	  log.Fatalf(m, args.Ncol)
+  }
+#+end_src
+#+begin_src latex
   We open a file to write the script to. But before actually doing that,
   we make sure the input data has either two or three columns.
 #+end_src
 #+begin_src go <<Construct R script, Ch.~\ref{ch:pl}>>=
   //<<Open script file, Ch.~\ref{ch:pl}>>
-  if args.Ncol == 2 || args.Ncol == 3 {
-	  //<<Deal with two or three columns, Ch.~\ref{ch:pl}>>
-  } else {
-	  //<<Deal with wrong number of columns, Ch.~\ref{ch:pl}>>
-  }
+  //<<Write script to file, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
 The script is written either to a unique file or to the file supplied
@@ -428,6 +377,7 @@ by the user.
   if err != nil {
 	  log.Fatal(err.Error())
   }
+  defer script.Close()
 #+end_src
 #+begin_src latex
   We import \ty{ioutil}.
@@ -436,51 +386,53 @@ by the user.
   "io/ioutil"
 #+end_src
 #+begin_src latex
-  If the data has the wrong number of columns, there's bound to be
-  something wrong, so we bail with a friendly message.
+  We write the script using a template. In experiments I found that the
+  resulting R code may contain empty lines, which is confusing when the
+  user inspects the script. I couldn't figure out how to rewrite the
+  template to avoid the blank lines. So we remove them from the template
+  output before writing the final code to file.
 #+end_src
-#+begin_src go <<Deal with wrong number of columns, Ch.~\ref{ch:pl}>>=
-  m := "there should be 2 or 3 columns " +
-	  "in the input, but you have %d\n"
-  log.Fatalf(m, args.Ncol)
-#+end_src
-#+begin_src latex
-  If there are two or three columns, we write the script using a
-  template, which we still have to create. Then we close the script
-  again.
-#+end_src
-#+begin_src go <<Deal with two or three columns, Ch.~\ref{ch:pl}>>=
+#+begin_src go <<Write script to file, Ch.~\ref{ch:pl}>>=
+  buf := new(bytes.Buffer)
   tmpl := template.New("tmpl")
-  //<<Create template, Ch.~\ref{ch:pl}>>
+  tmpl = template.Must(tmpl.Parse(tmplStr))
+  err = tmpl.Execute(buf, args)
   if err != nil {
 	  log.Fatal(err.Error())
   }
-  err = tmpl.Execute(script, args)
-  if err != nil {
-	  log.Fatal(err.Error())
-  }
-  script.Close()
+  code := ""
+  //<<Remove blank lines from code, Ch.~\ref{ch:pl}>>
+  fmt.Fprintf(script, "%s", code)
 #+end_src
 #+begin_src latex
-  We import \ty{template}.
+  We import \ty{bytes} \ty{template}, and \ty{fmt}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
+  "bytes"
   "text/template"
+  "fmt"
 #+end_src
 #+begin_src latex
-  The template is a string that then gets parsed.
+  The template string, \ty{tmplStr}, is read from the embedded file
+  \ty{template.txt}.
 #+end_src
-#+begin_src go <<Create template, Ch.~\ref{ch:pl}>>=
-  ts := ""
-  //<<Construct template string, Ch.~\ref{ch:pl}>>
-  tmpl = template.Must(tmpl.Parse(ts))
+#+begin_src go <<Variables, Ch.~\ref{ch:pl}>>=
+  //go:embed template.txt
+  var tmplStr string
 #+end_src
 #+begin_src latex
-  We construct the template string in five steps. Construct the header,
-  construct the plot, and deal with the three plocks of options
-  affecting the axes, the plot type, and the plot device.
+  We import \ty{embed}.
 #+end_src
-#+begin_src text <<Construct template string, Ch.~\ref{ch:pl}>>=
+#+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
+  _ "embed"
+#+end_src
+#+begin_src latex
+  We construct the template in the file \ty{template.txt} using five
+  steps. Construct the header, construct the plot, and deal with the
+  three blocks of options affecting the axes, the plot type, and the
+  plot device.
+#+end_src
+#+begin_src text <<template.txt>>=
   //<<Construct header, Ch.~\ref{ch:pl}>>
   //<<Construct plot, Ch.~\ref{ch:pl}>>
   //<<Deal with axes options, Ch.~\ref{ch:pl}>>
@@ -492,15 +444,18 @@ by the user.
   data from the standard input stream.
 #+end_src
 #+begin_src r <<Construct header, Ch.~\ref{ch:pl}>>=
-  ts = "library(\"ggplot2\")\n"
-  ts += "data <- read.table(file=\"stdin\")\n"
+  library("ggplot2")
+  data <- read.table(file="stdin")
 #+end_src
 #+begin_src latex
   We construct the plot and group the data if there are three columns.
 #+end_src
 #+begin_src r <<Construct plot, Ch.~\ref{ch:pl}>>=
-  ts += "plot <- ggplot(data, aes(V1, V2\n"
-  ts += "{{- if eq .Ncol 3}}, group=V3{{end}}))\n"
+  plot <- ggplot(data, aes(V1, V2
+  {{- if eq .Ncol 3 -}}
+  , group=V3
+  {{- end -}}
+  ))
 #+end_src
 #+begin_src latex
   We set the axis labels. If we have groups, we mark them with colors,
@@ -510,41 +465,56 @@ by the user.
   groups table, so we set it to the empty string.
 #+end_src
 #+begin_src r <<Deal with axes options, Ch.~\ref{ch:pl}>>=
-  ts += "plot <- plot + labs(x=\"{{.Xlab}}\", y=\"{{.Ylab}}\"\n"
-  ts += "{{- if eq .Ncol 3 -}}\n"
-  ts += ", color=\"\"\n"
-  ts += "{{- end}})\n"
+  plot <- plot + labs(x="{{.Xlab}}", y="{{.Ylab}}"
+  {{- if eq .Ncol 3 -}}
+  , color=""
+  {{- end -}}
+  )
 #+end_src
 #+begin_src latex
-  We set the ranges, if available.
+  We scale the x-axis and the y-axis.
 #+end_src
 #+begin_src r <<Deal with axes options, Ch.~\ref{ch:pl}>>=
-  ts += "{{if .Xrange -}}\n"
-  ts += "plot <- plot + xlim({{.Xmin}}, {{.Xmax}})\n"
-  ts += "{{end -}}\n"
-  ts += "{{if .Yrange}}\n"
-  ts += "plot <- plot + ylim({{.Ymin}}, {{.Ymax}})\n"
-  ts += "{{end -}}\n"
+  //<<Scale x-axis, Ch.~\ref{ch:pl}>>
+  //<<Scale y-axis, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
-  We set the requested axes to log scale.
+  When setting the scale of an axis to log, the limits, if any, have to
+  be set at the same time.
 #+end_src
-#+begin_src r <<Deal with axes options, Ch.~\ref{ch:pl}>>=
-  ts += "{{if or (eq 1 .Log) (eq 3 .Log) -}}\n"
-  ts += "plot <- plot + scale_x_log10()\n"
-  ts += "{{end -}}\n"
-  ts += "{{if or (eq 2 .Log) (eq 3 .Log) -}}\n"
-  ts += "plot <- plot + scale_y_log10()\n"
-  ts += "{{end -}}\n"
+#+begin_src r <<Scale x-axis, Ch.~\ref{ch:pl}>>=
+  {{if or (eq 1 .Log) (eq 3 .Log) -}}
+  plot <- plot + scale_x_log10(
+  {{- if .Xrange -}}
+  limits = c({{.Xmin}}, {{.Xmax}})
+  {{- end -}}
+  )
+  {{else if .Xrange -}}
+  plot <- plot + xlim({{.Xmin}}, {{.Xmax}})
+  {{end}}
+#+end_src
+#+begin_src latex
+  We repeat the scaling for the y-axis.
+#+end_src
+#+begin_src r <<Scale y-axis, Ch.~\ref{ch:pl}>>=
+  {{if or (eq 2 .Log) (eq 3 .Log) -}}
+  plot <- plot + scale_y_log10(
+  {{- if .Yrange -}}
+  limits = c({{.Ymin}}, {{.Ymax}})
+  {{- end -}}
+  )
+  {{else if .Yrange -}}
+  plot <- plot + ylim({{.Ymin}}, {{.Ymax}})
+  {{end}}
 #+end_src
 #+begin_src latex
   The first of the plot type options we transcribe to R is the base
   size of the plot.
 #+end_src
 #+begin_src r <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
-  ts += "{{if .Size -}}\n"
-  ts += "plot <- plot + theme_grey(base_size={{.Size}})\n"
-  ts += "{{end -}}\n"
+  {{if .Size -}}
+  plot <- plot + theme_grey(base_size={{.Size}})
+  {{end -}}
 #+end_src
 #+begin_src latex
   The user might have requested that only dots be plotted. If not, we
@@ -552,80 +522,117 @@ by the user.
   input data, in which case we extract the groups from the third column.
 #+end_src
 #+begin_src r <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
-  ts += "{{if .Dots -}}\n"
-  ts += "plot <- plot + geom_point(\n"
-  ts += "{{- if eq .Ncol 3 -}}\n"
-  ts += "aes(color=factor(V3))\n"
-  ts += "{{end -}})\n"
-  ts += "{{else -}}\n"
-  ts += "plot <- plot + geom_line(\n"
-  ts += "{{- if eq .Ncol 3 -}}\n"
-  ts += "aes(color=factor(V3))\n"
-  ts += "{{- end}})\n"
-  ts += "{{end -}}\n"
+  {{if .Dots -}}
+  plot <- plot + geom_point(
+  {{- if eq .Ncol 3 -}}
+  aes(color=factor(V3))
+  {{- end -}}
+  )
+  {{- else -}}
+  plot <- plot + geom_line(
+  {{- if eq .Ncol 3 -}}
+  aes(color=factor(V3))
+  {{- end -}}
+  )
+  {{- end}}
 #+end_src
 #+begin_src latex
   The user might have requested points with the lines.
 #+end_src
 #+begin_src r <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
-  ts += "{{if .DotsLines -}}\n"
-  ts += "plot <- plot + geom_point()\n"
-  ts += "{{end -}}\n"
+  {{if .DotsLines -}}
+  plot <- plot + geom_point()
+  {{end -}}
 #+end_src
 #+begin_src latex
   We set up the graphical device, set its width and height, plot, and
   close the device again.
 #+end_src
 #+begin_src r <<Deal with device options, Ch.~\ref{ch:pl}>>=
-  ts += "{{.Graph}}(\n"
+  {{if .Ps -}}
+  postscript(file="{{.Ps}}"
+  {{- if or (gt .Width 0.0) (gt .Height 0.0) -}}
+  ,
+  {{- end -}}
+  {{- else -}}
+  x11(
+  {{- end}}    
   //<<Set width and height, Ch.~\ref{ch:pl}>>
-  ts += "plot(plot)\n"
+  plot(plot)
   //<<Close device, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
-  We only set the width and / or the height, if they are greater than
-  zero.
+  We only set width or height if they are greater than zero. To keep the
+  values of width and height legible, we only print the first three
+  significant digits.
 #+end_src
 #+begin_src go <<Set width and height, Ch.~\ref{ch:pl}>>=
-  ts += "{{- if gt .Width 0.0 -}}\n"
-  ts += "width={{.Width}}\n"
-  ts += "{{- if gt .Height 0.0}}, {{end}}\n"
-  ts += "{{- end}}\n"
-  ts += "{{- if gt .Height 0.0 -}}\n"
-  ts += ", height={{.Height}}\n"
-  ts += "{{- end -}}\n"
-  ts += ")\n"
+  {{- if gt .Width 0.0 -}}
+  width={{printf "%.3f" .Width}}
+  {{- if gt .Height 0.0 -}}
+  ,
+  {{- end}}
+  {{- end}}
+  {{- if gt .Height 0.0 -}}
+  height={{printf "%.3f" .Height}}
+  {{- end -}}
+  )
 #+end_src
 #+begin_src latex
-  If we are running a screen device, we check every 0.1 s whether its
-  still active. If not, we end the script. This crutch simulates the
-  expected behavior that \ty{plotLine} returns when the graphics window
-  it spawned is closed.
+  If we are running an x11 window, we check every 0.1 s whether it's
+  still active. If is isn't active any more, we end the script. This
+  crutch simulates the expected behavior that \ty{plotLine} returns when
+  the graphics window is closed. If instead of running an x11 window we
+  print postscript output, we switch the device off afterwards.
 #+end_src
 #+begin_src go <<Close device, Ch.~\ref{ch:pl}>>=
-  ts += "{{if .Screen -}}\n"
-  ts += "while(names(dev.cur()) != 'null device')\n"
-  ts += "    Sys.sleep(0.1)\n"
-  ts += "{{else -}}\n"
-  ts += "dev.off()\n"
-  ts += "{{end -}}\n"
+  {{if not .Ps -}}
+  while(names(dev.cur()) != 'null device')
+      Sys.sleep(0.1)
+  {{else -}}
+  dev.off()
+  {{end -}}
+#+end_src
+#+begin_src latex
+  Our last step in writing the R script is to remove any blank lines it
+  might contain. We do this by examining each character in the buffer
+  holding the code. We keep a character if it isn't a newline preceded
+  by a newline. So we need a variable that tells us whether the previous
+  character was a newline, \ty{prevNl}.
+#+end_src
+#+begin_src go <<Remove blank lines from code, Ch.~\ref{ch:pl}>>=
+  i := 0
+  bb := buf.Bytes()
+  prevNl := false
+  for _, c := range bb {
+	  //<<Examine character, Ch.~\ref{ch:pl}>>
+  }
+  bb = bb[:i]
+  code = string(bb)
+#+end_src
+#+begin_src latex
+  If the previous character was not a newline, or the present character
+  is not a newline, we keep it.
+#+end_src
+#+begin_src go <<Examine character, Ch.~\ref{ch:pl}>>=
+  if !prevNl || c != '\n' {
+	  bb[i] = c
+	  i++
+  } 
+  if bb[i-1] == '\n' {
+	  prevNl = true
+  } else {
+	  prevNl = false
+  }
 #+end_src
 #+begin_src latex
   We have finished the R script and make sure it's eventually deleted
-  again. Apart from the script we wrote, there might also be a new file,
-  \ty{*.Rout} generated by R. We delete that, too.
+  again.
 #+end_src
 #+begin_src go <<Delete R script, Ch.~\ref{ch:pl}>>=
   err = os.Remove(script.Name())
   if err != nil {
 	  log.Fatal(err.Error())
-  }
-  rout := script.Name() + ".Rout"
-  if _, err = os.Stat(rout); err == nil {
-	  err = os.Remove(rout)
-	  if err != nil {
-		  log.Fatal(err.Error())
-	  }
   }
 #+end_src
 #+begin_src latex
@@ -635,10 +642,11 @@ by the user.
   "os"
 #+end_src
 #+begin_src latex
-  We run R in batch mode.
+  We run R via its scripting front end in ``vanilla'' mode to suppress
+  all additional output.
 #+end_src
 #+begin_src go <<Construct R command, Ch.~\ref{ch:pl}>>=
-cmd := exec.Command("R", "CMD", "BATCH", script.Name())
+  cmd := exec.Command("Rscript", "--vanilla", script.Name())
 #+end_src
 #+begin_src latex
   We import \ty{exec}.
@@ -647,15 +655,16 @@ cmd := exec.Command("R", "CMD", "BATCH", script.Name())
   "os/exec"
 #+end_src
 #+begin_src latex
-  We wrap the data piping in a goroutine.
+  We wrap the data piping in a goroutine. As blank lines would look ugly
+  in the output, we remove them.
 #+end_src
 #+begin_src go <<Pipe data into R command, Ch.~\ref{ch:pl}>>=
   stdin, err := cmd.StdinPipe()
   if err != nil { log.Fatal(err.Error()) }
   go func() {
 	  for _, d := range data {
-		  d += "\n"
 		  stdin.Write([]byte(d))
+		  stdin.Write([]byte("\n"))
 	  }
 	  stdin.Close()
   }()
@@ -668,4 +677,181 @@ cmd := exec.Command("R", "CMD", "BATCH", script.Name())
   if err != nil {
 	  log.Fatal(err.Error())
   }
+#+end_src
+#+begin_src latex
+  We are done writing \ty{plotLine}, let's test it.
+  \section*{Testing}
+  Out testing outline has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<plotLine_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:pl}>>
+  )
+
+  func TestPlotLine(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:pl}>>
+  }
+#+end_src
+#+begin_src latex
+  We prepare a set of tests and then run them. In each test we write the
+  output to a temporary postscript file, so that we can compare what we
+  get to what we want. When we're done testing, we remove the postscript
+  file again.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:pl}>>=
+  var tests []*exec.Cmd
+  psf, err := ioutil.TempFile(".", "tmp_*.ps")
+  if err != nil { log.Fatal(err.Error()) }
+  ps := psf.Name()
+  //<<Prepare tests, Ch.~\ref{ch:pl}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:pl}>>
+  }
+  err = os.Remove(ps)
+  if err != nil { log.Fatal(err.Error()) }
+#+end_src
+#+begin_src latex
+  We import \ty{os} and \ty{ioutil}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pl}>>=
+  "os"
+  "io/ioutil"
+#+end_src
+#+begin_src latex
+  We create six sets of tests, lines \& dots, axis labels, plot size,
+  log-scaling, ranges, and combinations of log-scaling and ranges.
+#+end_src
+#+begin_src go <<Prepare tests, Ch.~\ref{ch:pl}>>=
+  //<<Test lines and dots, Ch.~\ref{ch:pl}>>
+  //<<Test axis labels, Ch.~\ref{ch:pl}>>
+  //<<Test plot size, Ch.~\ref{ch:pl}>>
+  //<<Test log-scaling, Ch.~\ref{ch:pl}>>
+  //<<Test ranges, Ch.~\ref{ch:pl}>>
+  //<<Test combinations of log-scaling and ranges, Ch.~\ref{ch:pl}>>
+#+end_src
+#+begin_src latex
+  We have two sets of input data, \ty{test3.dat} with the three columns
+  of data shown in Figure~\ref{fig:pl}A, and \ty{test2.dat}, with just
+  the first two columns of group g1.
+
+  We begin testing by drawing a plot of each, then we concentrate on
+  \ty{test3.dat}. Every time the output we get is a postscript file,
+  which we can later compare with the output we want.
+#+end_src
+#+begin_src go <<Test lines and dots, Ch.~\ref{ch:pl}>>=
+  test := exec.Command("./plotLine", "-p", ps, "test2.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps, "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps, "-d", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps, "-D", "test3.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pl}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We label the axes individually and then both of them.
+#+end_src
+#+begin_src go <<Test axis labels, Ch.~\ref{ch:pl}>>=
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-x", "x-axis", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-y", "y-axis", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-x", "x-axis", "-y", "y-axis", "test3.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We set the plot width, height, and both.
+#+end_src
+#+begin_src go <<Test plot size, Ch.~\ref{ch:pl}>>=
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-w", "6", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-H", "5", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-w", "6", "-H", "5", "test3.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We set the x-axis to log-scale, the y-axis, and both of them.
+#+end_src
+#+begin_src go <<Test log-scaling, Ch.~\ref{ch:pl}>>=
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-l", "x", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-l", "y", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-l", "xy", "test3.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We set a range for the x-axis, for the y-axis, and for both axes.
+#+end_src
+#+begin_src go <<Test ranges, Ch.~\ref{ch:pl}>>=
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-X", "0.1:10", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-Y", "0.2:100", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-X", "0.1:10", "-Y", "0.2:100", "test3.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We combine log-scaling and limits.
+#+end_src
+#+begin_src go <<Test combinations of log-scaling and ranges, Ch.~\ref{ch:pl}>>=
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-X", "0.1:10", "-l", "x", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-Y", "0.2:100", "-l", "x", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-X", "0.1:10", "-l", "xy", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-p", ps,
+	  "-X", "0.1:10", "-Y", "0.2:100", "-l", "xy", "test3.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  For each test we compare what we get in \ty{ps} with what we want
+  in \ty{results/r1.ps}, \ty{results/r2.ps}, and so on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:pl}>>=
+  err := test.Run()
+  if err != nil { log.Fatal(err.Error()) }
+  get, err := ioutil.ReadFile(ps)
+  f := "results/r" + strconv.Itoa(i+1) + ".ps"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { log.Fatal(err.Error()) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n",
+		  string(get), string(want))
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{log}, \ty{ioutil}, \ty{strconv}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pl}>>=
+  "log"
+  "io/ioutil"
+  "strconv"
+  "bytes"
 #+end_src
