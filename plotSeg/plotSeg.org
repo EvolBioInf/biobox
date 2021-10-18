@@ -1,0 +1,586 @@
+#+begin_src latex
+  \section*{Introduction}
+  Segment plots, also known as dot plots, display a potentially large
+  number of exact matches between two sequences. Each exact match is a
+  segment, which is denoted by a quartet of numbers $(x_1, y_1, x_2,
+  y_2)$, where $(x_1,y_1)$ is the start of the segment and $(x_2,y_2)$
+  its end. The program \ty{mumPlot} (Ch.~\ref{ch:m2p}) generates such
+  quartets from MUMmer output. Figure~\ref{fig:ps}A shows some sample
+  input data and Figure~\ref{fig:ps}B its plot generated with
+  \ty{plotSeg}. Like the other \ty{plot*} programs, \ty{plotSeg} calls
+  the ggplot library of R for rendering.
+
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{cc}
+	\textbf{A} & \textbf{B}\\
+	\begin{tabular}{cccc}
+	  1 & 1 & 57 & 57\\
+	  65 & 65 & 229 & 229\\
+	  214 & 226 & 235 & 247\\
+	  226 & 244 & 309 & 327\\
+	  303 & 320 & 392 & 409
+	\end{tabular}
+	&
+	\raisebox{1.5cm}{\rotatebox{-90}{\includegraphics{plotSeg}}}
+      \end{tabular}
+    \end{center}
+    \caption{Example data (\textbf{A}) plotted with \ty{plotSeg}
+      (\textbf{B}).}\label{fig:ps}
+  \end{figure}
+
+  \section*{Implementation}
+  The outline of \ty{plotSeg} contains hooks for imports, types,
+  variables, functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<plotSeg.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:ps}>>
+  )
+
+  //<<Types, Ch.~\ref{ch:ps}>>
+  //<<Variables, Ch.~\ref{ch:ps}>>
+  //<<Functions, Ch.~\ref{ch:ps}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:ps}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:ps}>>=
+  //<<Set usage, Ch.~\ref{ch:ps}>>
+  //<<Declare options, Ch.~\ref{ch:ps}>>
+  //<<Parse options, Ch.~\ref{ch:ps}>>
+  //<<Parse input files, Ch.~\ref{ch:ps}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:ps}>>=
+  u := "plotSeq [-h] [option]... [foo.dat]..."
+  p := "Generate segment plots, also known as dot plots."
+  e := "mum2plot eco_x_y.mum | plotSeq"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the obligatory version option, we declare options for the
+  axes, and the graphics device.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:ps}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  //<<Declare axis options, Ch.~\ref{ch:ps}>>
+  //<<Declare device options, Ch.~\ref{ch:ps}>>
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  The user can label the axes and set their ranges.
+#+end_src
+#+begin_src go <<Declare axis options, Ch.~\ref{ch:ps}>>=
+  var optX = flag.String("x", "", "x-label")
+  var optY = flag.String("y", "", "y-label")
+  var optXX = flag.String("X", "", "x-range, s:e")
+  var optYY = flag.String("Y", "", "y-range, s:e")
+#+end_src
+#+begin_src latex
+  As to device, the user can opt for a postscript file instead of the
+  default x11 window, and set the width and height of the plot in cm.
+#+end_src
+#+begin_src go <<Declare device options, Ch.~\ref{ch:ps}>>=
+  var optP = flag.String("p", "", "postscript file")
+  var optW = flag.Float64("w", 0.0, "width in cm")
+  var optHH = flag.Float64("H", 0.0, "height in cm")
+#+end_src
+#+begin_src latex
+  We parse the options and respond to a request for the version first
+  (\ty{-v}), as this terminates the program. Then we declare the
+  variable \ty{opts} for holding the options and store the options that
+  require no further analysis. There are two more complex options, the
+  two ranges. We respond to them last.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:ps}>>=
+  flag.Parse()
+  //<<Respond to \ty{-v}, Ch.~\ref{ch:ps}>>
+  opts := new(Options)
+  //<<Collect option values, Ch.~\ref{ch:ps}>>
+  //<<Respond to \ty{-X}, Ch.~\ref{ch:ps}>>
+  //<<Respond to \ty{-Y}, Ch.~\ref{ch:ps}>>
+#+end_src
+#+begin_src latex
+  We respond to \ty{-v} by printing a standardized message.
+#+end_src
+#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:ps}>>=
+  if *optV {
+	  util.PrintInfo("plotSeg")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  We declare the type for holding the options and fill it with fields as
+  we go along.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:ps}>>=
+  type Options struct {
+	  //<<\ty{Options} fields, Ch.~\ref{ch:ps}>>
+  }
+#+end_src
+#+begin_src latex
+  We collect the axis labels, plot dimensions converted from cm to inch,
+  and postscript file.
+#+end_src
+#+begin_src go <<Collect option values, Ch.~\ref{ch:ps}>>=
+  opts.Xlab = *optX
+  opts.Ylab = *optY
+  opts.Width = *optW / 2.54
+  opts.Height = *optHH / 2.54
+  opts.Ps = *optP
+#+end_src
+#+begin_src latex
+  We add the fields we just used to \ty{Options}.
+#+end_src
+#+begin_src go <<\ty{Options} fields, Ch.~\ref{ch:ps}>>=
+  Xlab, Ylab string
+  Width, Height float64
+  Size int
+  Ps string
+#+end_src
+#+begin_src latex
+  If the user set an x-range, we record its values.
+#+end_src
+#+begin_src go <<Respond to \ty{-X}, Ch.~\ref{ch:ps}>>=
+  if *optXX != "" {
+	  sa := strings.Split(*optXX, ":")
+	  opts.Xmin = sa[0]
+	  opts.Xmax = sa[1]
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  We declare the x-range variables.
+#+end_src
+#+begin_src go <<\ty{Options} fields, Ch.~\ref{ch:ps}>>=
+  Xmin, Xmax string
+#+end_src
+#+begin_src latex
+  We deal with the y-range in the same way.
+#+end_src
+#+begin_src go <<Respond to \ty{-Y}, Ch.~\ref{ch:ps}>>=
+  if *optYY != "" {
+	  sa := strings.Split(*optYY, ":")
+	  opts.Ymin = sa[0]
+	  opts.Ymax = sa[1]
+  }
+#+end_src
+#+begin_src latex
+  We declare the y-range variables.
+#+end_src
+#+begin_src go <<\ty{Options} fields, Ch.~\ref{ch:ps}>>=
+  Ymin, Ymax string
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as input
+  files. Each of them serves as input to an R command that runs the same
+  R script. So we construct the script and the command and pass the
+  command as an argument to the function \ty{scan}. This function is run
+  for each input file. When we're done with the R script, we delete it.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:ps}>>=
+  files := flag.Args()
+  rscr := ""
+  var rcmd *exec.Cmd
+  //<<Construct R script, Ch.~\ref{ch:ps}>>
+  //<<Construct R command, Ch.~\ref{ch:ps}>>
+  clio.ParseFiles(files, scan, rcmd)
+  err = os.Remove(rscr)
+  if err != nil { log.Fatal(err.Error()) }
+#+end_src
+#+begin_src latex
+  We import \ty{exec} and \ty{os}, and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "os/exec"
+  "os"
+  "log"
+#+end_src
+#+begin_src latex
+  We open a file for the R script and write the code to it.
+#+end_src
+#+begin_src go <<Construct R script, Ch.~\ref{ch:ps}>>=
+  //<<Open script file, Ch.~\ref{ch:ps}>>
+  //<<Write script to file, Ch.~\ref{ch:ps}>>
+#+end_src
+#+begin_src latex
+  We write to a unique file generated by the system.
+#+end_src
+#+begin_src go <<Open script file, Ch.~\ref{ch:ps}>>=
+  script, err := ioutil.TempFile(".", "tmp_*.r")
+  if err != nil {
+	  log.Fatal(err.Error())
+  }
+  rscr = script.Name()
+#+end_src
+#+begin_src latex
+  We import \ty{ioutil}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "io/ioutil"
+#+end_src
+#+begin_src latex
+  We write the script with a template.
+#+end_src
+#+begin_src go <<Write script to file, Ch.~\ref{ch:ps}>>=
+  tmpl := template.New("tmpl")
+  tmpl = template.Must(tmpl.Parse(tmplStr))
+  err = tmpl.Execute(script, opts)
+  if err != nil {
+	  log.Fatal(err.Error())
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{template}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "text/template"
+#+end_src
+#+begin_src latex
+  The template is contained in a string, \ty{tmplStr}, that is read from
+  the embedded file \ty{segTmpl.txt}.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:ps}>>=
+  //go:embed segTmpl.txt
+  var tmplStr string
+#+end_src
+#+begin_src latex
+  We import \ty{embed}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  _ "embed"
+#+end_src
+#+begin_src latex
+  We construct the template in five steps. Construct the header,
+  followed by the plot. Then we deal with the axis options and the
+  device options.
+#+end_src
+#+begin_src r <<segTmpl.txt>>=
+  //<<Construct header, Ch.~\ref{ch:ps}>>
+  //<<Construct plot, Ch.~\ref{ch:ps}>>
+  //<<Deal with axis options, Ch.~\ref{ch:ps}>>
+  //<<Deal with device options, Ch.~\ref{ch:ps}>>
+#+end_src
+#+begin_src latex
+  In the header we import the ggplot library and read the data as a
+  table from the standard input stream.
+#+end_src
+#+begin_src r <<Construct header, Ch.~\ref{ch:ps}>>=
+  library("ggplot2")
+  d <- read.table(file="stdin")
+#+end_src
+#+begin_src latex
+  We construct the plot by declaring columns 3 and 4 as the end points
+  and setting its geometry to ``segment''.
+#+end_src
+#+begin_src r <<Construct plot, Ch.~\ref{ch:ps}>>=
+  p <- ggplot(d, aes(V1, V2, xend=V3, yend=V4))
+  p <- p + geom_segment()
+#+end_src
+#+begin_src latex
+  We set the axis labels and
+  ranges.
+#+end_src
+#+begin_src r <<Deal with axis options, Ch.~\ref{ch:ps}>>=
+  //<<Deal with axis labels, Ch.~\ref{ch:ps}>>
+  //<<Deal with axis ranges, Ch.~\ref{ch:ps}>>
+#+end_src
+#+begin_src latex
+  If the user didn't set an axis label, we remove the default label by
+  setting it to NULL.
+#+end_src
+#+begin_src go <<Deal with axis labels, Ch.~\ref{ch:ps}>>=
+  {{if .Xlab -}}
+  p <- p + xlab("{{.Xlab}}")
+  {{- else}}
+  p <- p + xlab(NULL)
+  {{- end}}
+  {{if .Ylab -}}
+  p <- p + ylab("{{.Ylab}}")
+  {{- else}}
+  p <- p + ylab(NULL)
+  {{- end}}
+#+end_src
+#+begin_src latex
+  If the user set the minimum and, we write the corresponding R-code.
+#+end_src
+#+begin_src go <<Deal with axis ranges, Ch.~\ref{ch:ps}>>=
+  {{if and .Xmin .Xmax}}
+  p <- p + xlim({{.Xmin}}, {{.Xmax}})
+  {{end}}
+  {{if and .Ymin .Ymax}}
+  p <- p + ylim({{.Ymin}}, {{.Ymax}})
+  {{end}}
+#+end_src
+#+begin_src latex
+  We set postscript or x11 together with the plot height \& width. Then
+  we draw the plot and close the device.
+#+end_src
+#+begin_src r <<Deal with device options, Ch.~\ref{ch:ps}>>=
+  {{if .Ps -}}
+  //<<Set postscript file, Ch.~\ref{ch:ps}>>
+  {{- else}}
+  //<<Set x11, Ch.~\ref{ch:ps}>>
+  {{- end}}
+  //<<Set height and width, Ch.~\ref{ch:ps}>>
+  plot(p)
+  //<<Close device, Ch.~\ref{ch:ps}>>
+#+end_src
+#+begin_src latex
+  We set the postscript file with vertical orientation, as we use these
+  plots in ordinary A4 pages.
+#+end_src
+#+begin_src r <<Set postscript file, Ch.~\ref{ch:ps}>>=
+  postscript(file="{{.Ps}}", horizontal=FALSE,
+#+end_src
+#+begin_src latex
+  We set the x11 screen.
+#+end_src
+#+begin_src r <<Set x11, Ch.~\ref{ch:ps}>>=
+  x11(
+#+end_src
+#+begin_src latex
+  We set the height and the width, if requested.
+#+end_src
+#+begin_src r <<Set height and width, Ch.~\ref{ch:ps}>>=
+  {{- if .Width}}
+  width={{.Width}},
+  {{- end}}
+  {{- if .Height}}
+  height={{.Height}}
+  {{- end}}
+  )
+#+end_src
+#+begin_src latex
+  If we spawned an x11 window, we make sure the script exits once the
+  user has closed that window. If, on the other hand, we wrote a
+  postscript file, we switch the device off.
+#+end_src
+#+begin_src go <<Close device, Ch.~\ref{ch:ps}>>=
+  {{if not .Ps -}}
+  while(names(dev.cur()) != 'null device')
+      Sys.sleep(0.1)
+  {{- else}}
+  dev.off()
+  {{- end}}
+#+end_src
+#+begin_src latex
+  The R script is written, so we turn to the R command that runs
+  it. This is based on the scripting front end of R, \ty{Rscript}, which
+  we run in ``vanilla'' mode to suppress extra output.
+#+end_src
+#+begin_src go <<Construct R command, Ch.~\ref{ch:ps}>>=
+  rcmd = exec.Command("Rscript", "--vanilla", rscr)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the command we just constructed by type
+  assertion, get the data, pipe the data into the command, and run it.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:ps}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  rcmd := args[0].(*exec.Cmd)
+	  //<<Read data, Ch.~\ref{ch:ps}>>
+	  //<<Pipe data into R command, Ch.~\ref{ch:ps}>>
+	  //<<Run R command, Ch.~\ref{ch:ps}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  We read the data and check each line has four columns. If not,
+  something has gone wrong and we bail.
+#+end_src
+#+begin_src go <<Read data, Ch.~\ref{ch:ps}>>=
+  sc := bufio.NewScanner(r)
+  var data []string
+  for sc.Scan() {
+	  row := sc.Text()
+	  fields := strings.Fields(row)
+	  l := len(fields)
+	  if l != 4 {
+		  log.Fatalf("get %d columns, want 4\n", l)
+	  }
+	  data = append(data, row)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{bufio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "bufio"
+#+end_src
+#+begin_src latex
+  Piping the data into the R command is wrapped in a goroutine.
+#+end_src
+#+begin_src go <<Pipe data into R command, Ch.~\ref{ch:ps}>>=
+  stdin, err := rcmd.StdinPipe()
+  if err != nil { log.Fatal(err.Error()) }
+  go func() {
+	  for _, d := range data {
+		  stdin.Write([]byte(d))
+		  stdin.Write([]byte("\n"))
+	  }
+	  stdin.Close()
+  }()
+#+end_src
+#+begin_src latex
+  We run the command.
+#+end_src
+#+begin_src go <<Run R command, Ch.~\ref{ch:ps}>>=
+  err = rcmd.Run()
+  if err != nil {
+	  log.Fatal(err.Error())
+  }
+#+end_src
+#+begin_src latex
+  The program \ty{plotSeg} is finished, let's test it.
+  \section*{Testing}
+  Our testing program contains hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<plotSeg_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:ps}>>
+  )
+
+  func TestPlotSeg(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:ps}>>
+  }
+#+end_src
+#+begin_src latex
+  We test by writing the individual tests and running them in a
+  loop. Each test is written to the same unique postscript file, which
+  we remove again after the tests.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:ps}>>=
+  ps, err := ioutil.TempFile(".", "tmp_*.ps")
+  if err != nil { log.Fatal(err.Error()) }
+  p := ps.Name()
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:ps}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:ps}>>
+  }
+  err = os.Remove(p)
+  if err != nil { log.Fatal(err.Error()) }
+#+end_src
+#+begin_src latex
+  We import \ty{ioutil}, \ty{log}, \ty{exec}, and \ty{os}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:ps}>>=
+  "io/ioutil"
+  "log"
+  "os/exec"
+  "os"
+#+end_src
+#+begin_src latex
+  We test setting axis labels, ranges, and plot size.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:ps}>>=
+  //<<Test axis labels, Ch.~\ref{ch:ps}>>
+  //<<Test axis ranges, Ch.~\ref{ch:ps}>>
+  //<<Test plot size, Ch.~\ref{ch:ps}>>
+#+end_src
+#+begin_src latex
+  We begin by running \ty{plotSeg} on the example data in \ty{test.dat}
+  without any other options. Then we set the x-label, the y-label, and
+  both.
+#+end_src
+#+begin_src go <<Test axis labels, Ch.~\ref{ch:ps}>>=
+  f := "test.dat"
+  te := exec.Command("./plotSeg", "-p", p, f)
+  tests = append(tests, te)
+  te = exec.Command("./plotSeg", "-p", p, "-x", "x", f)
+  tests = append(tests, te)
+  te = exec.Command("./plotSeg", "-p", p, "-y", "y", f)
+  tests = append(tests, te)
+  te = exec.Command("./plotSeg", "-p", p, "-x", "x",
+	  "-y", "y", f)
+  tests = append(tests, te)
+#+end_src
+#+begin_src latex
+  We set the x-range, the y-range, and both.
+#+end_src
+#+begin_src go <<Test axis ranges, Ch.~\ref{ch:ps}>>=
+  te = exec.Command("./plotSeg", "-p", p, "-X", "100:500", f)
+  tests = append(tests, te)
+  te = exec.Command("./plotSeg", "-p", p, "-Y", "100:500", f)
+  tests = append(tests, te)
+  te = exec.Command("./plotSeg", "-p", p, "-X", "100:500",
+	  "-Y", "100:500", f)
+  tests = append(tests, te)
+#+end_src
+#+begin_src latex
+  We set the plot wpidth, height, and both.
+#+end_src
+#+begin_src go <<Test plot size, Ch.~\ref{ch:ps}>>=
+  te = exec.Command("./plotSeg", "-p", p, "-w", "5", f)
+  tests = append(tests, te)
+  te = exec.Command("./plotSeg", "-p", p, "-H", "6", f)
+  tests = append(tests, te)
+  te = exec.Command("./plotSeg", "-p", p, "-w", "5",
+	  "-H", "6", f)
+  tests = append(tests, te)
+#+end_src
+#+begin_src latex
+  For each test we compare what we get with what we want, which is
+  stored in \ty{results/r1.ps}, \ty{results/r2.ps}, and so on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:ps}>>=
+  err = test.Run()
+  if err != nil { log.Fatal(err.Error()) }
+  get, err := ioutil.ReadFile(p)
+  if err != nil { log.Fatal(err.Error()) }
+  f = "results/r" + strconv.Itoa(i+1) + ".ps"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { log.Fatal(err.Error()) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n",
+		  string(get), string(want))
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv} and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:ps}>>=
+  "strconv"
+  "bytes"
+#+end_src

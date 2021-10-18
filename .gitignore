@@ -28,6 +28,7 @@ doc/naiveMatcher.tex
 doc/numAl.tex
 doc/pam.tex
 doc/plotLine.tex
+doc/plotSeg.tex
 doc/randomizeSeq.tex
 doc/ranDot.tex
 doc/ranseq.tex
@@ -61,6 +62,7 @@ naiveMatcher/naiveMatcher
 numAl/numAl
 pam/pam
 plotLine/plotLine
+plotSeg/plotSeg
 randomizeSeq/randomizeSeq
 ranDot/ranDot
 ranseq/ranseq
@@ -81,3 +83,5 @@ drawKt/ktWrapper*
 drawKt/kt.tex
 ranDot/*.sh
 plotLine/template.txt
+plotSeg/segTmpl.txt
+plotSeg/makeRes.sh
