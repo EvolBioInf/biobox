@@ -5,12 +5,12 @@ EXE = plotLine
 
 all: $(EXE)
 
-$(EXE): $(EXE).go template.txt
+$(EXE): $(EXE).go lineTmpl.txt
 	go build -ldflags "-X github.com/evolbioinf/biobox/util.version=$(VERSION) -X github.com/evolbioinf/biobox/util.date=$(DATE)" $(EXE).go
 $(EXE).go: $(EXE).org
 	bash ../scripts/org2nw $(EXE).org | notangle -R$(EXE).go | gofmt > $(EXE).go
-template.txt: $(EXE).org
-	bash ../scripts/org2nw $(EXE).org | notangle -Rtemplate.txt > template.txt
+lineTmpl.txt: $(EXE).org
+	bash ../scripts/org2nw $(EXE).org | notangle -RlineTmpl.txt > lineTmpl.txt
 test: $(EXE) $(EXE)_test.go
 	go test -v
 $(EXE)_test.go: $(EXE).org

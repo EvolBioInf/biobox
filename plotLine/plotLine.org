@@ -12,15 +12,15 @@
       \begin{tabular}{cc}
 	\textbf{A} & \textbf{B}\\
 	\begin{tabular}{lll}
-	  0 & 0 & g1\\
+	  1 & 1 & g1\\
 	  2 & 2 & g1\\
 	  4 & 4 & g1\\
-	  0 & 2 & g2\\
+	  1 & 2 & g2\\
 	  2 & 4 & g2\\
 	  4 & 8 & g2
 	\end{tabular}
 	&
-	\raisebox{1.5cm}{\rotatebox{-90}{\includegraphics{plotLine}}}
+	\raisebox{-2.5cm}{\includegraphics{plotLine}}
       \end{tabular}
     \end{center}
     \caption{Example data (\textbf{A}) plotted with \ty{plotLine}
@@ -73,7 +73,7 @@
 #+end_src
 #+begin_src latex
   Apart from the version, we declare options concerning the axes, the
-  plot type, the graphics device, and the underlying R script.
+  plot type, and the graphics device.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pl}>>=
   var optV = flag.Bool("v", false, "print program version " +
@@ -81,7 +81,6 @@
   //<<Declare axes options, Ch~\ref{ch:pl}>>
   //<<Declare plot type options, Ch.~\ref{ch:pl}>>
   //<<Declare device options, Ch.~\ref{ch:pl}>>
-  //<<Declare script options, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -93,18 +92,17 @@
   The options for axes define their labels, the range, and the scale.
 #+end_src
 #+begin_src go <<Declare axes options, Ch~\ref{ch:pl}>>=
-  var optX = flag.String("x", "x", "x-label")
-  var optY = flag.String("y", "y", "y-label")
+  var optX = flag.String("x", "", "x-label")
+  var optY = flag.String("y", "", "y-label")
   var optXX = flag.String("X", "s:e", "x-range")
   var optYY = flag.String("Y", "s:e", "y-range")
   var optL = flag.String("l", "", "log-scale (x|y|xy)")
 #+end_src
 #+begin_src latex
-  The user can set the base size of the plot, and opt for dots only or
-  lines with dots instead just lines, the default.
+  The user can opt for dots only or lines with dots instead just lines,
+  the default.
 #+end_src
 #+begin_src go <<Declare plot type options, Ch.~\ref{ch:pl}>>=
-  var optS = flag.Int("s", 0, "base size")
   var optD = flag.Bool("d", false, "dots only")
   var optDD = flag.Bool("D", false, "dots with lines")
 #+end_src
@@ -117,13 +115,6 @@
   var optP = flag.String("p", "", "postscript file")
   var optW = flag.Float64("w", 0.0, "width in cm")
   var optHH = flag.Float64("H", 0.0, "height in cm")
-#+end_src
-#+begin_src latex
-  The R script used for plotting is usually hidden from the
-  user. However, (s)he can opt to have it printed to a file.
-#+end_src
-#+begin_src go <<Declare script options, Ch.~\ref{ch:pl}>>=
-  var optR = flag.String("r", "", "R script")
 #+end_src
 #+begin_src latex
   We parse the options and respond to \ty{-v} first, as this might
@@ -165,18 +156,15 @@
 #+end_src
 #+begin_src latex
   We collect the option values that require no, or only little, further
-  analysis, \ty{-x}, \ty{-y}, \ty{-H}, \ty{-w}, \ty{-s}, \ty{-r},
-  \ty{-d}, \ty{-D}, and \ty{-p}. R takes plot height and width in
-  inches, but \ty{plotLine} works in cm. So we convert from cm to inch
-  by dividing by 2.54.
+  analysis, \ty{-x}, \ty{-y}, \ty{-H}, \ty{-w}, \ty{-d}, \ty{-D}, and
+  \ty{-p}. R takes plot height and width in inches, but \ty{plotLine}
+  works in cm. So we convert from cm to inch by dividing by 2.54.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:pl}>>=
   args.Xlab = *optX
   args.Ylab = *optY
   args.Height = *optHH / 2.54
   args.Width = *optW / 2.54
-  args.Size = *optS
-  args.Script = *optR
   args.Dots = *optD
   args.DotsLines = *optDD
   args.Ps = *optP
@@ -187,8 +175,7 @@
 #+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
   Xlab, Ylab string
   Height, Width float64
-  Size int
-  Script, Ps string
+  Ps string
   Dots, DotsLines bool
 #+end_src
 #+begin_src latex
@@ -291,8 +278,7 @@
   Inside \ty{scan}, we retrieve the variable \ty{args} by type
   assertion, read the data, construct the R script, construct the R
   command that runs the script, pipe the data into it, and run it. Then
-  we delete the R script again, unless the user wrote it to a specific
-  file.
+  we delete the R script again.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pl}>>=
   func scan(r io.Reader, a ...interface{}) {
@@ -302,9 +288,7 @@
 	  //<<Construct R command, Ch.~\ref{ch:pl}>>
 	  //<<Pipe data into R command, Ch.~\ref{ch:pl}>>
 	  //<<Run R command, Ch.~\ref{ch:pl}>>
-	  if args.Script == "" {
-		  //<<Delete R script, Ch.~\ref{ch:pl}>>
-	  }
+	  //<<Delete R script, Ch.~\ref{ch:pl}>>
   }
 #+end_src
 #+begin_src latex
@@ -363,17 +347,10 @@
   //<<Write script to file, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
-The script is written either to a unique file or to the file supplied
-by the user. 
+The script is written either to a unique file. 
 #+end_src
 #+begin_src go <<Open script file, Ch.~\ref{ch:pl}>>=
-  var script *os.File
-  var err error
-  if args.Script == "" {
-	  script, err = ioutil.TempFile(".", "tmp_*.r")
-  } else {
-	  script, err = os.Create(args.Script)
-  }
+  script, err := ioutil.TempFile(".", "tmp_*.r")
   if err != nil {
 	  log.Fatal(err.Error())
   }
@@ -386,38 +363,28 @@ by the user.
   "io/ioutil"
 #+end_src
 #+begin_src latex
-  We write the script using a template. In experiments I found that the
-  resulting R code may contain empty lines, which is confusing when the
-  user inspects the script. I couldn't figure out how to rewrite the
-  template to avoid the blank lines. So we remove them from the template
-  output before writing the final code to file.
+  We write the script using a template.
 #+end_src
 #+begin_src go <<Write script to file, Ch.~\ref{ch:pl}>>=
-  buf := new(bytes.Buffer)
   tmpl := template.New("tmpl")
   tmpl = template.Must(tmpl.Parse(tmplStr))
-  err = tmpl.Execute(buf, args)
+  err = tmpl.Execute(script, args)
   if err != nil {
 	  log.Fatal(err.Error())
   }
-  code := ""
-  //<<Remove blank lines from code, Ch.~\ref{ch:pl}>>
-  fmt.Fprintf(script, "%s", code)
 #+end_src
 #+begin_src latex
-  We import \ty{bytes} \ty{template}, and \ty{fmt}.
+  We import \ty{template}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
-  "bytes"
   "text/template"
-  "fmt"
 #+end_src
 #+begin_src latex
   The template string, \ty{tmplStr}, is read from the embedded file
-  \ty{template.txt}.
+  \ty{lineTmpl.txt}.
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:pl}>>=
-  //go:embed template.txt
+  //go:embed lineTmpl.txt
   var tmplStr string
 #+end_src
 #+begin_src latex
@@ -429,10 +396,9 @@ by the user.
 #+begin_src latex
   We construct the template in the file \ty{template.txt} using five
   steps. Construct the header, construct the plot, and deal with the
-  three blocks of options affecting the axes, the plot type, and the
-  plot device.
+  blocks of options affecting the axes and the plot device.
 #+end_src
-#+begin_src text <<template.txt>>=
+#+begin_src text <<lineTmpl.txt>>=
   //<<Construct header, Ch.~\ref{ch:pl}>>
   //<<Construct plot, Ch.~\ref{ch:pl}>>
   //<<Deal with axes options, Ch.~\ref{ch:pl}>>
@@ -458,18 +424,19 @@ by the user.
   ))
 #+end_src
 #+begin_src latex
-  We set the axis labels. If we have groups, we mark them with colors,
-  for which we shall use the variable \ty{color}. However, the
-  categories indicated by the colors are just the factors extracted from
-  V3. We don't want something like ``factor(V3)''as the label of the
-  groups table, so we set it to the empty string.
+  If the user set axis labels, we set them here.
 #+end_src
 #+begin_src r <<Deal with axes options, Ch.~\ref{ch:pl}>>=
-  plot <- plot + labs(x="{{.Xlab}}", y="{{.Ylab}}"
-  {{- if eq .Ncol 3 -}}
-  , color=""
-  {{- end -}}
-  )
+  {{if .Xlab}}
+  plot <- plot + xlab("{{.Xlab}}")
+  {{else}}
+  plot <- plot + xlab(NULL)
+  {{end}}
+  {{if .Ylab}}
+  plot <- plot + ylab("{{.Ylab}}")
+  {{else}}
+  plot <- plot + ylab(NULL)
+  {{end}}
 #+end_src
 #+begin_src latex
   We scale the x-axis and the y-axis.
@@ -508,15 +475,6 @@ by the user.
   {{end}}
 #+end_src
 #+begin_src latex
-  The first of the plot type options we transcribe to R is the base
-  size of the plot.
-#+end_src
-#+begin_src r <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
-  {{if .Size -}}
-  plot <- plot + theme_grey(base_size={{.Size}})
-  {{end -}}
-#+end_src
-#+begin_src latex
   The user might have requested that only dots be plotted. If not, we
   plot lines. In either case we check whether there are three columns of
   input data, in which case we extract the groups from the third column.
@@ -537,6 +495,15 @@ by the user.
   {{- end}}
 #+end_src
 #+begin_src latex
+  The list of categories is by default now labeled ``factor(V3)''. This
+  isn't very useful and we remove the category label altogether.
+#+end_src
+#+begin_src go <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
+  {{if eq .Ncol 3}}
+  plot <- plot + labs(color="")
+  {{end}}
+#+end_src
+#+begin_src latex
   The user might have requested points with the lines.
 #+end_src
 #+begin_src r <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
@@ -546,11 +513,13 @@ by the user.
 #+end_src
 #+begin_src latex
   We set up the graphical device, set its width and height, plot, and
-  close the device again.
+  close the device again. Postscript plots are set to vertical
+  orientation, as they are intended to be integrated into ordinary A4
+  pages.
 #+end_src
 #+begin_src r <<Deal with device options, Ch.~\ref{ch:pl}>>=
   {{if .Ps -}}
-  postscript(file="{{.Ps}}"
+  postscript(file="{{.Ps}}", horizontal=FALSE,
   {{- if or (gt .Width 0.0) (gt .Height 0.0) -}}
   ,
   {{- end -}}
@@ -562,19 +531,17 @@ by the user.
   //<<Close device, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
-  We only set width or height if they are greater than zero. To keep the
-  values of width and height legible, we only print the first three
-  significant digits.
+  We only set width or height if they are greater than zero.
 #+end_src
 #+begin_src go <<Set width and height, Ch.~\ref{ch:pl}>>=
   {{- if gt .Width 0.0 -}}
-  width={{printf "%.3f" .Width}}
+  width={{.Width}}
   {{- if gt .Height 0.0 -}}
   ,
   {{- end}}
   {{- end}}
   {{- if gt .Height 0.0 -}}
-  height={{printf "%.3f" .Height}}
+  height={{.Height}}
   {{- end -}}
   )
 #+end_src
@@ -592,38 +559,6 @@ by the user.
   {{else -}}
   dev.off()
   {{end -}}
-#+end_src
-#+begin_src latex
-  Our last step in writing the R script is to remove any blank lines it
-  might contain. We do this by examining each character in the buffer
-  holding the code. We keep a character if it isn't a newline preceded
-  by a newline. So we need a variable that tells us whether the previous
-  character was a newline, \ty{prevNl}.
-#+end_src
-#+begin_src go <<Remove blank lines from code, Ch.~\ref{ch:pl}>>=
-  i := 0
-  bb := buf.Bytes()
-  prevNl := false
-  for _, c := range bb {
-	  //<<Examine character, Ch.~\ref{ch:pl}>>
-  }
-  bb = bb[:i]
-  code = string(bb)
-#+end_src
-#+begin_src latex
-  If the previous character was not a newline, or the present character
-  is not a newline, we keep it.
-#+end_src
-#+begin_src go <<Examine character, Ch.~\ref{ch:pl}>>=
-  if !prevNl || c != '\n' {
-	  bb[i] = c
-	  i++
-  } 
-  if bb[i-1] == '\n' {
-	  prevNl = true
-  } else {
-	  prevNl = false
-  }
 #+end_src
 #+begin_src latex
   We have finished the R script and make sure it's eventually deleted
@@ -655,8 +590,7 @@ by the user.
   "os/exec"
 #+end_src
 #+begin_src latex
-  We wrap the data piping in a goroutine. As blank lines would look ugly
-  in the output, we remove them.
+  We wrap the data piping in a goroutine.
 #+end_src
 #+begin_src go <<Pipe data into R command, Ch.~\ref{ch:pl}>>=
   stdin, err := cmd.StdinPipe()
@@ -762,13 +696,13 @@ by the user.
 #+end_src
 #+begin_src go <<Test axis labels, Ch.~\ref{ch:pl}>>=
   test = exec.Command("./plotLine", "-p", ps,
-	  "-x", "x-axis", "test3.dat")
+	  "-x", "x", "test3.dat")
   tests = append(tests, test)
   test = exec.Command("./plotLine", "-p", ps,
-	  "-y", "y-axis", "test3.dat")
+	  "-y", "y", "test3.dat")
   tests = append(tests, test)
   test = exec.Command("./plotLine", "-p", ps,
-	  "-x", "x-axis", "-y", "y-axis", "test3.dat")
+	  "-x", "x", "-y", "y", "test3.dat")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
@@ -809,8 +743,8 @@ by the user.
   test = exec.Command("./plotLine", "-p", ps,
 	  "-Y", "0.2:100", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
-	  "-X", "0.1:10", "-Y", "0.2:100", "test3.dat")
+  test = exec.Command("./plotLine", "-p", ps, "-X", "0.1:10",
+	  "-Y", "0.2:100", "test3.dat")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
