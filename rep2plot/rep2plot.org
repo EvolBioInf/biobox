@@ -27,16 +27,16 @@
   read as a segment in a dot plot. If we write its start and end
   positions $(x_1, y_1, x_2, y_2)$, we get $(3292,3287,3328,3323)$. The
   program \ty{rep2plot} transforms \ty{repeater} output to such
-  segments, which can then be rendered with \ty{pipePlot}
-  (Chapter~\ref{ch:pp})) to give Figure~\ref{fig:ppAdh}.
+  segments, which can then be rendered with \ty{plotSeg}
+  (Chapter~\ref{ch:ps})) to give Figure~\ref{fig:ppAdh}.
 
   \begin{figure}
     \begin{center}
-      \scalebox{0.5}{\includegraphics{ppAdh}}
+      \includegraphics{ppAdh}
     \end{center}
     \caption{Segment plot of the matches between the \emph{Adh} loci in
       \emph{Drosophila melanogaster} and
-      \emph{D. guanche}.}\label{fig:ppAdh}
+      \emph{D. guanche} using \ty{rep2plot} and \ty{plotSeg} (Ch.~\ref{ch:ps}).}\label{fig:ppAdh}
   \end{figure}
 
   There is one slight complication, though. DNA is double-stranded. So
