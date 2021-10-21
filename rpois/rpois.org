@@ -22,13 +22,16 @@
 #+end_src
 #+begin_src latex
   In the main function, we set the usage, declare the options, parse the
-  options, and compute the random variable.
+  options, and compute the random variable $n$ times.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:rpo}>>=
+  var n int
   //<<Set usage, Ch.~\ref{ch:rpo}>>
   //<<Declare options, Ch.~\ref{ch:rpo}>>
   //<<Parse options, Ch.~\ref{ch:rpo}>>
-  //<<Compute random variable, Ch.~\ref{ch:rpo}>>
+  for i := 0; i < n; i++ {
+	  //<<Compute random variable, Ch.~\ref{ch:rpo}>>
+  }
 #+end_src
 #+begin_src latex
   The usage consists of three parts, the actual usage message, an
@@ -47,12 +50,13 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  The user can set the mean number of events, \ty{-m}, and the seed for
-  the random number generator, \ty{-s}, which is a long integer. (S)he
-  can also ask for the version.
+  The user can set the mean number of events, \ty{-m}, the sample size
+  (\ty{-n}), and the seed for the random number generator, \ty{-s},
+  which is a long integer. (S)he can also ask for the version.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:rpo}>>=
   var optM = flag.Float64("m", 1, "mean")
+  var optN = flag.Int("n", 1, "sample size")
   var optS = flag.Int64("s", 0, "seed for random number generator; " +
 	  "default: internal")
   var optV = flag.Bool("v", false, "print program version & " +
@@ -65,10 +69,12 @@
   "flag"
 #+end_src
 #+begin_src latex
-  We parse the options and respond to \ty{-v} and \ty{-s}.
+  We parse the options, set the sample size, and respond to \ty{-v} and
+  \ty{-s}.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:rpo}>>=
   flag.Parse()
+  n = *optN
   //<<Respond to \ty{-v}, Ch.~\ref{ch:rpo}>>
   //<<Respond to \ty{-s}, Ch.~\ref{ch:rpo}>>
 #+end_src
