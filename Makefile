@@ -3,6 +3,7 @@ plotLine plotSeg randomizeSeq ranDot ranseq rep2plot repeater revComp rpois shus
 watterson wrapSeq
 
 all:
+	test -d bin || mkdir bin
 	for prog in $(progs); do \
 		make -C $$prog; \
 		cp $$prog/$$prog bin; \
