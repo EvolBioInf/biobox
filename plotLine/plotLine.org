@@ -350,7 +350,7 @@
 The script is written either to a unique file. 
 #+end_src
 #+begin_src go <<Open script file, Ch.~\ref{ch:pl}>>=
-  script, err := ioutil.TempFile(".", "tmp_*.r")
+  script, err := ioutil.TempFile("", "tmp_*.r")
   if err != nil {
 	  log.Fatal(err.Error())
   }
