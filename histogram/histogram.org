@@ -1,0 +1,443 @@
+#+begin_src latex
+  \section*{Introduction}
+  Given a list of numbers, we'd often like to visualize their frequency
+  distribution. The program \ty{histogram} reads a column of floating
+  point numbers and prints their frequency distribution as pairs of x/y
+  values that can then be plotted using, for example, \ty{plotLine}
+  (Ch.~\ref{ch:pl}). Table~\ref{tab:his}A shows some abridged example
+  input and Table~\ref{tab:his}B the corresponding output. The default
+  output is raw counts, which is plotted in Figure~\ref{fig:his}A. The
+  user can also opt to plot frequencies, shown in Figure~\ref{fig:his}B.
+
+  \begin{table}
+    \caption{Example input (\textbf{A}) and output ( \textbf{B}) of
+      \ty{histogram}.}\label{tab:his}
+    \begin{center}
+    \begin{tabular}{c|c}
+      \textbf{A} & \textbf{B}\\\hline
+      \begin{tabular}{c}
+	9\\
+	2\\
+	2\\
+	2\\
+	4\\
+	...
+      \end{tabular}
+      &
+      \begin{tabular}{cc}
+	0 & 0\\
+	0 & 0.005\\
+	1 & 0.005\\
+	1 & 0\\
+	1 & 0.026\\
+	...
+      \end{tabular}
+    \end{tabular}
+    \end{center}
+  \end{table}
+
+  \begin{figure}
+    \begin{tabular}{cc}
+      \textbf{A} & \textbf{B}\\
+      \includegraphics{hisC} & \includegraphics{hisF}
+    \end{tabular}
+    \caption{Plotting counts (\textbf{A}) and frequencies (\textbf{B})
+      of the example data in Table~\ref{tab:his}A using \ty{plotLine}.}\label{fig:his}
+  \end{figure}
+
+  The default number of bins, $k$, is computed using Sturge's rule,
+  \begin{equation}\label{eq:stu}
+  k = 1 + 3.322\log(n),
+  \end{equation}
+  but the user can set the number of bins.  The default range starts at
+  the floor of the minimum input value and ends at the floor of the
+  maximum value plus 1. Again, the user is free to set a different
+  range.
+
+  \section*{Implementation}
+  The outline of \ty{histogram} provides hooks for imports, functions,
+  and the logic of the main function.
+#+end_src
+#+begin_src go <<histogram.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:his}>>
+  )
+
+  //<<Functions, Ch.~\ref{ch:his}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:his}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:his}>>=
+  //<<Set usage, Ch.~\ref{ch:his}>>
+  //<<Declare options, Ch.~\ref{ch:his}>>
+  //<<Parse options, Ch.~\ref{ch:his}>>
+  //<<Parse input files, Ch.~\ref{ch:his}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:his}>>=
+  u := "histogram [-h] [option]... [foo.dat]... | plotLine"
+  p := "Convert a column of numbers to histogram coordinates."
+  e := "histogram -b 20 foo.dat"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version, we declare three program-specific options, the
+  number of bins, the range, and whether frequencies should be printed
+  instead of the default raw counts.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:his}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optB = flag.Int("b", 0, "number of bins")
+  var optR = flag.String("r", "xmin:xmax", "range")
+  var optF = flag.Bool("f", false, "print frequencies")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and first respond to \ty{-v}, as this terminates
+  the program. Then we
+  respond to the range option, \ty{-r}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:his}>>=
+  flag.Parse()
+  //<<Respond to \ty{-v}, Ch.~\ref{ch:his}>>
+  //<<Respond to \ty{-r}, Ch.~\ref{ch:his}>>
+#+end_src
+#+begin_src latex
+  We respond to \ty{-v} by printing standardized information about
+  \ty{histogram}.
+#+end_src
+#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:his}>>=
+  if *optV {
+	  util.PrintInfo("histogram")
+  }
+#+end_src
+#+begin_src latex
+  We import  \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  If the user set a range, we store its values.
+#+end_src
+#+begin_src go <<Respond to \ty{-r}, Ch.~\ref{ch:his}>>=
+  fields := strings.Split(*optR, ":")
+  var xmin, xmax float64
+  var err error
+  if fields[0] != "xmin" && fields[1] != "xmax" {
+	  xmin, err = strconv.ParseFloat(fields[0], 64)
+	  if err != nil { log.Fatal("broken range") }
+	  xmax, err = strconv.ParseFloat(fields[1], 64)
+	  if err != nil { log.Fatal("broken range") }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are interpreted as the names
+  of input files. Each of these files is now analyzed with the function
+  \ty{scan}, which takes as arguments options for the number of bins,
+  the range, and whether or not frequencies are requested.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:his}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optB, xmin, xmax, *optF)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the arguments passed and read the data
+  into a slice of floats. Then we calculate the number of bins, their
+  ranges, and their counts. Taking our cue from
+  \cite[p. 313ff]{gal05:gnu}, \ty{counts[i]} is the number of values
+  between \ty{ranges[i]} and \ty{ranges[i+1]}. The lower boundary is
+  included, the upper excluded. Using \ty{counts} and \ty{ranges}, we
+  write the histogram of counts or frequencies.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:his}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:his}>>
+	  var data []float64
+	  //<<Read data, Ch.~\ref{ch:his}>>
+	  //<<Calculate number of bins, Ch.~\ref{ch:his}>>
+	  //<<Calculate ranges, Ch.~\ref{ch:his}>>
+	  //<<Calculate counts or frequencies, Ch.~\ref{ch:his}>>
+	  //<<Write histogram, Ch.~\ref{ch:his}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  The number of bins and the minimum and maximum x-values are retrieved
+  through type assertion.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:his}>>=
+  numBins := args[0].(int)
+  xmin := args[1].(float64)
+  xmax := args[2].(float64)
+  printFreq := args[3].(bool)
+#+end_src
+#+begin_src latex
+  We scan the input, convert numbers from string to float, and store
+  them.
+#+end_src
+#+begin_src go <<Read data, Ch.~\ref{ch:his}>>=
+  sc := bufio.NewScanner(r)
+  for sc.Scan() {
+	  ns := sc.Text()
+	  f, err := strconv.ParseFloat(ns, 64)
+	  if err != nil {
+		  log.Fatal("malformed input")
+	  }
+	  data = append(data, f)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{bufio}, \ty{strconv} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "bufio"
+  "strconv"
+  "log"
+#+end_src
+#+begin_src latex
+  If the user didn't set the number of bins, we compute it from
+  equation~(\ref{eq:stu}).
+#+end_src
+#+begin_src go <<Calculate number of bins, Ch.~\ref{ch:his}>>=
+  if numBins == 0 {
+	  l := len(data)
+	  nb := 1.0 + 3.322 * math.Log(float64(l))
+	  numBins = int(math.Round(nb))
+  }
+#+end_src
+#+begin_src latex
+  If the user did not set an x-range, we determine it from the
+  data. Since our subsequent binning step requires sorted data, we sort
+  at this point, which gives us easy access to the minimum and maximum
+  values.
+#+end_src
+#+begin_src go <<Calculate ranges, Ch.~\ref{ch:his}>>=
+  sort.Float64s(data)
+  if xmin == xmax && xmin == 0.0 {
+	  //<<Determine \ty{xmin} and \ty{xmax}, Ch.~\ref{ch:his}>>
+  }
+  //<<Set ranges, Ch.~\ref{ch:his}>>
+#+end_src
+#+begin_src latex
+  We import \ty{sort}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "sort"
+#+end_src
+#+begin_src latex
+  Let $m$ and $a$ be the minimum and the maximum input values, then the
+  minimum of x is $\mbox{floor}(m)$ and the maximum $\mbox{floor}(a)$.
+#+end_src
+#+begin_src go <<Determine \ty{xmin} and \ty{xmax}, Ch.~\ref{ch:his}>>=
+  xmin = math.Floor(data[0])
+  xmax = math.Floor(data[len(data)-1]+1.0)
+#+end_src
+#+begin_src latex
+  We import \ty{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "math"
+#+end_src
+#+begin_src latex
+  If there are $n$ bins, there are $n+1$ entries in \ty{ranges}, the
+  smallest being \ty{xmin}, the largest \ty{xmax}.
+#+end_src
+#+begin_src go <<Set ranges, Ch.~\ref{ch:his}>>=
+  counts := make([]float64, numBins)
+  d := (xmax - xmin) / float64(numBins)
+  ranges := make([]float64, numBins + 1)
+  ranges[0] = xmin
+  for i := 1; i <= numBins; i++ {
+	  ranges[i] = ranges[i-1] + d
+  }
+#+end_src
+#+begin_src latex
+  To calculate the counts, we find the start of the range and then count
+  the entries in each bin. Then we calculate the frequencies, if
+  desired.
+#+end_src
+#+begin_src go <<Calculate counts or frequencies, Ch.~\ref{ch:his}>>=
+  //<<Find start of range, Ch.~\ref{ch:his}>>
+  i := 0
+  for j, _ := range counts {
+	  for i < len(data) && data[i] < ranges[j+1] {
+		  counts[j]++
+		  i++
+	  }
+  }
+  if printFreq {
+	  //<<Calculate frequencies, Ch.~\ref{ch:his}>>
+  }
+#+end_src
+#+begin_src latex
+  We make sure the first element in \ty{data} is an element of the first
+  bin.
+#+end_src
+#+begin_src go <<Find start of range, Ch.~\ref{ch:his}>>=
+  for i, d := range data {
+	  if d >= ranges[0] {
+		  data = data[i:]
+		  break
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We sum the counts and divide the counts to get the frequencies.
+#+end_src
+#+begin_src go <<Calculate frequencies, Ch.~\ref{ch:his}>>=
+  s := 0.0
+  for _, c := range counts {
+	  s += c
+  }
+  for i, c := range counts {
+	  counts[i] = c / s
+  }
+#+end_src
+#+begin_src latex
+  The histogram consists of two columns of x/y data, which we write with
+  a tabwriter. Let $c$ be the count for a bin, and $x_1, x_2$ its
+  boundaries. Then we represent each bar in the histogram by three
+  points,
+  \begin{center}
+    \begin{tabular}{llll}
+      $x_1$ & 0\\
+      $x_1$ & $c$\\
+      $x_2$ & $c$\\
+    \end{tabular}
+  \end{center}
+  This leaves the last bar without a line on its right, and all bars
+  open at the bottom. We fix this in a finishing step.
+#+end_src
+#+begin_src go <<Write histogram, Ch.~\ref{ch:his}>>=
+  w := tabwriter.NewWriter(os.Stdout, 2, 1, 2, ' ', 0)
+  for i, c := range counts {
+	  x1 := ranges[i]
+	  x2 := ranges[i+1]
+	  y := c
+	  fmt.Fprintf(w, "%.3g\t0\n", x1)
+	  fmt.Fprintf(w, "%.3g\t%.3g\n", x1, y)
+	  fmt.Fprintf(w, "%.3g\t%.3g\n", x2, y)
+  }
+  //<<Finish plot, Ch.~\ref{ch:his}>>
+  w.Flush()
+#+end_src
+#+begin_src latex
+  We import \ty{os}, \ty{tabwriter} and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "os"
+  "text/tabwriter"
+  "fmt"
+#+end_src
+#+begin_src latex
+  To finish the plot, we close the last bar, and draw a bottom line.
+#+end_src
+#+begin_src go <<Finish plot, Ch.~\ref{ch:his}>>=
+  x1 := ranges[0]
+  x2 := ranges[len(ranges)-1]
+  fmt.Fprintf(w, "%.3g\t0\n", x2)
+  fmt.Fprintf(w, "%.3g\t0\n", x1)
+#+end_src
+#+begin_src latex
+  The program \ty{histogram} is finished, time to test it.
+  \section*{Testing}
+  The outline of our testing code has hooks for imports and the testing
+  logic.
+#+end_src
+#+begin_src go <<histogram_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:his}>>
+  )
+
+  func TestHistogram(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:his}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct the tests and then iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:his}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:his}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:his}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:his}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We run \ty{histogram} twice on our test data in \ty{test.dat}. The
+  first run returns counts, the second frequencies. In both cases we set
+  the range and the number of bins.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:his}>>=
+  test := exec.Command("./histogram", "-r", "0:16", "-b", "16",
+	  "test.dat")
+  tests = append(tests, test)
+  test = exec.Command("./histogram", "-r", "0:16", "-b", "16",
+	  "-f", "test.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  For each test we compare what we get with what we want, which is
+  stored in \ty{r1.txt} and \ty{r2.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:his}>>=
+  get, err := test.Output()
+  if err != nil { t.Error(err.Error()) }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Error(err.Error()) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:his}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

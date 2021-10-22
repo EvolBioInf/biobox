@@ -21,6 +21,7 @@ doc/drawKt.tex
 doc/drawSt.tex
 doc/fasta2tab.tex
 doc/getSeq.tex
+doc/histogram.tex
 doc/keyMat.tex
 doc/mum2plot.tex
 doc/mutator.tex
@@ -55,6 +56,7 @@ drawKt/drawKt
 drawSt/drawSt
 fasta2tab/fasta2tab
 getSeq/getSeq
+histogram/histogram
 keyMat/keyMat
 mum2plot/mum2plot
 mutator/mutator
