@@ -5,7 +5,7 @@ node [style=filled, color=lightgray]
 	1
 	5
 	7
-node [style="" color=""]
+node [style="", color=""]
 	3 -- 2
 	8 -- 4
 	9 -- 3
