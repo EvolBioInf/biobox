@@ -476,8 +476,15 @@ The script is written either to a unique file.
 #+end_src
 #+begin_src latex
   The user might have requested that only dots be plotted. If not, we
-  plot lines. In either case we check whether there are three columns of
-  input data, in which case we extract the groups from the third column.
+  plot lines, which we do with the \emph{path} aesthetic instead of the
+  \emph{line} aesthetic one might have expected. The difference is that
+  a path plot takes the x-values in the given order while in a line plot
+  they are sorted first~\cite[p. 25]{wic16:ggp}. Having control over the
+  order of x-values makes \ty{plotLine} more useful.
+
+  Regardless of whether we plot points or paths, we check whether there
+  are three columns of input data, in which case we extract the groups
+  from the third column.
 #+end_src
 #+begin_src r <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
   {{if .Dots -}}
@@ -487,7 +494,7 @@ The script is written either to a unique file.
   {{- end -}}
   )
   {{- else -}}
-  plot <- plot + geom_line(
+  plot <- plot + geom_path(
   {{- if eq .Ncol 3 -}}
   aes(color=factor(V3))
   {{- end -}}
