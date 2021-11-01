@@ -37,6 +37,7 @@ doc/rep2plot.tex
 doc/repeater.tex
 doc/revComp.tex
 doc/rpois.tex
+doc/sblast.tex
 doc/shustring.tex
 doc/simNorm.tex
 doc/simOrf.tex
@@ -72,6 +73,7 @@ rep2plot/rep2plot
 repeater/repeater
 revComp/revComp
 rpois/rpois
+sblast/sblast
 shustring/shustring
 simNorm/simNorm
 simOrf/simOrf

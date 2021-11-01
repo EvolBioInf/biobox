@@ -1,5 +1,5 @@
 progs = al blast2dot cchar cutSeq dnaDist drawKt drawSt fasta2tab getSeq histogram keyMat mum2plot mutator naiveMatcher numAl pam \
-plotLine plotSeg randomizeSeq ranDot ranseq rep2plot repeater revComp rpois shustring simNorm simOrf testMeans var \
+plotLine plotSeg randomizeSeq ranDot ranseq rep2plot repeater revComp rpois sblast shustring simNorm simOrf testMeans var \
 watterson wrapSeq
 
 all:

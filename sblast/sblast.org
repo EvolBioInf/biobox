@@ -1,0 +1,869 @@
+#+begin_src latex
+  \section*{Introduction}
+  BLAST calculates local alignments between pairs of sequences and is
+  used extensively in molecular biology to annotate sequences. The
+  members of a sequence pair aligned with BLAST are called query and
+  subject, where the query is searched in the subject. The search
+  algorithm has three steps, division of the query into short,
+  overlapping words, $w$, search for the words in the subject, and
+  extension of matches into alignments. These three steps are
+  illustrated in Figure~\ref{fig:blast} and we implement them in a
+  simple BLAST program for DNA sequences, \ty{sblast}.
+
+  \begin{figure}
+    \begin{center}
+      \input{blastAlg}
+    \end{center}
+    \caption{Cartoon of the BLAST algorithm.}\label{fig:blast}
+  \end{figure}
+
+  Before we write any code, let's look at the three steps of the
+  algorithm in a bit more detail starting with the construction of the
+  word list. Let \ty{GTCGA} be our query and the word length $w=4$, then
+  the word list is $\{\ty{GTC}, \ty{TCG}, \ty{CGA}\}$. In real
+  implementations, $w$ is typically at least 11 for DNA sequences. To
+  emphasize the importance of the word list in the BLAST algorithm, the
+  user of \ty{sblast} can print it out for inspection.
+
+  The query words are looked up in the subject by exact matching using a
+  keyword tree. This is a tree structure built from the query words. As
+  illustrated in Chapter~\ref{ch:dkt}, its construction takes some
+  effort. To persuade the user of \ty{sblast} that this effort is worth
+  while, we also implement na\"ive matching as an alternative.
+
+  Each match of a query word in the subject is extended to the left and
+  the right until the score of the alignment doesn't grow any
+  further. Now, a word might be flanked by a mismatch, in which case the
+  score drops on the first extension, but clearly we shouldn't give up
+  immediately. So there is a maximum number of extension steps we are
+  willing to wait for the last maximum score to improve until we give up
+  and fall back to the position that generated the maximum. We call this
+  the number of idle extension steps.
+
+  This gives us enough understanding of BLAST to get coding.
+
+  \section*{Implementation}
+  Our program outline contains hooks for imports, types, methods,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<sblast.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:sb}>>
+  )
+  //<<Types, Ch.~\ref{ch:sb}>>
+  //<<Methods, Ch.~\ref{ch:sb}>>
+  //<<Functions, Ch.~\ref{ch:sb}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:sb}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:sb}>>=
+  //<<Set usage, Ch.~\ref{ch:sb}>>
+  //<<Declare options, Ch.~\ref{ch:sb}>>
+  //<<Parse options, Ch.~\ref{ch:sb}>>
+  //<<Parse input files, Ch.~\ref{ch:sb}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{sblast}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:sb}>>=
+  u := "sblast [-h] [option]... query.fasta [subject.fasta]..."
+  p := "Carry out a simple version of BLAST."
+  e := "sblast query.fasta subject.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from help (\ty{-h}), which is already given by the \ty{flag}
+  package, we provide eight additional options. The algorithm is
+  specified by match and mismatch scores, the word length, and the
+  maximum number of idle extension steps. There is a threshold score,
+  below which an alignment is not printed. The matching method may be
+  switched to na\"ive and the user can print the word list. These
+  options and their default values are listed in
+  Table~\ref{tab:blast}. Wherever I could, I took the defaults from
+  BLAST.
+
+  \begin{table}
+    \caption{User options of \ty{sblast} and their defaults.}\label{tab:blast}
+    \begin{center}
+    \begin{tabular}{clll}
+      \hline
+      \# & Option & Meaning & Default\\\hline
+      1 & \ty{-a} & match & 1\\
+      2 & \ty{-i} & mismatch & -3\\
+      3 & \ty{-w} & word length & 11\\
+      4 & \ty{-s} & idle extension steps & 30\\
+      5 & \ty{-t} & threshold score & 50\\
+      6 & \ty{-n} & na\"ive matching & false\\
+      7 & \ty{-l} & print word list & false\\
+      8 & \ty{-v} & print version & false\\\hline
+    \end{tabular}
+    \end{center}
+  \end{table}
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:sb}>>=
+  var optA = flag.Float64("a", 1.0, "match")
+  var optI = flag.Float64("i", -3.0, "mismatch")
+  var optW = flag.Int("w", 11, "word length")
+  var optS = flag.Int("s", 30, "maximum number " +
+	  "of idle extension steps")
+  var optT = flag.Float64("t", 50.0, "threshold score")
+  var optN = flag.Bool("n", false, "naive matching")
+  var optL = flag.Bool("l", false, "print word list")
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}, as this would terminate
+  the program. Then we collect the remaining option values.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:sb}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("sblast")
+  }
+  //<<Collect option values, Ch.~\ref{ch:sb}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  There are seven options we later pass to the BLAST algorithm. To
+  make this easy, we collect them in the variable \ty{opts}.
+#+end_src
+#+begin_src go <<Collect option values, Ch.~\ref{ch:sb}>>=
+  opts := new(Opts)
+  opts.a = *optA
+  opts.i = *optI
+  opts.w = *optW
+  opts.s = *optS
+  opts.t = *optT
+  opts.n = *optN
+  opts.l = *optL
+#+end_src
+#+begin_src latex
+  We declare the type \ty{Opts}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:sb}>>=
+  type Opts struct {
+	  a, i, t float64
+	  w, s int
+	  n, l bool
+  }
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. The first of these contains the query sequences, any
+  subsequent file the subject sequences. If there is no query file, we
+  bail with a friendly message. If there is, we call \ty{ParseFiles},
+  which has as first parameter the names of the subject files, and
+  second parameter the function \ty{scan}. This function is applied to
+  each subject file and takes as arguments the options and the query
+  file. It also takes as argument a tab writer to align the columns of
+  the output. This is initialized with the column headers and flushed
+  after the run is finished.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:sb}>>=
+  files := flag.Args()
+  if len(files) == 0 {
+	  log.Fatal("please provide a query")
+  }
+  out := tabwriter.NewWriter(os.Stdout, 2, 1, 2, ' ' ,0)
+  if !opts.l {
+	  fmt.Fprintf(out, "#qa\tsa\tqs\tqe\tsa\tse\tscore\n")
+  } else {
+	  fmt.Fprintf(out, "#qa\tn\tword\n")
+  }
+  clio.ParseFiles(files[1:], scan, opts, files[0], out)
+  out.Flush()
+#+end_src
+#+begin_src latex
+  We import \ty{tabwriter} and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "text/tabwriter"
+  "fmt"
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the arguments, iterate across the
+  subject sequences, and for each one iterate across the queries.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:sb}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:sb}>>
+	  sScanner := fasta.NewScanner(r)
+	  for sScanner.ScanSequence() {
+		  subject := sScanner.Sequence()
+		  //<<Iterate across queries, Ch.~\ref{ch:sb}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  The options and the queries are retrieved by type assertion.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:sb}>>=
+  opts := args[0].(*Opts)
+  qName := args[1].(string)
+  out := args[2].(*tabwriter.Writer)
+#+end_src
+#+begin_src latex
+  We open the query file and analyze each sequence it contains.
+#+end_src
+#+begin_src go <<Iterate across queries, Ch.~\ref{ch:sb}>>=
+  qFile, err := os.Open(qName)
+  if err != nil {
+	  log.Fatalf("couldn't open %s\n", qName)
+  }
+  defer qFile.Close()
+  qScanner := fasta.NewScanner(qFile)
+  for qScanner.ScanSequence() {
+	  query := qScanner.Sequence()
+	  //<<Analyze query, Ch.~\ref{ch:sb}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{os} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "os"
+  "log"
+#+end_src
+#+begin_src latex
+  A query either gets its word list printed or is aligned to the
+  subject.
+#+end_src
+#+begin_src go <<Analyze query, Ch.~\ref{ch:sb}>>=
+  if opts.l {
+	  //<<Print word list, Ch.~\ref{ch:sb}>>
+  } else {
+	  //<<Align query, Ch.~\ref{ch:sb}>>
+  }
+#+end_src
+#+begin_src latex
+  A word list is started by the header of the sequence. The list itself
+  consists of numbered words, one per line. We only write the words on
+  the forward strand. Since we might write the word lists for more than
+  one query, we extract the query accession as the first token on the
+  command line.
+#+end_src
+#+begin_src go <<Print word list, Ch.~\ref{ch:sb}>>=
+  words := getWords(query, opts.w)
+  qa := strings.Fields(query.Header())[0]
+  for i, word := range words {
+	  fmt.Fprintf(out, "%s\t%d\t%s\n", qa, i+1, word)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  The function \ty{getWords} takes as argument a sequence and a word
+  length and returns all words of that length.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:sb}>>=
+  func getWords(seq *fasta.Sequence, w int) []string {
+	  var words []string
+	  d := seq.Data()
+	  l := len(d)
+	  for i := 0; i <= l - w; i++ {
+		  word := string(d[i:i+w])
+		  words = append(words, word)
+	  }
+	  return words
+  }
+#+end_src
+#+begin_src latex
+  We align the query first along its forward strand, then along its
+  reverse strand. We print the resulting alignments.
+#+end_src
+#+begin_src go <<Align query, Ch.~\ref{ch:sb}>>=
+  forward := true
+  alignments := align(query, subject, opts, forward)
+  query.ReverseComplement()
+  forward = false
+  a := align(query, subject, opts, forward)
+  alignments = append(alignments, a...)
+  //<<Print alignments, Ch.~\ref{ch:sb}>>
+#+end_src
+#+begin_src latex
+  Inside the function \ty{align}, we calculate the alignments and return
+  them.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:sb}>>=
+  func align(query, subject *fasta.Sequence,
+	  opts *Opts, forward bool) []Alignment {
+	  var alignments []Alignment
+	  //<<Calculate alignments, Ch.~\ref{ch:sb}>>
+	  return alignments
+  }
+#+end_src
+#+begin_src latex
+  An alignment consists of query start and end, subject start and end,
+  a score, and a strand.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:sb}>>=
+  type Alignment struct {
+	  qs, qe, ss, se int
+	  score float64
+	  forward bool
+  }
+#+end_src
+#+begin_src latex
+  As shown in Figure~\ref{fig:blast}, we initialize alignments through
+  exact matching and then extend the matches to the left and to the
+  right. Then we filter the alignments and sort them by score.
+#+end_src
+#+begin_src go <<Calculate alignments, Ch.~\ref{ch:sb}>>=
+  //<<Exact matching, Ch.~\ref{ch:sb}>>
+  //<<Extend alignments, Ch.~\ref{ch:sb}>>
+  //<<Filter alignments, Ch.~\ref{ch:sb}>>
+  //<<Sort alignments by score, Ch.~\ref{ch:sb}>>
+#+end_src
+#+begin_src latex
+  As shown in Figure~\ref{fig:blast}, in the exact matching phase of the
+  algorithm query words are located in the subject. We store these
+  matches as mini alignments, which we either find by na\"ive matching
+  or by matching with a keyword tree.
+#+end_src
+#+begin_src go <<Exact matching, Ch.~\ref{ch:sb}>>=
+  if opts.n {
+	  //<<Na\"ive exact matching, Ch.~\ref{ch:sb}>>
+  } else {
+	  //<<Exact match with keyword tree, Ch.~\ref{ch:sb}>>
+  }
+#+end_src
+#+begin_src latex
+  In na\"ive exact matching, we iterate over the query to generate the
+  patterns and then look for them in the subject.
+#+end_src
+#+begin_src go <<Na\"ive exact matching, Ch.~\ref{ch:sb}>>=
+  q := query.Data()
+  m := len(q)
+  s := subject.Data()
+  n := len(s)
+  w := opts.w
+  for i := 0; i < m - w; i++ {
+	  p := q[i:i+w]
+	  for j := 0; j < n - w; j++ {
+		  //<<Look for pattern, Ch.~\ref{ch:sb}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We break off the search for a pattern at the first mismatch we
+  encounter.
+#+end_src
+#+begin_src go <<Look for pattern, Ch.~\ref{ch:sb}>>=
+  var k int
+  for k = 0; k < w; k++ {
+	  if s[j+k] != p[k] {
+		  break
+	  }
+  }
+  if k == opts.w {
+	  a := Alignment{qs: i, qe: i+w-1, ss: j, se: j+w-1,
+		  score: float64(w) *opts.a, forward: forward}
+	  alignments = append(alignments, a)
+  }
+#+end_src
+#+begin_src latex
+  With a keyword tree, we look for all patterns at the same time. So we
+  construct the patterns and their keyword tree, search for matches in
+  the subject, and store the matches as alignments.
+#+end_src
+#+begin_src go <<Exact match with keyword tree, Ch.~\ref{ch:sb}>>=
+  //<<Construct patterns, Ch.~\ref{ch:sb}>>
+  //<<Construct keyword tree, Ch.~\ref{ch:sb}>>
+  //<<Search with keyword tree, Ch.~\ref{ch:sb}>>
+  //<<Convert matches to alignments, Ch.~\ref{ch:sb}>>
+#+end_src
+#+begin_src latex
+  We store the patterns as a string slice.
+#+end_src
+#+begin_src go <<Construct patterns, Ch.~\ref{ch:sb}>>=
+  var patterns []string
+  q := query.Data()
+  m := len(q)
+  w := opts.w
+  for i := 0; i <= m-w; i++ {
+	  p := string(q[i:i+w])
+	  patterns = append(patterns, p)
+  }
+#+end_src
+#+begin_src latex
+  The keyword tree is constructed by a function call.
+#+end_src
+#+begin_src go <<Construct keyword tree, Ch.~\ref{ch:sb}>>=
+tree := kt.NewKeywordTree(patterns)
+#+end_src
+#+begin_src latex
+  We import \ty{kt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "github.com/evolbioinf/kt"
+#+end_src
+#+begin_src latex
+  The search with the keyword tree is also a single function call.
+#+end_src
+#+begin_src go <<Search with keyword tree, Ch.~\ref{ch:sb}>>=
+  matches := tree.Search(subject.Data(), patterns)
+#+end_src
+#+begin_src latex
+  We iterate over the matches and convert them to our proto alignments.
+#+end_src
+#+begin_src go <<Convert matches to alignments, Ch.~\ref{ch:sb}>>=
+  for _, m := range matches {
+	  qs := m.Pattern
+	  ss := m.Position
+	  qe := qs + w - 1
+	  se := ss + w - 1
+	  sc := float64(w) * opts.a
+	  a := Alignment{qs: qs, ss: ss, qe: qe,
+		  se: se, score: sc, forward: forward}
+	  alignments = append(alignments, a)
+  }
+#+end_src
+#+begin_src latex
+  We extend each alignment seed by walking to the left and to the right.
+#+end_src
+#+begin_src go <<Extend alignments, Ch.~\ref{ch:sb}>>=
+  q := query.Data()
+  m := len(q)
+  s := subject.Data()
+  n := len(s)
+  for i, _ := range alignments {
+	  //<<Walk left, Ch.~\ref{ch:sb}>>
+	  //<<Walk right, Ch.~\ref{ch:sb}>>
+  }
+#+end_src
+#+begin_src latex
+  We walk left until we run out of query or subject, or until we run out
+  of idle steps. In each step we compare the current pair of residues
+  and ask whether we should adjust the alignment start.
+#+end_src
+#+begin_src go <<Walk left, Ch.~\ref{ch:sb}>>=
+  cq := alignments[i].qs - 1
+  cs := alignments[i].ss - 1
+  score := alignments[i].score
+  is := 0
+  for cq >= 0 && cs >= 0 && is <= opts.s {
+	  //<<Compare current pair of residues, Ch.~\ref{ch:sb}>>
+	  //<<Adjust alignment start? Ch.~\ref{ch:sb}>>
+	  cq--
+	  cs--
+  }
+#+end_src
+#+begin_src latex
+  If a pair of residues is identical, we add the match score to the
+  current score, otherwise we add the mismatch score.
+#+end_src
+#+begin_src go <<Compare current pair of residues, Ch.~\ref{ch:sb}>>=
+  if q[cq] == s[cs] {
+	  score += opts.a
+  } else {
+	  score += opts.i
+  }
+#+end_src
+#+begin_src latex
+  If the alignment score has grown, we shift the alignment start to the
+  left, set the new maximum score, and reset the number of idle steps to
+  zero. Otherwise, we've just carried out an idle step.
+#+end_src
+#+begin_src go <<Adjust alignment start? Ch.~\ref{ch:sb}>>=
+  if score > alignments[i].score {
+	  alignments[i].score = score
+	  alignments[i].qs = cq
+	  alignments[i].ss = cs
+	  is = 0
+  } else {
+	  is++
+  }
+#+end_src
+#+begin_src latex
+  Walking to the right is similar as walking to the left, except that
+  now we ask whether we should adjust the alignment end.
+#+end_src
+#+begin_src go <<Walk right, Ch.~\ref{ch:sb}>>=
+  cq = alignments[i].qe + 1
+  cs = alignments[i].se + 1
+  score = alignments[i].score
+  is = 0
+  for cq < m && cs < n && is <= opts.s {
+	  //<<Compare current pair of residues, Ch.~\ref{ch:sb}>>
+	  //<<Adjust alignment end? Ch.~\ref{ch:sb}>>
+	  cq++
+	  cs++
+  }
+#+end_src
+#+begin_src latex
+  If the score has improved, we extend the alignment to the right, set
+  the new score, and reset the number of idle steps to zero. Otherwise,
+  we increment the idle steps.
+#+end_src
+#+begin_src go <<Adjust alignment end? Ch.~\ref{ch:sb}>>=
+  if score > alignments[i].score {
+	  alignments[i].score = score
+	  alignments[i].qe = cq
+	  alignments[i].se = cs
+	  is = 0
+  } else {
+	  is++
+  }
+#+end_src
+#+begin_src latex
+  We filter the alignments by removing those with low scores. In
+  addition, words that land in the same homologous region on the
+  subject may generate alignments that are contained in each
+  other. We remove these redundant alignments.
+#+end_src
+#+begin_src go <<Filter alignments, Ch.~\ref{ch:sb}>>=
+  //<<Remove low-scoring alignments, Ch.~\ref{ch:sb}>>
+  //<<Remove redundant alignments, Ch.~\ref{ch:sb}>>
+#+end_src
+#+begin_src latex
+  We keep only alignments with a score greater or equal to the threshold
+  score.
+#+end_src
+#+begin_src go <<Remove low-scoring alignments, Ch.~\ref{ch:sb}>>=
+  i := 0
+  max := -1.0
+  for _, al := range alignments {
+	  if al.score >= opts.t {
+		  if max < al.score { max = al.score }
+		  alignments[i] = al
+		  i++
+	  }
+  }
+  alignments = alignments[:i]
+#+end_src
+#+begin_src latex
+  Redundant alignments tend to either share a start position or an end
+  position. So we sort by start position as primary key and reduce runs
+  of identical start positions to the first element. This means we
+  should sort alignments with identical start positions by score in
+  reverse order.  Then repeat for the end position.
+#+end_src
+#+begin_src go <<Remove redundant alignments, Ch.~\ref{ch:sb}>>=
+  //<<Sort alignments by start, Ch.~\ref{ch:sb}>>
+  //<<Delete alignments with identical start, Ch.~\ref{ch:sb}>>
+  //<<Sort alignments by end, Ch.~\ref{ch:sb}>>
+  //<<Delete alignments with identical end, Ch.~\ref{ch:sb}>>
+#+end_src
+#+begin_src latex
+  We sort the alignments by their start positions using an alignment
+  slice.
+#+end_src
+#+begin_src go <<Sort alignments by start, Ch.~\ref{ch:sb}>>=
+  sort.Sort(AlSliceStart(alignments))
+#+end_src
+#+begin_src latex
+  We import \ty{sort}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "sort"
+#+end_src
+#+begin_src latex
+  We declare \ty{AlSliceStart}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:sb}>>=
+  type AlSliceStart []Alignment
+#+end_src
+#+begin_src latex
+  We implement the methods \ty{Len}, \ty{Less}, and \ty{Swap} to make
+  \ty{AlSliceStart} sortable.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:sb}>>=
+  func (a AlSliceStart) Len() int {
+	  return len(a)
+  }
+  //<<Implement \ty{Less} for \ty{AlSliceStart}, Ch.~\ref{ch:sb}>>
+  func (a AlSliceStart) Swap(i, j int) {
+	  a[i], a[j] = a[j], a[i]
+  }
+#+end_src
+#+begin_src latex
+  We make sure that for alignments starting at the same position the
+  highest scoring one comes first.
+#+end_src
+#+begin_src go <<Implement \ty{Less} for \ty{AlSliceStart}, Ch.~\ref{ch:sb}>>=
+  func (a AlSliceStart) Less(i, j int) bool {
+	  if a[i].ss == a[j].ss {
+		  return a[i].score > a[j].score
+	  } else {
+		  return a[i].ss < a[j].ss
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Wit the alignments sorted by their start and positions and scores, we
+  can 
+#+end_src
+#+begin_src go <<Delete alignments with identical start, Ch.~\ref{ch:sb}>>=
+  j := 0
+  if len(alignments) > 0 { j = 1 }
+  for i := 1; i < len(alignments); i++ {
+	  if alignments[i].ss != alignments[i-1].ss {
+		  alignments[j] = alignments[i]
+		  j++
+	  }
+  }
+  alignments = alignments[:j]
+#+end_src
+#+begin_src latex
+  We repeat this procedure for the alignment ends and start again by
+  sorting the alignments by their end positions using an alignment
+  slice.
+#+end_src
+#+begin_src go <<Sort alignments by end, Ch.~\ref{ch:sb}>>=
+  sort.Sort(AlSliceEnd(alignments))
+#+end_src
+#+begin_src latex
+  We declare \ty{AlSliceEnd}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:sb}>>=
+  type AlSliceEnd []Alignment
+#+end_src
+#+begin_src latex
+  We implement the methods \ty{Len}, \ty{Less}, and \ty{Swap} to make
+  \ty{AlSliceStart} sortable.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:sb}>>=
+  func (a AlSliceEnd) Len() int {
+	  return len(a)
+  }
+  //<<Implement \ty{Less} for \ty{AlSliceEnd}, Ch.~\ref{ch:sb}>>
+  func (a AlSliceEnd) Swap(i, j int) {
+	  a[i], a[j] = a[j], a[i]
+  }
+#+end_src
+#+begin_src latex
+  We make sure that for alignments ending at the same position the
+  highest scoring one comes first.
+#+end_src
+#+begin_src go <<Implement \ty{Less} for \ty{AlSliceEnd}, Ch.~\ref{ch:sb}>>=
+  func (a AlSliceEnd) Less(i, j int) bool {
+	  if a[i].se == a[j].se {
+		  return a[i].score > a[j].score
+	  } else {
+		  return a[i].se < a[j].se
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Wit the alignments sorted by their end and positions and scores, we
+  can 
+#+end_src
+#+begin_src go <<Delete alignments with identical end, Ch.~\ref{ch:sb}>>=
+  j = 0
+  if len(alignments) > 0 { j = 1 }
+  for i := 1; i < len(alignments); i++ {
+	  if alignments[i].se != alignments[i-1].se {
+		  alignments[j] = alignments[i]
+		  j++
+	  }
+  }
+  alignments = alignments[:j]
+#+end_src
+#+begin_src latex
+  We sort the remaining alignments by score.
+#+end_src
+#+begin_src go <<Sort alignments by score, Ch.~\ref{ch:sb}>>=
+  sort.Sort(AlSliceScore(alignments))
+#+end_src
+#+begin_src latex
+  We declare \ty{AlSliceScore}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:sb}>>=
+  type AlSliceScore []Alignment
+#+end_src
+#+begin_src latex
+  We implement the \ty{Sort} interface on \ty{AlSliceScore} imposing an
+  ascending order this time.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:sb}>>=
+  func (a AlSliceScore) Len() int {
+	  return len(a)
+  }
+  func (a AlSliceScore) Less(i, j int) bool {
+	  return a[i].score > a[j].score
+  }
+  func (a AlSliceScore) Swap(i, j int) {
+	  a[i], a[j] = a[j], a[i]
+  }
+#+end_src
+#+begin_src latex
+  The alignments are ready to be printed. Again, we extract the
+  accessions from the header. Alignments on the reverse strand get their
+  subject positions switched.
+#+end_src
+#+begin_src go <<Print alignments, Ch.~\ref{ch:sb}>>=
+  qa := strings.Fields(query.Header())[0]
+  sa := strings.Fields(subject.Header())[0]
+  for _, a := range alignments {
+	  if !a.forward {
+		  a.ss, a.se = a.se, a.ss
+	  }
+	  fmt.Fprintf(out, "%s\t%s\t%d\t%d\t%d\t%d\t%.1f\n",
+		  qa, sa, a.qs+1, a.qe+1, a.ss+1, a.se+1, a.score)
+  }
+#+end_src
+#+begin_src latex
+  We have finished \ty{sblast}, let's test it.
+
+  \section*{Testing}
+  Our testing code has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<sblast_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:sb}>>
+  )
+
+  func TestSblast(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:sb}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct the tests and iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:sb}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:sb}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:sb}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:sb}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We test the first seven options listed in Table~\ref{tab:blast}.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:sb}>>=
+  //<<Test \ty{-a}, Ch.~\ref{ch:sb}>>
+  //<<Test \ty{-i}, Ch.~\ref{ch:sb}>>
+  //<<Test \ty{-w}, Ch.~\ref{ch:sb}>>
+  //<<Test \ty{-s}, Ch.~\ref{ch:sb}>>
+  //<<Test \ty{-t}, Ch.~\ref{ch:sb}>>
+  //<<Test \ty{-n}, Ch.~\ref{ch:sb}>>
+  //<<Test \ty{-l}, Ch.~\ref{ch:sb}>>
+#+end_src
+#+begin_src latex
+  We set the match score from its default of 1 to 2. We use the file
+  \ty{test.fasta} as query and subject. It contains the \emph{Adh} loci
+  of \emph{Drosophila melanogaster} and \emph{D. guanche}.
+#+end_src
+#+begin_src go <<Test \ty{-a}, Ch.~\ref{ch:sb}>>=
+  test := exec.Command("./sblast", "-a", "2",
+	  "test.fasta", "test.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We set the mismatch score from default -3 to -2.
+#+end_src
+#+begin_src go <<Test \ty{-i}, Ch.~\ref{ch:sb}>>=
+  test = exec.Command("./sblast", "-i", "-2",
+	  "test.fasta", "test.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We set the word length from default 11 to 20.
+#+end_src
+#+begin_src go <<Test \ty{-w}, Ch.~\ref{ch:sb}>>=
+  test = exec.Command("./sblast", "-w", "20",
+	  "test.fasta", "test.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We reduce the maximum number of idle steps from default 30 to 20.
+#+end_src
+#+begin_src go <<Test \ty{-s}, Ch.~\ref{ch:sb}>>=
+  test = exec.Command("./sblast", "-s", "20",
+	  "test.fasta", "test.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We reduce the threshold score from 50 to 40.
+#+end_src
+#+begin_src go <<Test \ty{-t}, Ch.~\ref{ch:sb}>>=
+  test = exec.Command("./sblast", "-t", "40",
+	  "test.fasta", "test.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We switch from matching with a keyword tree to na\"ive matching.
+#+end_src
+#+begin_src go <<Test \ty{-n}, Ch.~\ref{ch:sb}>>=
+  test = exec.Command("./sblast", "-n",
+	  "test.fasta", "test.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We print the word list.
+#+end_src
+#+begin_src go <<Test \ty{-l}, Ch.~\ref{ch:sb}>>=
+  test = exec.Command("./sblast", "-l",
+	  "test.fasta", "test.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  When running \ty{sblast}, we compare what we get with what we want,
+  which is contained in results files \ty{r1.txt}, \ty{r2.txt}, and so
+  on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:sb}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("couldn't run %s\n", test) }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("couldn't open %s\n", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n",
+		  string(get), string(want))
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:sb}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

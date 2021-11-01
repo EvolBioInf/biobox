@@ -1,0 +1,784 @@
+\nwfilename{}\nwbegindocs{0}\nwenddocs{}\nwbegindocs{1}\nwdocspar% ===> this file was generated automatically by noweave --- better not edit it
+\section*{Introduction}
+BLAST calculates local alignments between pairs of sequences and is
+used extensively in molecular biology to annotate sequences. The
+members of a sequence pair aligned with BLAST are called query and
+subject, where the query is searched in the subject. The search
+algorithm has three steps, division of the query into short,
+overlapping words, $w$, search for the words in the subject, and
+extension of matches into alignments. These three steps are
+illustrated in Figure~\ref{fig:blast} and we implement them in a
+simple BLAST program for DNA sequences, \ty{sblast}.
+
+\begin{figure}
+  \begin{center}
+    \input{blastAlg}
+  \end{center}
+  \caption{Cartoon of the BLAST algorithm.}\label{fig:blast}
+\end{figure}
+
+Before we write any code, let's look at the three steps of the
+algorithm in a bit more detail starting with the construction of the
+word list. Let \ty{GTCGA} be our query and the word length $w=4$, then
+the word list is $\{\ty{GTC}, \ty{TCG}, \ty{CGA}\}$. In real
+implementations, $w$ is typically at least 11 for DNA sequences. To
+emphasize the importance of the word list in the BLAST algorithm, the
+user of \ty{sblast} can print it out for inspection.
+
+The query words are looked up in the subject by exact matching using a
+keyword tree. This is a tree structure built from the query words. As
+illustrated in Chapter~\ref{ch:dkt}, its construction takes some
+effort. To persuade the user of \ty{sblast} that this effort is worth
+while, we also implement na\"ive matching as an alternative.
+
+Each match of a query word in the subject is extended to the left and
+the right until the score of the alignment doesn't grow any
+further. Now, a word might be flanked by a mismatch, in which case the
+score drops on the first extension, but clearly we shouldn't give up
+immediately. So there is a maximum number of extension steps we are
+willing to wait for the last maximum score to improve until we give up
+and fall back to the position that generated the maximum. We call this
+the number of idle extension steps.
+
+This gives us enough understanding of BLAST to get coding.
+
+\section*{Implementation}
+Our program outline contains hooks for imports, types, methods,
+functions, and the logic of the main function.
+\nwenddocs{}\nwbegincode{2}\sublabel{NW0-16JhEl-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-16JhEl-1}}}\moddef{sblast.go~{\nwtagstyle{}\subpageref{NW0-16JhEl-1}}}\endmoddef\nwstartdeflinemarkup\nwenddeflinemarkup
+package main
+
+import (
+          \LA{}Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}\RA{}
+)
+\LA{}Types, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HzpIk-1}}\RA{}
+\LA{}Methods, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HmI1L-1}}\RA{}
+\LA{}Functions, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3nuSaQ-1}}\RA{}
+func main() \{
+          \LA{}Main function, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4WmA2g-1}}\RA{}
+\}
+\nwnotused{sblast.go}\nwendcode{}\nwbegindocs{3}\nwdocspar
+In the main function we set the usage, declare the options, parse the
+options, and parse the input files.
+\nwenddocs{}\nwbegincode{4}\sublabel{NW0-4WmA2g-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-4WmA2g-1}}}\moddef{Main function, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4WmA2g-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwenddeflinemarkup
+\LA{}Set usage, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-ys5c2-1}}\RA{}
+\LA{}Declare options, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-225M11-1}}\RA{}
+\LA{}Parse options, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1n3jf6-1}}\RA{}
+\LA{}Parse input files, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3CnRTg-1}}\RA{}
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{5}\nwdocspar
+The usage consists of the actual usage message, an explanation of the
+purpose of \ty{sblast}, and an example command.
+\nwenddocs{}\nwbegincode{6}\sublabel{NW0-ys5c2-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-ys5c2-1}}}\moddef{Set usage, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-ys5c2-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-4WmA2g-1}}\nwenddeflinemarkup
+u := "sblast [-h] [option]... query.fasta [subject.fasta]..."
+p := "Carry out a simple version of BLAST."
+e := "sblast query.fasta subject.fasta"
+clio.Usage(u, p, e)
+\nwused{\\{NW0-4WmA2g-1}}\nwendcode{}\nwbegindocs{7}\nwdocspar
+We import \ty{clio}.
+\nwenddocs{}\nwbegincode{8}\sublabel{NW0-2Og5jB-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\moddef{Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{\relax}{NW0-2Og5jB-2}\nwenddeflinemarkup
+"github.com/evolbioinf/clio"
+\nwalsodefined{\\{NW0-2Og5jB-2}\\{NW0-2Og5jB-3}\\{NW0-2Og5jB-4}\\{NW0-2Og5jB-5}\\{NW0-2Og5jB-6}\\{NW0-2Og5jB-7}\\{NW0-2Og5jB-8}\\{NW0-2Og5jB-9}}\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{9}\nwdocspar
+Apart from help (\ty{-h}), which is already given by the \ty{flag}
+package, we provide eight additional options. The algorithm is
+specified by match and mismatch scores, the word length, and the
+maximum number of idle extension steps. There is a threshold score,
+below which an alignment is not printed. The matching method may be
+switched to na\"ive and the user can print the word list. These
+options and their default values are listed in
+Table~\ref{tab:blast}. Wherever I could, I took the defaults from
+BLAST.
+
+\begin{table}
+  \caption{User options of \ty{sblast} and their defaults.}\label{tab:blast}
+  \begin{center}
+  \begin{tabular}{clll}
+    \hline
+    \# & Option & Meaning & Default\\\hline
+    1 & \ty{-a} & match & 1\\
+    2 & \ty{-i} & mismatch & -3\\
+    3 & \ty{-w} & word length & 11\\
+    4 & \ty{-s} & idle extension steps & 30\\
+    5 & \ty{-t} & threshold score & 50\\
+    6 & \ty{-n} & na\"ive matching & false\\
+    7 & \ty{-l} & print word list & false\\
+    8 & \ty{-v} & print version & false\\\hline
+  \end{tabular}
+  \end{center}
+\end{table}
+\nwenddocs{}\nwbegincode{10}\sublabel{NW0-225M11-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-225M11-1}}}\moddef{Declare options, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-225M11-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-4WmA2g-1}}\nwenddeflinemarkup
+var optA = flag.Float64("a", 1.0, "match")
+var optI = flag.Float64("i", -3.0, "mismatch")
+var optW = flag.Int("w", 11, "word length")
+var optS = flag.Int("s", 30, "maximum number " +
+          "of idle extension steps")
+var optT = flag.Float64("t", 50.0, "threshold score")
+var optN = flag.Bool("n", false, "naive matching")
+var optL = flag.Bool("l", false, "print word list")
+var optV = flag.Bool("v", false, "print program version " +
+          "and other information")
+\nwused{\\{NW0-4WmA2g-1}}\nwendcode{}\nwbegindocs{11}\nwdocspar
+We import \ty{flag}.
+\nwenddocs{}\nwbegincode{12}\sublabel{NW0-2Og5jB-2}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2Og5jB-2}}}\moddef{Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-2Og5jB-1}{NW0-2Og5jB-3}\nwenddeflinemarkup
+"flag"
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{13}\nwdocspar
+We parse the options and respond to \ty{-v}, as this would terminate
+the program. Then we collect the remaining option values.
+\nwenddocs{}\nwbegincode{14}\sublabel{NW0-1n3jf6-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1n3jf6-1}}}\moddef{Parse options, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1n3jf6-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-4WmA2g-1}}\nwenddeflinemarkup
+flag.Parse()
+if *optV \{
+          util.PrintInfo("sblast")
+\}
+\LA{}Collect option values, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-45Dubr-1}}\RA{}
+\nwused{\\{NW0-4WmA2g-1}}\nwendcode{}\nwbegindocs{15}\nwdocspar
+We import \ty{util}.
+\nwenddocs{}\nwbegincode{16}\sublabel{NW0-2Og5jB-3}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2Og5jB-3}}}\moddef{Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-2Og5jB-2}{NW0-2Og5jB-4}\nwenddeflinemarkup
+"github.com/evolbioinf/biobox/util"
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{17}\nwdocspar
+There are seven options we later pass to the BLAST algorithm. To
+make this easy, we collect them in the variable \ty{opts}.
+\nwenddocs{}\nwbegincode{18}\sublabel{NW0-45Dubr-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-45Dubr-1}}}\moddef{Collect option values, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-45Dubr-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1n3jf6-1}}\nwenddeflinemarkup
+opts := new(Opts)
+opts.a = *optA
+opts.i = *optI
+opts.w = *optW
+opts.s = *optS
+opts.t = *optT
+opts.n = *optN
+opts.l = *optL
+\nwused{\\{NW0-1n3jf6-1}}\nwendcode{}\nwbegindocs{19}\nwdocspar
+We declare the type \ty{Opts}.
+\nwenddocs{}\nwbegincode{20}\sublabel{NW0-HzpIk-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-HzpIk-1}}}\moddef{Types, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HzpIk-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{\relax}{NW0-HzpIk-2}\nwenddeflinemarkup
+type Opts struct \{
+          a, i, t float64
+          w, s int
+          n, l bool
+\}
+\nwalsodefined{\\{NW0-HzpIk-2}\\{NW0-HzpIk-3}\\{NW0-HzpIk-4}\\{NW0-HzpIk-5}}\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{21}\nwdocspar
+The remaining tokens on the command line are taken as the names of
+input files. The first of these contains the query sequences, any
+subsequent file the subject sequences. If there is no query file, we
+bail with a friendly message. If there is, we call \ty{ParseFiles},
+which has as first parameter the names of the subject files, and
+second parameter the function \ty{scan}. This function is applied to
+each subject file and takes as arguments the options and the query
+file. It also takes as argument a tab writer to align the columns of
+the output. This is initialized with the column headers and flushed
+after the run is finished.
+\nwenddocs{}\nwbegincode{22}\sublabel{NW0-3CnRTg-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3CnRTg-1}}}\moddef{Parse input files, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3CnRTg-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-4WmA2g-1}}\nwenddeflinemarkup
+files := flag.Args()
+if len(files) == 0 \{
+          log.Fatal("please provide a query")
+\}
+out := tabwriter.NewWriter(os.Stdout, 2, 1, 2, ' ' ,0)
+if !opts.l \{
+          fmt.Fprintf(out, "#qa\\tsa\\tqs\\tqe\\tsa\\tse\\tscore\\n")
+\} else \{
+          fmt.Fprintf(out, "#qa\\tn\\tword\\n")
+\}
+clio.ParseFiles(files[1:], scan, opts, files[0], out)
+out.Flush()
+\nwused{\\{NW0-4WmA2g-1}}\nwendcode{}\nwbegindocs{23}\nwdocspar
+We import \ty{tabwriter} and \ty{fmt}.
+\nwenddocs{}\nwbegincode{24}\sublabel{NW0-2Og5jB-4}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2Og5jB-4}}}\moddef{Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-2Og5jB-3}{NW0-2Og5jB-5}\nwenddeflinemarkup
+"text/tabwriter"
+"fmt"
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{25}\nwdocspar
+Inside \ty{scan}, we retrieve the arguments, iterate across the
+subject sequences, and for each one iterate across the queries.
+\nwenddocs{}\nwbegincode{26}\sublabel{NW0-3nuSaQ-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3nuSaQ-1}}}\moddef{Functions, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3nuSaQ-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{\relax}{NW0-3nuSaQ-2}\nwenddeflinemarkup
+func scan(r io.Reader, args ...interface\{\}) \{
+          \LA{}Retrieve arguments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3worYP-1}}\RA{}
+          sScanner := fasta.NewScanner(r)
+          for sScanner.ScanSequence() \{
+                  subject := sScanner.Sequence()
+                  \LA{}Iterate across queries, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2otCSW-1}}\RA{}
+          \}
+\}
+\nwalsodefined{\\{NW0-3nuSaQ-2}\\{NW0-3nuSaQ-3}}\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{27}\nwdocspar
+We import \ty{io} and \ty{fasta}.
+\nwenddocs{}\nwbegincode{28}\sublabel{NW0-2Og5jB-5}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2Og5jB-5}}}\moddef{Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-2Og5jB-4}{NW0-2Og5jB-6}\nwenddeflinemarkup
+"io"
+"github.com/evolbioinf/fasta"
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{29}\nwdocspar
+The options and the queries are retrieved by type assertion.
+\nwenddocs{}\nwbegincode{30}\sublabel{NW0-3worYP-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3worYP-1}}}\moddef{Retrieve arguments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3worYP-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-3nuSaQ-1}}\nwenddeflinemarkup
+opts := args[0].(*Opts)
+qName := args[1].(string)
+out := args[2].(*tabwriter.Writer)
+\nwused{\\{NW0-3nuSaQ-1}}\nwendcode{}\nwbegindocs{31}\nwdocspar
+We open the query file and analyze each sequence it contains.
+\nwenddocs{}\nwbegincode{32}\sublabel{NW0-2otCSW-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2otCSW-1}}}\moddef{Iterate across queries, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2otCSW-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-3nuSaQ-1}}\nwenddeflinemarkup
+qFile, err := os.Open(qName)
+if err != nil \{
+          log.Fatalf("couldn't open %s\\n", qName)
+\}
+defer qFile.Close()
+qScanner := fasta.NewScanner(qFile)
+for qScanner.ScanSequence() \{
+          query := qScanner.Sequence()
+          \LA{}Analyze query, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3uTedU-1}}\RA{}
+\}
+\nwused{\\{NW0-3nuSaQ-1}}\nwendcode{}\nwbegindocs{33}\nwdocspar
+We import \ty{os} and \ty{log}.
+\nwenddocs{}\nwbegincode{34}\sublabel{NW0-2Og5jB-6}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2Og5jB-6}}}\moddef{Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-2Og5jB-5}{NW0-2Og5jB-7}\nwenddeflinemarkup
+"os"
+"log"
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{35}\nwdocspar
+A query either gets its word list printed or is aligned to the
+subject.
+\nwenddocs{}\nwbegincode{36}\sublabel{NW0-3uTedU-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3uTedU-1}}}\moddef{Analyze query, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3uTedU-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-2otCSW-1}}\nwenddeflinemarkup
+if opts.l \{
+          \LA{}Print word list, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4ax9cN-1}}\RA{}
+\} else \{
+          \LA{}Align query, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1R6yr3-1}}\RA{}
+\}
+\nwused{\\{NW0-2otCSW-1}}\nwendcode{}\nwbegindocs{37}\nwdocspar
+A word list is started by the header of the sequence. The list itself
+consists of numbered words, one per line. We only write the words on
+the forward strand. Since we might write the word lists for more than
+one query, we extract the query accession as the first token on the
+command line.
+\nwenddocs{}\nwbegincode{38}\sublabel{NW0-4ax9cN-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-4ax9cN-1}}}\moddef{Print word list, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4ax9cN-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-3uTedU-1}}\nwenddeflinemarkup
+words := getWords(query, opts.w)
+qa := strings.Fields(query.Header())[0]
+for i, word := range words \{
+          fmt.Fprintf(out, "%s\\t%d\\t%s\\n", qa, i+1, word)
+\}
+\nwused{\\{NW0-3uTedU-1}}\nwendcode{}\nwbegindocs{39}\nwdocspar
+We import \ty{strings}.
+\nwenddocs{}\nwbegincode{40}\sublabel{NW0-2Og5jB-7}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2Og5jB-7}}}\moddef{Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-2Og5jB-6}{NW0-2Og5jB-8}\nwenddeflinemarkup
+"strings"
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{41}\nwdocspar
+The function \ty{getWords} takes as argument a sequence and a word
+length and returns all words of that length.
+\nwenddocs{}\nwbegincode{42}\sublabel{NW0-3nuSaQ-2}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3nuSaQ-2}}}\moddef{Functions, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3nuSaQ-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-3nuSaQ-1}{NW0-3nuSaQ-3}\nwenddeflinemarkup
+func getWords(seq *fasta.Sequence, w int) []string \{
+          var words []string
+          d := seq.Data()
+          l := len(d)
+          for i := 0; i <= l - w; i++ \{
+                  word := string(d[i:i+w])
+                  words = append(words, word)
+          \}
+          return words
+\}
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{43}\nwdocspar
+We align the query first along its forward strand, then along its
+reverse strand. We print the resulting alignments.
+\nwenddocs{}\nwbegincode{44}\sublabel{NW0-1R6yr3-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1R6yr3-1}}}\moddef{Align query, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1R6yr3-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-3uTedU-1}}\nwenddeflinemarkup
+forward := true
+alignments := align(query, subject, opts, forward)
+query.ReverseComplement()
+forward = false
+a := align(query, subject, opts, forward)
+alignments = append(alignments, a...)
+\LA{}Print alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4aXeEl-1}}\RA{}
+\nwused{\\{NW0-3uTedU-1}}\nwendcode{}\nwbegindocs{45}\nwdocspar
+Inside the function \ty{align}, we calculate the alignments and return
+them.
+\nwenddocs{}\nwbegincode{46}\sublabel{NW0-3nuSaQ-3}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3nuSaQ-3}}}\moddef{Functions, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3nuSaQ-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-3nuSaQ-2}{\relax}\nwenddeflinemarkup
+func align(query, subject *fasta.Sequence,
+          opts *Opts, forward bool) []Alignment \{
+          var alignments []Alignment
+          \LA{}Calculate alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1DYjD7-1}}\RA{}
+          return alignments
+\}
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{47}\nwdocspar
+An alignment consists of query start and end, subject start and end,
+a score, and a strand.
+\nwenddocs{}\nwbegincode{48}\sublabel{NW0-HzpIk-2}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-HzpIk-2}}}\moddef{Types, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HzpIk-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-HzpIk-1}{NW0-HzpIk-3}\nwenddeflinemarkup
+type Alignment struct \{
+          qs, qe, ss, se int
+          score float64
+          forward bool
+\}
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{49}\nwdocspar
+As shown in Figure~\ref{fig:blast}, we initialize alignments through
+exact matching and then extend the matches to the left and to the
+right. Then we filter the alignments and sort them by score.
+\nwenddocs{}\nwbegincode{50}\sublabel{NW0-1DYjD7-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1DYjD7-1}}}\moddef{Calculate alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1DYjD7-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-3nuSaQ-3}}\nwenddeflinemarkup
+\LA{}Exact matching, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1uN9bQ-1}}\RA{}
+\LA{}Extend alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2p7uJM-1}}\RA{}
+\LA{}Filter alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-rI1tg-1}}\RA{}
+\LA{}Sort alignments by score, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2cS5wy-1}}\RA{}
+\nwused{\\{NW0-3nuSaQ-3}}\nwendcode{}\nwbegindocs{51}\nwdocspar
+As shown in Figure~\ref{fig:blast}, in the exact matching phase of the
+algorithm query words are located in the subject. We store these
+matches as mini alignments, which we either find by na\"ive matching
+or by matching with a keyword tree.
+\nwenddocs{}\nwbegincode{52}\sublabel{NW0-1uN9bQ-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1uN9bQ-1}}}\moddef{Exact matching, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1uN9bQ-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1DYjD7-1}}\nwenddeflinemarkup
+if opts.n \{
+          \LA{}Na\"ive exact matching, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4CQMjJ-1}}\RA{}
+\} else \{
+          \LA{}Exact match with keyword tree, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2zPa6i-1}}\RA{}
+\}
+\nwused{\\{NW0-1DYjD7-1}}\nwendcode{}\nwbegindocs{53}\nwdocspar
+In na\"ive exact matching, we iterate over the query to generate the
+patterns and then look for them in the subject.
+\nwenddocs{}\nwbegincode{54}\sublabel{NW0-4CQMjJ-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-4CQMjJ-1}}}\moddef{Na\"ive exact matching, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4CQMjJ-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1uN9bQ-1}}\nwenddeflinemarkup
+q := query.Data()
+m := len(q)
+s := subject.Data()
+n := len(s)
+w := opts.w
+for i := 0; i < m - w; i++ \{
+          p := q[i:i+w]
+          for j := 0; j < n - w; j++ \{
+                  \LA{}Look for pattern, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1aqFvq-1}}\RA{}
+          \}
+\}
+\nwused{\\{NW0-1uN9bQ-1}}\nwendcode{}\nwbegindocs{55}\nwdocspar
+We break off the search for a pattern at the first mismatch we
+encounter.
+\nwenddocs{}\nwbegincode{56}\sublabel{NW0-1aqFvq-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1aqFvq-1}}}\moddef{Look for pattern, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1aqFvq-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-4CQMjJ-1}}\nwenddeflinemarkup
+var k int
+for k = 0; k < w; k++ \{
+          if s[j+k] != p[k] \{
+                  break
+          \}
+\}
+if k == opts.w \{
+          a := Alignment\{qs: i, qe: i+w-1, ss: j, se: j+w-1,
+                  score: float64(w) *opts.a, forward: forward\}
+          alignments = append(alignments, a)
+\}
+\nwused{\\{NW0-4CQMjJ-1}}\nwendcode{}\nwbegindocs{57}\nwdocspar
+With a keyword tree, we look for all patterns at the same time. So we
+construct the patterns and their keyword tree, search for matches in
+the subject, and store the matches as alignments.
+\nwenddocs{}\nwbegincode{58}\sublabel{NW0-2zPa6i-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2zPa6i-1}}}\moddef{Exact match with keyword tree, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2zPa6i-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1uN9bQ-1}}\nwenddeflinemarkup
+\LA{}Construct patterns, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-UZ3nD-1}}\RA{}
+\LA{}Construct keyword tree, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4Wz7Gt-1}}\RA{}
+\LA{}Search with keyword tree, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1YDNRQ-1}}\RA{}
+\LA{}Convert matches to alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2JbbBG-1}}\RA{}
+\nwused{\\{NW0-1uN9bQ-1}}\nwendcode{}\nwbegindocs{59}\nwdocspar
+We store the patterns as a string slice.
+\nwenddocs{}\nwbegincode{60}\sublabel{NW0-UZ3nD-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-UZ3nD-1}}}\moddef{Construct patterns, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-UZ3nD-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-2zPa6i-1}}\nwenddeflinemarkup
+var patterns []string
+q := query.Data()
+m := len(q)
+w := opts.w
+for i := 0; i <= m-w; i++ \{
+          p := string(q[i:i+w])
+          patterns = append(patterns, p)
+\}
+\nwused{\\{NW0-2zPa6i-1}}\nwendcode{}\nwbegindocs{61}\nwdocspar
+The keyword tree is constructed by a function call.
+\nwenddocs{}\nwbegincode{62}\sublabel{NW0-4Wz7Gt-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-4Wz7Gt-1}}}\moddef{Construct keyword tree, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4Wz7Gt-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-2zPa6i-1}}\nwenddeflinemarkup
+tree := kt.NewKeywordTree(patterns)
+\nwused{\\{NW0-2zPa6i-1}}\nwendcode{}\nwbegindocs{63}\nwdocspar
+We import \ty{kt}.
+\nwenddocs{}\nwbegincode{64}\sublabel{NW0-2Og5jB-8}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2Og5jB-8}}}\moddef{Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-2Og5jB-7}{NW0-2Og5jB-9}\nwenddeflinemarkup
+"github.com/evolbioinf/kt"
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{65}\nwdocspar
+The search with the keyword tree is also a single function call.
+\nwenddocs{}\nwbegincode{66}\sublabel{NW0-1YDNRQ-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1YDNRQ-1}}}\moddef{Search with keyword tree, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1YDNRQ-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-2zPa6i-1}}\nwenddeflinemarkup
+matches := tree.Search(subject.Data(), patterns)
+\nwused{\\{NW0-2zPa6i-1}}\nwendcode{}\nwbegindocs{67}\nwdocspar
+We iterate over the matches and convert them to our proto alignments.
+\nwenddocs{}\nwbegincode{68}\sublabel{NW0-2JbbBG-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2JbbBG-1}}}\moddef{Convert matches to alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2JbbBG-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-2zPa6i-1}}\nwenddeflinemarkup
+for _, m := range matches \{
+          qs := m.Pattern
+          ss := m.Position
+          qe := qs + w - 1
+          se := ss + w - 1
+          sc := float64(w) * opts.a
+          a := Alignment\{qs: qs, ss: ss, qe: qe,
+                  se: se, score: sc, forward: forward\}
+          alignments = append(alignments, a)
+\}
+\nwused{\\{NW0-2zPa6i-1}}\nwendcode{}\nwbegindocs{69}\nwdocspar
+We extend each alignment seed by walking to the left and to the right.
+\nwenddocs{}\nwbegincode{70}\sublabel{NW0-2p7uJM-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2p7uJM-1}}}\moddef{Extend alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2p7uJM-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1DYjD7-1}}\nwenddeflinemarkup
+q := query.Data()
+m := len(q)
+s := subject.Data()
+n := len(s)
+for i, _ := range alignments \{
+          \LA{}Walk left, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-35cUih-1}}\RA{}
+          \LA{}Walk right, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3FnixI-1}}\RA{}
+\}
+\nwused{\\{NW0-1DYjD7-1}}\nwendcode{}\nwbegindocs{71}\nwdocspar
+We walk left until we run out of query or subject, or until we run out
+of idle steps. In each step we compare the current pair of residues
+and ask whether we should adjust the alignment start.
+\nwenddocs{}\nwbegincode{72}\sublabel{NW0-35cUih-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-35cUih-1}}}\moddef{Walk left, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-35cUih-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-2p7uJM-1}}\nwenddeflinemarkup
+cq := alignments[i].qs - 1
+cs := alignments[i].ss - 1
+score := alignments[i].score
+is := 0
+for cq >= 0 && cs >= 0 && is <= opts.s \{
+          \LA{}Compare current pair of residues, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4WxDgc-1}}\RA{}
+          \LA{}Adjust alignment start? Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-vHJSe-1}}\RA{}
+          cq--
+          cs--
+\}
+\nwused{\\{NW0-2p7uJM-1}}\nwendcode{}\nwbegindocs{73}\nwdocspar
+If a pair of residues is identical, we add the match score to the
+current score, otherwise we add the mismatch score.
+\nwenddocs{}\nwbegincode{74}\sublabel{NW0-4WxDgc-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-4WxDgc-1}}}\moddef{Compare current pair of residues, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4WxDgc-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-35cUih-1}\\{NW0-3FnixI-1}}\nwenddeflinemarkup
+if q[cq] == s[cs] \{
+          score += opts.a
+\} else \{
+          score += opts.i
+\}
+\nwused{\\{NW0-35cUih-1}\\{NW0-3FnixI-1}}\nwendcode{}\nwbegindocs{75}\nwdocspar
+If the alignment score has grown, we shift the alignment start to the
+left, set the new maximum score, and reset the number of idle steps to
+zero. Otherwise, we've just carried out an idle step.
+\nwenddocs{}\nwbegincode{76}\sublabel{NW0-vHJSe-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-vHJSe-1}}}\moddef{Adjust alignment start? Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-vHJSe-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-35cUih-1}}\nwenddeflinemarkup
+if score > alignments[i].score \{
+          alignments[i].score = score
+          alignments[i].qs = cq
+          alignments[i].ss = cs
+          is = 0
+\} else \{
+          is++
+\}
+\nwused{\\{NW0-35cUih-1}}\nwendcode{}\nwbegindocs{77}\nwdocspar
+Walking to the right is similar as walking to the left, except that
+now we ask whether we should adjust the alignment end.
+\nwenddocs{}\nwbegincode{78}\sublabel{NW0-3FnixI-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3FnixI-1}}}\moddef{Walk right, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3FnixI-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-2p7uJM-1}}\nwenddeflinemarkup
+cq = alignments[i].qe + 1
+cs = alignments[i].se + 1
+score = alignments[i].score
+is = 0
+for cq < m && cs < n && is <= opts.s \{
+          \LA{}Compare current pair of residues, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4WxDgc-1}}\RA{}
+          \LA{}Adjust alignment end? Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3W96lC-1}}\RA{}
+          cq++
+          cs++
+\}
+\nwused{\\{NW0-2p7uJM-1}}\nwendcode{}\nwbegindocs{79}\nwdocspar
+If the score has improved, we extend the alignment to the right, set
+the new score, and reset the number of idle steps to zero. Otherwise,
+we increment the idle steps.
+\nwenddocs{}\nwbegincode{80}\sublabel{NW0-3W96lC-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3W96lC-1}}}\moddef{Adjust alignment end? Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3W96lC-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-3FnixI-1}}\nwenddeflinemarkup
+if score > alignments[i].score \{
+          alignments[i].score = score
+          alignments[i].qe = cq
+          alignments[i].se = cs
+          is = 0
+\} else \{
+          is++
+\}
+\nwused{\\{NW0-3FnixI-1}}\nwendcode{}\nwbegindocs{81}\nwdocspar
+We filter the alignments by removing those with low scores. In
+addition, words that land in the same homologous region on the
+subject may generate alignments that are contained in each
+other. We remove these redundant alignments.
+\nwenddocs{}\nwbegincode{82}\sublabel{NW0-rI1tg-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-rI1tg-1}}}\moddef{Filter alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-rI1tg-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1DYjD7-1}}\nwenddeflinemarkup
+\LA{}Remove low-scoring alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1lD71o-1}}\RA{}
+\LA{}Remove redundant alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-uGjcy-1}}\RA{}
+\nwused{\\{NW0-1DYjD7-1}}\nwendcode{}\nwbegindocs{83}\nwdocspar
+We keep only alignments with a score greater or equal to the threshold
+score.
+\nwenddocs{}\nwbegincode{84}\sublabel{NW0-1lD71o-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1lD71o-1}}}\moddef{Remove low-scoring alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1lD71o-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-rI1tg-1}}\nwenddeflinemarkup
+i := 0
+max := -1.0
+for _, al := range alignments \{
+          if al.score >= opts.t \{
+                  if max < al.score \{ max = al.score \}
+                  alignments[i] = al
+                  i++
+          \}
+\}
+alignments = alignments[:i]
+\nwused{\\{NW0-rI1tg-1}}\nwendcode{}\nwbegindocs{85}\nwdocspar
+Redundant alignments tend to either share a start position or an end
+position. So we sort by start position as primary key and reduce runs
+of identical start positions to the first element. This means we
+should sort alignments with identical start positions by score in
+reverse order.  Then repeat for the end position.
+\nwenddocs{}\nwbegincode{86}\sublabel{NW0-uGjcy-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-uGjcy-1}}}\moddef{Remove redundant alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-uGjcy-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-rI1tg-1}}\nwenddeflinemarkup
+\LA{}Sort alignments by start, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2MdYsq-1}}\RA{}
+\LA{}Delete alignments with identical start, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4E0EaF-1}}\RA{}
+\LA{}Sort alignments by end, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3kEXx6-1}}\RA{}
+\LA{}Delete alignments with identical end, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-47xVRU-1}}\RA{}
+\nwused{\\{NW0-rI1tg-1}}\nwendcode{}\nwbegindocs{87}\nwdocspar
+We sort the alignments by their start positions using an alignment
+slice.
+\nwenddocs{}\nwbegincode{88}\sublabel{NW0-2MdYsq-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2MdYsq-1}}}\moddef{Sort alignments by start, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2MdYsq-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-uGjcy-1}}\nwenddeflinemarkup
+sort.Sort(AlSliceStart(alignments))
+\nwused{\\{NW0-uGjcy-1}}\nwendcode{}\nwbegindocs{89}\nwdocspar
+We import \ty{sort}.
+\nwenddocs{}\nwbegincode{90}\sublabel{NW0-2Og5jB-9}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2Og5jB-9}}}\moddef{Imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2Og5jB-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-2Og5jB-8}{\relax}\nwenddeflinemarkup
+"sort"
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{91}\nwdocspar
+We declare \ty{AlSliceStart}.
+\nwenddocs{}\nwbegincode{92}\sublabel{NW0-HzpIk-3}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-HzpIk-3}}}\moddef{Types, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HzpIk-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-HzpIk-2}{NW0-HzpIk-4}\nwenddeflinemarkup
+type AlSliceStart []Alignment
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{93}\nwdocspar
+We implement the methods \ty{Len}, \ty{Less}, and \ty{Swap} to make
+\ty{AlSliceStart} sortable.
+\nwenddocs{}\nwbegincode{94}\sublabel{NW0-HmI1L-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-HmI1L-1}}}\moddef{Methods, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HmI1L-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{\relax}{NW0-HmI1L-2}\nwenddeflinemarkup
+func (a AlSliceStart) Len() int \{
+          return len(a)
+\}
+\LA{}Implement \ty{Less} for \ty{AlSliceStart}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3eeXUd-1}}\RA{}
+func (a AlSliceStart) Swap(i, j int) \{
+          a[i], a[j] = a[j], a[i]
+\}
+\nwalsodefined{\\{NW0-HmI1L-2}\\{NW0-HmI1L-3}}\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{95}\nwdocspar
+We make sure that for alignments starting at the same position the
+highest scoring one comes first.
+\nwenddocs{}\nwbegincode{96}\sublabel{NW0-3eeXUd-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3eeXUd-1}}}\moddef{Implement \ty{Less} for \ty{AlSliceStart}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3eeXUd-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-HmI1L-1}}\nwenddeflinemarkup
+func (a AlSliceStart) Less(i, j int) bool \{
+          if a[i].ss == a[j].ss \{
+                  return a[i].score > a[j].score
+          \} else \{
+                  return a[i].ss < a[j].ss
+          \}
+\}
+\nwused{\\{NW0-HmI1L-1}}\nwendcode{}\nwbegindocs{97}\nwdocspar
+Wit the alignments sorted by their start and positions and scores, we
+can 
+\nwenddocs{}\nwbegincode{98}\sublabel{NW0-4E0EaF-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-4E0EaF-1}}}\moddef{Delete alignments with identical start, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4E0EaF-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-uGjcy-1}}\nwenddeflinemarkup
+j := 0
+if len(alignments) > 0 \{ j = 1 \}
+for i := 1; i < len(alignments); i++ \{
+          if alignments[i].ss != alignments[i-1].ss \{
+                  alignments[j] = alignments[i]
+                  j++
+          \}
+\}
+alignments = alignments[:j]
+\nwused{\\{NW0-uGjcy-1}}\nwendcode{}\nwbegindocs{99}\nwdocspar
+We repeat this procedure for the alignment ends and start again by
+sorting the alignments by their end positions using an alignment
+slice.
+\nwenddocs{}\nwbegincode{100}\sublabel{NW0-3kEXx6-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-3kEXx6-1}}}\moddef{Sort alignments by end, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-3kEXx6-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-uGjcy-1}}\nwenddeflinemarkup
+sort.Sort(AlSliceEnd(alignments))
+\nwused{\\{NW0-uGjcy-1}}\nwendcode{}\nwbegindocs{101}\nwdocspar
+We declare \ty{AlSliceEnd}.
+\nwenddocs{}\nwbegincode{102}\sublabel{NW0-HzpIk-4}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-HzpIk-4}}}\moddef{Types, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HzpIk-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-HzpIk-3}{NW0-HzpIk-5}\nwenddeflinemarkup
+type AlSliceEnd []Alignment
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{103}\nwdocspar
+We implement the methods \ty{Len}, \ty{Less}, and \ty{Swap} to make
+\ty{AlSliceStart} sortable.
+\nwenddocs{}\nwbegincode{104}\sublabel{NW0-HmI1L-2}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-HmI1L-2}}}\moddef{Methods, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HmI1L-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-HmI1L-1}{NW0-HmI1L-3}\nwenddeflinemarkup
+func (a AlSliceEnd) Len() int \{
+          return len(a)
+\}
+\LA{}Implement \ty{Less} for \ty{AlSliceEnd}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-wGgQt-1}}\RA{}
+func (a AlSliceEnd) Swap(i, j int) \{
+          a[i], a[j] = a[j], a[i]
+\}
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{105}\nwdocspar
+We make sure that for alignments ending at the same position the
+highest scoring one comes first.
+\nwenddocs{}\nwbegincode{106}\sublabel{NW0-wGgQt-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-wGgQt-1}}}\moddef{Implement \ty{Less} for \ty{AlSliceEnd}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-wGgQt-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-HmI1L-2}}\nwenddeflinemarkup
+func (a AlSliceEnd) Less(i, j int) bool \{
+          if a[i].se == a[j].se \{
+                  return a[i].score > a[j].score
+          \} else \{
+                  return a[i].se < a[j].se
+          \}
+\}
+\nwused{\\{NW0-HmI1L-2}}\nwendcode{}\nwbegindocs{107}\nwdocspar
+Wit the alignments sorted by their end and positions and scores, we
+can 
+\nwenddocs{}\nwbegincode{108}\sublabel{NW0-47xVRU-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-47xVRU-1}}}\moddef{Delete alignments with identical end, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-47xVRU-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-uGjcy-1}}\nwenddeflinemarkup
+j = 0
+if len(alignments) > 0 \{ j = 1 \}
+for i := 1; i < len(alignments); i++ \{
+          if alignments[i].se != alignments[i-1].se \{
+                  alignments[j] = alignments[i]
+                  j++
+          \}
+\}
+alignments = alignments[:j]
+\nwused{\\{NW0-uGjcy-1}}\nwendcode{}\nwbegindocs{109}\nwdocspar
+We sort the remaining alignments by score.
+\nwenddocs{}\nwbegincode{110}\sublabel{NW0-2cS5wy-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2cS5wy-1}}}\moddef{Sort alignments by score, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2cS5wy-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1DYjD7-1}}\nwenddeflinemarkup
+sort.Sort(AlSliceScore(alignments))
+\nwused{\\{NW0-1DYjD7-1}}\nwendcode{}\nwbegindocs{111}\nwdocspar
+We declare \ty{AlSliceScore}.
+\nwenddocs{}\nwbegincode{112}\sublabel{NW0-HzpIk-5}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-HzpIk-5}}}\moddef{Types, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HzpIk-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-HzpIk-4}{\relax}\nwenddeflinemarkup
+type AlSliceScore []Alignment
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{113}\nwdocspar
+We implement the \ty{Sort} interface on \ty{AlSliceScore} imposing an
+ascending order this time.
+\nwenddocs{}\nwbegincode{114}\sublabel{NW0-HmI1L-3}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-HmI1L-3}}}\moddef{Methods, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-HmI1L-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-16JhEl-1}}\nwprevnextdefs{NW0-HmI1L-2}{\relax}\nwenddeflinemarkup
+func (a AlSliceScore) Len() int \{
+          return len(a)
+\}
+func (a AlSliceScore) Less(i, j int) bool \{
+          return a[i].score > a[j].score
+\}
+func (a AlSliceScore) Swap(i, j int) \{
+          a[i], a[j] = a[j], a[i]
+\}
+\nwused{\\{NW0-16JhEl-1}}\nwendcode{}\nwbegindocs{115}\nwdocspar
+The alignments are ready to be printed. Again, we extract the
+accessions from the header. Alignments on the reverse strand get their
+subject positions switched.
+\nwenddocs{}\nwbegincode{116}\sublabel{NW0-4aXeEl-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-4aXeEl-1}}}\moddef{Print alignments, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-4aXeEl-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1R6yr3-1}}\nwenddeflinemarkup
+qa := strings.Fields(query.Header())[0]
+sa := strings.Fields(subject.Header())[0]
+for _, a := range alignments \{
+          if !a.forward \{
+                  a.ss, a.se = a.se, a.ss
+          \}
+          fmt.Fprintf(out, "%s\\t%s\\t%d\\t%d\\t%d\\t%d\\t%.1f\\n",
+                  qa, sa, a.qs+1, a.qe+1, a.ss+1, a.se+1, a.score)
+\}
+\nwused{\\{NW0-1R6yr3-1}}\nwendcode{}\nwbegindocs{117}\nwdocspar
+We have finished \ty{sblast}, let's test it.
+
+\section*{Testing}
+Our testing code has hooks for imports and the testing logic.
+\nwenddocs{}\nwbegincode{118}\sublabel{NW0-1OYUWR-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1OYUWR-1}}}\moddef{sblast\_test.go~{\nwtagstyle{}\subpageref{NW0-1OYUWR-1}}}\endmoddef\nwstartdeflinemarkup\nwenddeflinemarkup
+package main
+
+import (
+          "testing"
+          \LA{}Testing imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1ZGULc-1}}\RA{}
+)
+
+func TestSblast(t *testing.T) \{
+          \LA{}Testing, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1wtKzR-1}}\RA{}
+\}
+\nwnotused{sblast\_test.go}\nwendcode{}\nwbegindocs{119}\nwdocspar
+We construct the tests and iterate over them.
+\nwenddocs{}\nwbegincode{120}\sublabel{NW0-1wtKzR-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1wtKzR-1}}}\moddef{Testing, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1wtKzR-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1OYUWR-1}}\nwenddeflinemarkup
+var tests []*exec.Cmd
+\LA{}Construct tests, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-Ncr9g-1}}\RA{}
+for i, test := range tests \{
+          \LA{}Run test, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2RU8dU-1}}\RA{}
+\}
+\nwused{\\{NW0-1OYUWR-1}}\nwendcode{}\nwbegindocs{121}\nwdocspar
+We import \ty{exec}.
+\nwenddocs{}\nwbegincode{122}\sublabel{NW0-1ZGULc-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1ZGULc-1}}}\moddef{Testing imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1ZGULc-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1OYUWR-1}}\nwprevnextdefs{\relax}{NW0-1ZGULc-2}\nwenddeflinemarkup
+"os/exec"
+\nwalsodefined{\\{NW0-1ZGULc-2}}\nwused{\\{NW0-1OYUWR-1}}\nwendcode{}\nwbegindocs{123}\nwdocspar
+We test the first seven options listed in Table~\ref{tab:blast}.
+\nwenddocs{}\nwbegincode{124}\sublabel{NW0-Ncr9g-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-Ncr9g-1}}}\moddef{Construct tests, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-Ncr9g-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1wtKzR-1}}\nwenddeflinemarkup
+\LA{}Test \ty{-a}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-9vAOK-1}}\RA{}
+\LA{}Test \ty{-i}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1qb7sU-1}}\RA{}
+\LA{}Test \ty{-w}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1Avqe-1}}\RA{}
+\LA{}Test \ty{-s}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1Cmn0V-1}}\RA{}
+\LA{}Test \ty{-t}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-35M18u-1}}\RA{}
+\LA{}Test \ty{-n}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2audHl-1}}\RA{}
+\LA{}Test \ty{-l}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1Wlaab-1}}\RA{}
+\nwused{\\{NW0-1wtKzR-1}}\nwendcode{}\nwbegindocs{125}\nwdocspar
+We set the match score from its default of 1 to 2. We use the file
+\ty{test.fasta} as query and subject. It contains the \emph{Adh} loci
+of \emph{Drosophila melanogaster} and \emph{D. guanche}.
+\nwenddocs{}\nwbegincode{126}\sublabel{NW0-9vAOK-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-9vAOK-1}}}\moddef{Test \ty{-a}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-9vAOK-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-Ncr9g-1}}\nwenddeflinemarkup
+test := exec.Command("./sblast", "-a", "2",
+          "test.fasta", "test.fasta")
+tests = append(tests, test)
+\nwused{\\{NW0-Ncr9g-1}}\nwendcode{}\nwbegindocs{127}\nwdocspar
+We set the mismatch score from default -3 to -2.
+\nwenddocs{}\nwbegincode{128}\sublabel{NW0-1qb7sU-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1qb7sU-1}}}\moddef{Test \ty{-i}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1qb7sU-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-Ncr9g-1}}\nwenddeflinemarkup
+test = exec.Command("./sblast", "-i", "-2",
+          "test.fasta", "test.fasta")
+tests = append(tests, test)
+\nwused{\\{NW0-Ncr9g-1}}\nwendcode{}\nwbegindocs{129}\nwdocspar
+We set the word length from default 11 to 20.
+\nwenddocs{}\nwbegincode{130}\sublabel{NW0-1Avqe-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1Avqe-1}}}\moddef{Test \ty{-w}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1Avqe-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-Ncr9g-1}}\nwenddeflinemarkup
+test = exec.Command("./sblast", "-w", "20",
+          "test.fasta", "test.fasta")
+tests = append(tests, test)
+\nwused{\\{NW0-Ncr9g-1}}\nwendcode{}\nwbegindocs{131}\nwdocspar
+We reduce the maximum number of idle steps from default 30 to 20.
+\nwenddocs{}\nwbegincode{132}\sublabel{NW0-1Cmn0V-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1Cmn0V-1}}}\moddef{Test \ty{-s}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1Cmn0V-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-Ncr9g-1}}\nwenddeflinemarkup
+test = exec.Command("./sblast", "-s", "20",
+          "test.fasta", "test.fasta")
+tests = append(tests, test)
+\nwused{\\{NW0-Ncr9g-1}}\nwendcode{}\nwbegindocs{133}\nwdocspar
+We reduce the threshold score from 50 to 40.
+\nwenddocs{}\nwbegincode{134}\sublabel{NW0-35M18u-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-35M18u-1}}}\moddef{Test \ty{-t}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-35M18u-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-Ncr9g-1}}\nwenddeflinemarkup
+test = exec.Command("./sblast", "-t", "40",
+          "test.fasta", "test.fasta")
+tests = append(tests, test)
+\nwused{\\{NW0-Ncr9g-1}}\nwendcode{}\nwbegindocs{135}\nwdocspar
+We switch from matching with a keyword tree to na\"ive matching.
+\nwenddocs{}\nwbegincode{136}\sublabel{NW0-2audHl-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2audHl-1}}}\moddef{Test \ty{-n}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2audHl-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-Ncr9g-1}}\nwenddeflinemarkup
+test = exec.Command("./sblast", "-n",
+          "test.fasta", "test.fasta")
+tests = append(tests, test)
+\nwused{\\{NW0-Ncr9g-1}}\nwendcode{}\nwbegindocs{137}\nwdocspar
+We print the word list.
+\nwenddocs{}\nwbegincode{138}\sublabel{NW0-1Wlaab-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1Wlaab-1}}}\moddef{Test \ty{-l}, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1Wlaab-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-Ncr9g-1}}\nwenddeflinemarkup
+test = exec.Command("./sblast", "-l",
+          "test.fasta", "test.fasta")
+tests = append(tests, test)
+\nwused{\\{NW0-Ncr9g-1}}\nwendcode{}\nwbegindocs{139}\nwdocspar
+When running \ty{sblast}, we compare what we get with what we want,
+which is contained in results files \ty{r1.txt}, \ty{r2.txt}, and so
+on.
+\nwenddocs{}\nwbegincode{140}\sublabel{NW0-2RU8dU-1}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-2RU8dU-1}}}\moddef{Run test, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-2RU8dU-1}}}\endmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1wtKzR-1}}\nwenddeflinemarkup
+get, err := test.Output()
+if err != nil \{ t.Errorf("couldn't run %s\\n", test) \}
+f := "r" + strconv.Itoa(i+1) + ".txt"
+want, err := ioutil.ReadFile(f)
+if err != nil \{ t.Errorf("couldn't open %s\\n", f) \}
+if !bytes.Equal(get, want) \{
+          t.Errorf("get:\\n%s\\nwant:\\n%s\\n",
+                  string(get), string(want))
+\}
+\nwused{\\{NW0-1wtKzR-1}}\nwendcode{}\nwbegindocs{141}\nwdocspar
+We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+\nwenddocs{}\nwbegincode{142}\sublabel{NW0-1ZGULc-2}\nwmargintag{{\nwtagstyle{}\subpageref{NW0-1ZGULc-2}}}\moddef{Testing imports, Ch.~\ref{ch:sb}~{\nwtagstyle{}\subpageref{NW0-1ZGULc-1}}}\plusendmoddef\nwstartdeflinemarkup\nwusesondefline{\\{NW0-1OYUWR-1}}\nwprevnextdefs{NW0-1ZGULc-1}{\relax}\nwenddeflinemarkup
+"strconv"
+"io/ioutil"
+"bytes"
+\nwused{\\{NW0-1OYUWR-1}}\nwendcode{}
+
+\nwixlogsorted{c}{{Adjust alignment end? Ch.~\ref{ch:sb}}{NW0-3W96lC-1}{\nwixu{NW0-3FnixI-1}\nwixd{NW0-3W96lC-1}}}%
+\nwixlogsorted{c}{{Adjust alignment start? Ch.~\ref{ch:sb}}{NW0-vHJSe-1}{\nwixu{NW0-35cUih-1}\nwixd{NW0-vHJSe-1}}}%
+\nwixlogsorted{c}{{Align query, Ch.~\ref{ch:sb}}{NW0-1R6yr3-1}{\nwixu{NW0-3uTedU-1}\nwixd{NW0-1R6yr3-1}}}%
+\nwixlogsorted{c}{{Analyze query, Ch.~\ref{ch:sb}}{NW0-3uTedU-1}{\nwixu{NW0-2otCSW-1}\nwixd{NW0-3uTedU-1}}}%
+\nwixlogsorted{c}{{Calculate alignments, Ch.~\ref{ch:sb}}{NW0-1DYjD7-1}{\nwixu{NW0-3nuSaQ-3}\nwixd{NW0-1DYjD7-1}}}%
+\nwixlogsorted{c}{{Collect option values, Ch.~\ref{ch:sb}}{NW0-45Dubr-1}{\nwixu{NW0-1n3jf6-1}\nwixd{NW0-45Dubr-1}}}%
+\nwixlogsorted{c}{{Compare current pair of residues, Ch.~\ref{ch:sb}}{NW0-4WxDgc-1}{\nwixu{NW0-35cUih-1}\nwixd{NW0-4WxDgc-1}\nwixu{NW0-3FnixI-1}}}%
+\nwixlogsorted{c}{{Construct keyword tree, Ch.~\ref{ch:sb}}{NW0-4Wz7Gt-1}{\nwixu{NW0-2zPa6i-1}\nwixd{NW0-4Wz7Gt-1}}}%
+\nwixlogsorted{c}{{Construct patterns, Ch.~\ref{ch:sb}}{NW0-UZ3nD-1}{\nwixu{NW0-2zPa6i-1}\nwixd{NW0-UZ3nD-1}}}%
+\nwixlogsorted{c}{{Construct tests, Ch.~\ref{ch:sb}}{NW0-Ncr9g-1}{\nwixu{NW0-1wtKzR-1}\nwixd{NW0-Ncr9g-1}}}%
+\nwixlogsorted{c}{{Convert matches to alignments, Ch.~\ref{ch:sb}}{NW0-2JbbBG-1}{\nwixu{NW0-2zPa6i-1}\nwixd{NW0-2JbbBG-1}}}%
+\nwixlogsorted{c}{{Declare options, Ch.~\ref{ch:sb}}{NW0-225M11-1}{\nwixu{NW0-4WmA2g-1}\nwixd{NW0-225M11-1}}}%
+\nwixlogsorted{c}{{Delete alignments with identical end, Ch.~\ref{ch:sb}}{NW0-47xVRU-1}{\nwixu{NW0-uGjcy-1}\nwixd{NW0-47xVRU-1}}}%
+\nwixlogsorted{c}{{Delete alignments with identical start, Ch.~\ref{ch:sb}}{NW0-4E0EaF-1}{\nwixu{NW0-uGjcy-1}\nwixd{NW0-4E0EaF-1}}}%
+\nwixlogsorted{c}{{Exact match with keyword tree, Ch.~\ref{ch:sb}}{NW0-2zPa6i-1}{\nwixu{NW0-1uN9bQ-1}\nwixd{NW0-2zPa6i-1}}}%
+\nwixlogsorted{c}{{Exact matching, Ch.~\ref{ch:sb}}{NW0-1uN9bQ-1}{\nwixu{NW0-1DYjD7-1}\nwixd{NW0-1uN9bQ-1}}}%
+\nwixlogsorted{c}{{Extend alignments, Ch.~\ref{ch:sb}}{NW0-2p7uJM-1}{\nwixu{NW0-1DYjD7-1}\nwixd{NW0-2p7uJM-1}}}%
+\nwixlogsorted{c}{{Filter alignments, Ch.~\ref{ch:sb}}{NW0-rI1tg-1}{\nwixu{NW0-1DYjD7-1}\nwixd{NW0-rI1tg-1}}}%
+\nwixlogsorted{c}{{Functions, Ch.~\ref{ch:sb}}{NW0-3nuSaQ-1}{\nwixu{NW0-16JhEl-1}\nwixd{NW0-3nuSaQ-1}\nwixd{NW0-3nuSaQ-2}\nwixd{NW0-3nuSaQ-3}}}%
+\nwixlogsorted{c}{{Implement \ty{Less} for \ty{AlSliceEnd}, Ch.~\ref{ch:sb}}{NW0-wGgQt-1}{\nwixu{NW0-HmI1L-2}\nwixd{NW0-wGgQt-1}}}%
+\nwixlogsorted{c}{{Implement \ty{Less} for \ty{AlSliceStart}, Ch.~\ref{ch:sb}}{NW0-3eeXUd-1}{\nwixu{NW0-HmI1L-1}\nwixd{NW0-3eeXUd-1}}}%
+\nwixlogsorted{c}{{Imports, Ch.~\ref{ch:sb}}{NW0-2Og5jB-1}{\nwixu{NW0-16JhEl-1}\nwixd{NW0-2Og5jB-1}\nwixd{NW0-2Og5jB-2}\nwixd{NW0-2Og5jB-3}\nwixd{NW0-2Og5jB-4}\nwixd{NW0-2Og5jB-5}\nwixd{NW0-2Og5jB-6}\nwixd{NW0-2Og5jB-7}\nwixd{NW0-2Og5jB-8}\nwixd{NW0-2Og5jB-9}}}%
+\nwixlogsorted{c}{{Iterate across queries, Ch.~\ref{ch:sb}}{NW0-2otCSW-1}{\nwixu{NW0-3nuSaQ-1}\nwixd{NW0-2otCSW-1}}}%
+\nwixlogsorted{c}{{Look for pattern, Ch.~\ref{ch:sb}}{NW0-1aqFvq-1}{\nwixu{NW0-4CQMjJ-1}\nwixd{NW0-1aqFvq-1}}}%
+\nwixlogsorted{c}{{Main function, Ch.~\ref{ch:sb}}{NW0-4WmA2g-1}{\nwixu{NW0-16JhEl-1}\nwixd{NW0-4WmA2g-1}}}%
+\nwixlogsorted{c}{{Methods, Ch.~\ref{ch:sb}}{NW0-HmI1L-1}{\nwixu{NW0-16JhEl-1}\nwixd{NW0-HmI1L-1}\nwixd{NW0-HmI1L-2}\nwixd{NW0-HmI1L-3}}}%
+\nwixlogsorted{c}{{Na\"ive exact matching, Ch.~\ref{ch:sb}}{NW0-4CQMjJ-1}{\nwixu{NW0-1uN9bQ-1}\nwixd{NW0-4CQMjJ-1}}}%
+\nwixlogsorted{c}{{Parse input files, Ch.~\ref{ch:sb}}{NW0-3CnRTg-1}{\nwixu{NW0-4WmA2g-1}\nwixd{NW0-3CnRTg-1}}}%
+\nwixlogsorted{c}{{Parse options, Ch.~\ref{ch:sb}}{NW0-1n3jf6-1}{\nwixu{NW0-4WmA2g-1}\nwixd{NW0-1n3jf6-1}}}%
+\nwixlogsorted{c}{{Print alignments, Ch.~\ref{ch:sb}}{NW0-4aXeEl-1}{\nwixu{NW0-1R6yr3-1}\nwixd{NW0-4aXeEl-1}}}%
+\nwixlogsorted{c}{{Print word list, Ch.~\ref{ch:sb}}{NW0-4ax9cN-1}{\nwixu{NW0-3uTedU-1}\nwixd{NW0-4ax9cN-1}}}%
+\nwixlogsorted{c}{{Remove low-scoring alignments, Ch.~\ref{ch:sb}}{NW0-1lD71o-1}{\nwixu{NW0-rI1tg-1}\nwixd{NW0-1lD71o-1}}}%
+\nwixlogsorted{c}{{Remove redundant alignments, Ch.~\ref{ch:sb}}{NW0-uGjcy-1}{\nwixu{NW0-rI1tg-1}\nwixd{NW0-uGjcy-1}}}%
+\nwixlogsorted{c}{{Retrieve arguments, Ch.~\ref{ch:sb}}{NW0-3worYP-1}{\nwixu{NW0-3nuSaQ-1}\nwixd{NW0-3worYP-1}}}%
+\nwixlogsorted{c}{{Run test, Ch.~\ref{ch:sb}}{NW0-2RU8dU-1}{\nwixu{NW0-1wtKzR-1}\nwixd{NW0-2RU8dU-1}}}%
+\nwixlogsorted{c}{{sblast.go}{NW0-16JhEl-1}{\nwixd{NW0-16JhEl-1}}}%
+\nwixlogsorted{c}{{sblast\_test.go}{NW0-1OYUWR-1}{\nwixd{NW0-1OYUWR-1}}}%
+\nwixlogsorted{c}{{Search with keyword tree, Ch.~\ref{ch:sb}}{NW0-1YDNRQ-1}{\nwixu{NW0-2zPa6i-1}\nwixd{NW0-1YDNRQ-1}}}%
+\nwixlogsorted{c}{{Set usage, Ch.~\ref{ch:sb}}{NW0-ys5c2-1}{\nwixu{NW0-4WmA2g-1}\nwixd{NW0-ys5c2-1}}}%
+\nwixlogsorted{c}{{Sort alignments by end, Ch.~\ref{ch:sb}}{NW0-3kEXx6-1}{\nwixu{NW0-uGjcy-1}\nwixd{NW0-3kEXx6-1}}}%
+\nwixlogsorted{c}{{Sort alignments by score, Ch.~\ref{ch:sb}}{NW0-2cS5wy-1}{\nwixu{NW0-1DYjD7-1}\nwixd{NW0-2cS5wy-1}}}%
+\nwixlogsorted{c}{{Sort alignments by start, Ch.~\ref{ch:sb}}{NW0-2MdYsq-1}{\nwixu{NW0-uGjcy-1}\nwixd{NW0-2MdYsq-1}}}%
+\nwixlogsorted{c}{{Test \ty{-a}, Ch.~\ref{ch:sb}}{NW0-9vAOK-1}{\nwixu{NW0-Ncr9g-1}\nwixd{NW0-9vAOK-1}}}%
+\nwixlogsorted{c}{{Test \ty{-i}, Ch.~\ref{ch:sb}}{NW0-1qb7sU-1}{\nwixu{NW0-Ncr9g-1}\nwixd{NW0-1qb7sU-1}}}%
+\nwixlogsorted{c}{{Test \ty{-l}, Ch.~\ref{ch:sb}}{NW0-1Wlaab-1}{\nwixu{NW0-Ncr9g-1}\nwixd{NW0-1Wlaab-1}}}%
+\nwixlogsorted{c}{{Test \ty{-n}, Ch.~\ref{ch:sb}}{NW0-2audHl-1}{\nwixu{NW0-Ncr9g-1}\nwixd{NW0-2audHl-1}}}%
+\nwixlogsorted{c}{{Test \ty{-s}, Ch.~\ref{ch:sb}}{NW0-1Cmn0V-1}{\nwixu{NW0-Ncr9g-1}\nwixd{NW0-1Cmn0V-1}}}%
+\nwixlogsorted{c}{{Test \ty{-t}, Ch.~\ref{ch:sb}}{NW0-35M18u-1}{\nwixu{NW0-Ncr9g-1}\nwixd{NW0-35M18u-1}}}%
+\nwixlogsorted{c}{{Test \ty{-w}, Ch.~\ref{ch:sb}}{NW0-1Avqe-1}{\nwixu{NW0-Ncr9g-1}\nwixd{NW0-1Avqe-1}}}%
+\nwixlogsorted{c}{{Testing imports, Ch.~\ref{ch:sb}}{NW0-1ZGULc-1}{\nwixu{NW0-1OYUWR-1}\nwixd{NW0-1ZGULc-1}\nwixd{NW0-1ZGULc-2}}}%
+\nwixlogsorted{c}{{Testing, Ch.~\ref{ch:sb}}{NW0-1wtKzR-1}{\nwixu{NW0-1OYUWR-1}\nwixd{NW0-1wtKzR-1}}}%
+\nwixlogsorted{c}{{Types, Ch.~\ref{ch:sb}}{NW0-HzpIk-1}{\nwixu{NW0-16JhEl-1}\nwixd{NW0-HzpIk-1}\nwixd{NW0-HzpIk-2}\nwixd{NW0-HzpIk-3}\nwixd{NW0-HzpIk-4}\nwixd{NW0-HzpIk-5}}}%
+\nwixlogsorted{c}{{Walk left, Ch.~\ref{ch:sb}}{NW0-35cUih-1}{\nwixu{NW0-2p7uJM-1}\nwixd{NW0-35cUih-1}}}%
+\nwixlogsorted{c}{{Walk right, Ch.~\ref{ch:sb}}{NW0-3FnixI-1}{\nwixu{NW0-2p7uJM-1}\nwixd{NW0-3FnixI-1}}}%
+

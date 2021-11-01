@@ -1,0 +1,12 @@
+\begin{pspicture}(-0.5,0)(10,3.5)
+  \input{bl1}
+  %% \pscustom{
+  %%   \translate(0,-1)
+  %% }
+  \input{bl2}
+  \psset{linecolor=lightgray, linewidth=0.5pt, nodesep=2pt}
+  \nccurve[angleA=-120,angleB=90]{->}{s1}{e1}
+  \nccurve[angleA=-90,angleB=90]{->}{s2}{e2}
+  \nccurve[angleA=-90,angleB=90]{->}{s2}{e1b}
+  \nccurve[angleA=-120,angleB=90]{->}{s3}{e3}
+\end{pspicture}
