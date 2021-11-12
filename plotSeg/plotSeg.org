@@ -218,7 +218,7 @@
   //<<Construct R command, Ch.~\ref{ch:ps}>>
   clio.ParseFiles(files, scan, rcmd)
   err = os.Remove(rscr)
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatalf("can't delete %q", rscr) }
 #+end_src
 #+begin_src latex
   We import \ty{exec} and \ty{os}, and \ty{log}.
@@ -241,7 +241,7 @@
 #+begin_src go <<Open script file, Ch.~\ref{ch:ps}>>=
   script, err := ioutil.TempFile("", "tmp_*.r")
   if err != nil {
-	  log.Fatal(err.Error())
+	  log.Fatal("can't open R-script")
   }
   rscr = script.Name()
 #+end_src
@@ -255,11 +255,11 @@
   We write the script with a template.
 #+end_src
 #+begin_src go <<Write script to file, Ch.~\ref{ch:ps}>>=
-  tmpl := template.New("tmpl")
+  tmpl := template.New("R-script-template")
   tmpl = template.Must(tmpl.Parse(tmplStr))
   err = tmpl.Execute(script, opts)
   if err != nil {
-	  log.Fatal(err.Error())
+	  log.Fatalf("can't execute %q", tmpl.Name())
   }
 #+end_src
 #+begin_src latex
@@ -450,7 +450,7 @@
 #+end_src
 #+begin_src go <<Pipe data into R command, Ch.~\ref{ch:ps}>>=
   stdin, err := rcmd.StdinPipe()
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatal("can't open stdin") }
   go func() {
 	  for _, d := range data {
 		  stdin.Write([]byte(d))
@@ -465,7 +465,7 @@
 #+begin_src go <<Run R command, Ch.~\ref{ch:ps}>>=
   err = rcmd.Run()
   if err != nil {
-	  log.Fatal(err.Error())
+	  log.Fatalf("can't run %q", rcmd)
   }
 #+end_src
 #+begin_src latex
@@ -492,7 +492,7 @@
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:ps}>>=
   ps, err := ioutil.TempFile(".", "tmp_*.ps")
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatal("cant open ps-output file") }
   p := ps.Name()
   var tests []*exec.Cmd
   //<<Construct tests, Ch.~\ref{ch:ps}>>
@@ -500,7 +500,7 @@
 	  //<<Run test, Ch.~\ref{ch:ps}>>
   }
   err = os.Remove(p)
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatalf("can't delete %q", p) }
 #+end_src
 #+begin_src latex
   We import \ty{ioutil}, \ty{log}, \ty{exec}, and \ty{os}.
@@ -566,12 +566,12 @@
 #+end_src
 #+begin_src go <<Run test, Ch.~\ref{ch:ps}>>=
   err = test.Run()
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatalf("can't run %q", test) }
   get, err := ioutil.ReadFile(p)
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatalf("can't read %q", p) }
   f = "results/r" + strconv.Itoa(i+1) + ".ps"
   want, err := ioutil.ReadFile(f)
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatalf("can't read %q", f) }
   if !bytes.Equal(get, want) {
 	  t.Errorf("get:\n%s\nwant:\n%s\n",
 		  string(get), string(want))
