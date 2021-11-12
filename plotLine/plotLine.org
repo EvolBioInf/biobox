@@ -188,9 +188,9 @@
   var err error
   if sa[0] != "s" && sa[1] != "e" {
 	  args.Xmin, err = strconv.ParseFloat(sa[0], 64)
-	  if err != nil { log.Fatal(err.Error()) }
+	  if err != nil { log.Fatalf("can't convert %q", sa[0]) }
 	  args.Xmax, err = strconv.ParseFloat(sa[1], 64)
-	  if err != nil { log.Fatal(err.Error()) }
+	  if err != nil { log.Fatalf("can't convert %q", sa[1]) }
 	  args.Xrange = true
   }
 #+end_src
@@ -216,9 +216,9 @@
   sa = strings.Split(*optYY, ":")
   if sa[0] != "s" && sa[1] != "e" {
 	  args.Ymin, err = strconv.ParseFloat(sa[0], 64)
-	  if err != nil { log.Fatal(err.Error()) }
+	  if err != nil { log.Fatalf("can't convert %q", sa[0]) }
 	  args.Ymax, err = strconv.ParseFloat(sa[1], 64)
-	  if err != nil { log.Fatal(err.Error()) }
+	  if err != nil { log.Fatalf("can't convert %q", sa[1]) }
 	  args.Yrange = true
   }
 #+end_src
@@ -352,7 +352,7 @@ The script is written either to a unique file.
 #+begin_src go <<Open script file, Ch.~\ref{ch:pl}>>=
   script, err := ioutil.TempFile("", "tmp_*.r")
   if err != nil {
-	  log.Fatal(err.Error())
+	  log.Fatalf("can't create script file")
   }
   defer script.Close()
 #+end_src
@@ -366,11 +366,11 @@ The script is written either to a unique file.
   We write the script using a template.
 #+end_src
 #+begin_src go <<Write script to file, Ch.~\ref{ch:pl}>>=
-  tmpl := template.New("tmpl")
+  tmpl := template.New("R-template")
   tmpl = template.Must(tmpl.Parse(tmplStr))
   err = tmpl.Execute(script, args)
   if err != nil {
-	  log.Fatal(err.Error())
+	  log.Fatalf("can't run %q", tmpl.Name())
   }
 #+end_src
 #+begin_src latex
@@ -574,7 +574,7 @@ The script is written either to a unique file.
 #+begin_src go <<Delete R script, Ch.~\ref{ch:pl}>>=
   err = os.Remove(script.Name())
   if err != nil {
-	  log.Fatal(err.Error())
+	  log.Fatalf("can't remove %q", script.Name())
   }
 #+end_src
 #+begin_src latex
@@ -601,7 +601,7 @@ The script is written either to a unique file.
 #+end_src
 #+begin_src go <<Pipe data into R command, Ch.~\ref{ch:pl}>>=
   stdin, err := cmd.StdinPipe()
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatal("can't open stdin") }
   go func() {
 	  for _, d := range data {
 		  stdin.Write([]byte(d))
@@ -616,7 +616,7 @@ The script is written either to a unique file.
 #+begin_src go <<Run R command, Ch.~\ref{ch:pl}>>=
   err = cmd.Run()
   if err != nil {
-	  log.Fatal(err.Error())
+	  log.Fatalf("can't run %q", cmd)
   }
 #+end_src
 #+begin_src latex
@@ -645,14 +645,14 @@ The script is written either to a unique file.
 #+begin_src go <<Testing, Ch.~\ref{ch:pl}>>=
   var tests []*exec.Cmd
   psf, err := ioutil.TempFile(".", "tmp_*.ps")
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatal("can't open script file") }
   ps := psf.Name()
   //<<Prepare tests, Ch.~\ref{ch:pl}>>
   for i, test := range tests {
 	  //<<Run test, Ch.~\ref{ch:pl}>>
   }
   err = os.Remove(ps)
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatalf("can't delete %q", ps) }
 #+end_src
 #+begin_src latex
   We import \ty{os} and \ty{ioutil}.
@@ -777,11 +777,11 @@ The script is written either to a unique file.
 #+end_src
 #+begin_src go <<Run test, Ch.~\ref{ch:pl}>>=
   err := test.Run()
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatalf("can't run %q", test) }
   get, err := ioutil.ReadFile(ps)
   f := "results/r" + strconv.Itoa(i+1) + ".ps"
   want, err := ioutil.ReadFile(f)
-  if err != nil { log.Fatal(err.Error()) }
+  if err != nil { log.Fatalf("can't open %q", f) }
   if !bytes.Equal(get, want) {
 	  t.Errorf("get:\n%s\nwant:\n%s\n",
 		  string(get), string(want))
