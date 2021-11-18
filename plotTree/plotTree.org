@@ -1,0 +1,1053 @@
+#+begin_src latex
+  \section*{Introduction}
+  We'd often like to draw a quick phylogeny from a tree given in Newick
+  format, for example the one shown in Figure~\ref{fig:phy}A. The
+  program \ty{plotTree} takes as input such a tree and plots it either
+  in rooted (Figure~\ref{fig:phy}B) or unrooted (Figure~\ref{fig:phy}C)
+  layout. The user can also choose between postscript or x11 output and
+  may omit the node labels. The plot is drawn using the \ty{ggplot}
+  graphics engine, which is part of R.
+
+
+  \begin{figure}
+    \begin{center}
+      \textbf{A}\\
+      \small
+      \texttt{(((One:0.2,Two:0.3)75:0.3,(Three:0.5,Four:0.3)69:0.2):0.3,Five:0.7):0.0;}
+    \end{center}
+    \begin{center}
+      \begin{tabular}{cc}
+	\textbf{B} & \textbf{C}\\
+	\scalebox{0.6}{\includegraphics{treeR}} & \scalebox{0.6}{\includegraphics{treeU}}
+      \end{tabular}
+    \end{center}
+    \caption{The program \ty{drawTree} reads a tree in Newick format
+      (\textbf{A}) and converts it into a
+      rooted (\textbf{B}) or an unrooted (\textbf{C})
+      phylogeny.}\label{fig:phy}
+  \end{figure}
+
+
+  \section*{Implementation}
+  The outline of \ty{plotTree} has hooks for imports, types, variables,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<plotTree.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:pt}>>
+  )
+  //<<Types, Ch.~\ref{ch:pt}>>
+  //<<Variables, Ch.~\ref{ch:pt}>>
+  //<<Functions, Ch.~\ref{ch:pt}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:pt}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options and parse the
+  options. The trees are drawn with R scripts, one per tree, and we
+  construct these scripts from a template. With the template in hand, we
+  parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:pt}>>=
+  //<<Set usage, Ch.~\ref{ch:pt}>>
+  //<<Declare options, Ch.~\ref{ch:pt}>>
+  //<<Parse options, Ch.~\ref{ch:pt}>>
+  //<<Construct template for R script, Ch.~\ref{ch:pt}>>
+  //<<Parse input files, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  \subsection*{User Interaction}
+  The usage consists of three parts, the actual usage message, an
+  explanation of the purpose of \ty{plotTree}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:pt}>>=
+  u := "plotTree [-h] [option]... [foo.nwk]..."
+  p := "Plot Newick-formatted trees."
+  e := "plotTree foo.nwk"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import the package \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the built-in help option (\ty{-h}), we declare a version
+  option and four program-specific options: By default, we interpret a
+  bifurcating root as belonging to a rooted tree drawn like
+  Figure~\ref{fig:phy}B, and a trifurcating root as belonging to an
+  unrooted tree drawn like Figure~\ref{fig:phy}C. However, the user can
+  enforce a rooted (\ty{-r}) or an unrooted (\ty{-u}) layout
+  irrespective of the degree of the root.
+
+  The nodes in a Newick string may or may not be labeled. By default,
+  \ty{plotTree} draws the labels, but the user can opt to omit them
+  (\ty{-n}). The user can also choose to draw the tree to a postscript
+  file instead of an x11 window (\ty{-p}), give the postscript plot a
+  width (\ty{-w}) and a height (\ty{-H}), and set the margins as a
+  function of the plot dimensions to accommodate leaf labels, which
+  might otherwise be truncated (\ty{-m}). Another switch to fine tune
+  the graphic raises the scale label as a fraction of the plot's
+  height (\ty{-s}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optR = flag.Bool("r", false, "rooted tree (default input)")
+  var optU = flag.Bool("u", false, "unrooted tree (default input)")
+  var optN = flag.Bool("n", false, "no node labels (default input)")
+  var optP = flag.String("p", "",
+	  "postscript output file (default x11)")
+  var optW = flag.Float64("w", 0.0, "width of postscript plot in cm")
+  var optHH = flag.Float64("H", 0.0, "height of postscript plot in cm")
+  var optM = flag.Float64("m", 0.1, "margin as fraction of plot width and height")
+  var optS = flag.Float64("s", 0.03, "raise scale label as fraction of plot height")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and collect them in the variable \ty{opts}. We
+  measure width and height is measured in centimeters, but R expects
+  inches, so we convert the centimeters to inches.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:pt}>>=
+  flag.Parse()
+  opts := new(opts)
+  opts.Rooted = *optR
+  opts.Unrooted = *optU
+  opts.NoLabels = *optN
+  opts.Ps = *optP
+  opts.Width = *optW / 2.54
+  opts.Height = *optHH / 2.54
+  opts.Margin = *optM
+  opts.RaiseScale = *optS
+#+end_src
+#+begin_src latex
+  We define the \ty{opts} structure and add a hook for additional
+  fields.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:pt}>>=
+  type opts struct {
+	  Rooted bool
+	  Unrooted bool
+	  NoLabels bool
+	  Ps string
+	  Width, Height, Margin float64
+	  RaiseScale float64
+	  //<<Opts fields, Ch.~\ref{ch:pt}>>
+  }
+#+end_src
+#+begin_src latex
+  The first option we respond to is \ty{-v} as this might stop the
+  program.
+#+end_src
+#+begin_src go  <<Parse options, Ch.~\ref{ch:pt}>>=
+  if *optV {
+	  util.PrintInfo("plotTree")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  \subsection*{R Script}
+  Each tree requires its own R script, which is constructed from a
+  template. 
+#+end_src
+#+begin_src go <<Construct template for R script, Ch.~\ref{ch:pt}>>=
+  tmpl := template.New("R-script")
+  tmpl = template.Must(tmpl.Parse(tmplStr))
+#+end_src
+#+begin_src latex
+  We import \ty{template}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "text/template"
+#+end_src
+#+begin_src latex
+  The template is read from a string, \ty{tmplStr}, which in turn is
+  read from the embedded file \ty{treeTmpl.txt}.
+#+end_src
+#+begin_src go <<Variables, Ch.~\ref{ch:pt}>>=
+  //go:embed treeTmpl.txt
+  var tmplStr string
+#+end_src
+#+begin_src latex
+  We import \ty{embed}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  _ "embed"
+#+end_src
+#+begin_src latex
+  We construct the template in three steps. Construct the header,
+  construct the plot, and write the plot to the device.
+#+end_src
+#+begin_src R <<treeTmpl.txt>>=
+  //<<Construct header, Ch.~\ref{ch:pt}>>
+  //<<Construct plot, Ch.~\ref{ch:pt}>>
+  //<<Write plot to device, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  In the header we import the \ty{ggplot} library and read the data as a
+  table from the standard input.
+#+end_src
+#+begin_src R <<Construct header, Ch.~\ref{ch:pt}>>=
+  library("ggplot2")
+  d <- read.table(file="stdin")
+#+end_src
+#+begin_src latex
+  The plot is constructed as a segment plot with the first two columns
+  as the starting positions, columns 3 and 4 as the end
+  positions. Column 5 contain the labels, column 6 their angles. These
+  only matter for unrooted layout, but it simplifies our script if we
+  include the angles in any case. We also add a centered plot title and
+  ranges for the y and x axes.
+#+end_src
+#+begin_src R <<Construct plot, Ch.~\ref{ch:pt}>>=
+  p <- ggplot(d, aes(V1, V2, xend=V3, yend=V4))
+  p <- p + theme_void()
+  p <- p + geom_segment()
+  p <- p + geom_text(aes(label=V5,angle=V6))
+  p <- p + theme(plot.title=element_text(hjust=0.5))
+  p <- p + ggtitle("{{.Title}}")
+  p <- p + xlim({{.Xmin}}, {{.Xmax}})
+  p <- p + ylim({{.Ymin}}, {{.Ymax}})
+#+end_src
+#+begin_src latex
+  We add \ty{opts} fields for the plot title, and for the minima of x
+  and y.
+#+end_src
+#+begin_src go <<Opts fields, Ch.~\ref{ch:pt}>>=
+  Title string
+  Xmin, Xmax, Ymin, Ymax float64
+#+end_src
+#+begin_src latex
+  We write to a postscript file or to a x11 window.
+#+end_src
+#+begin_src R <<Write plot to device, Ch.~\ref{ch:pt}>>=
+  {{if .Ps}}
+  //<<Write to postscript file, Ch.~\ref{ch:pt}>>
+  {{else}}
+  //<<Write to x11 window, Ch.~\ref{ch:pt}>>
+  {{end}}
+#+end_src
+#+begin_src latex
+  We set the postscript file with vertical orientation and give it a
+  width and a height. Having written to the file, we switch the device
+  off.
+#+end_src
+#+begin_src R <<Write to postscript file, Ch.~\ref{ch:pt}>>=
+  postscript(file="{{.Ps}}", horizontal=FALSE,
+	     width={{.Width}}, height={{.Height}})
+  plot(p)
+  dev.off()
+#+end_src
+#+begin_src latex
+  If we write to an x11 window, we keep the script waiting until the
+  user closes the window. The script checks the window every tenth
+  second.
+#+end_src
+#+begin_src R <<Write to x11 window, Ch.~\ref{ch:pt}>>=
+  x11()
+  plot(p)
+  while(names(dev.cur()) != 'null device')
+      Sys.sleep(0.1)
+#+end_src
+#+begin_src latex
+  \subsection*{Scan Input Files}
+  The remaining tokens on the command line are interpreted as input
+  files. Each of them is parsed with the function \ty{scan}, which takes
+  the file names, a file counter, the R template, and the program
+  options as its own arguments.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:pt}>>=
+  files := flag.Args()
+  fileCounter := 0
+  clio.ParseFiles(files, scan, files, &fileCounter, tmpl, opts)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the arguments. Then we iterate over the
+  trees, and count each one. A tree is represented by its root node,
+  which we convert from the root returned by the scanner. Then we draw
+  the newly converted tree.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:pt}>>
+	  sc := newick.NewScanner(r)
+	  treeCounter := 0
+	  for sc.Scan() {
+		  treeCounter++
+		  root := convertTree(sc.Tree())
+		  //<<Draw tree, Ch.~\ref{ch:pt}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{newick}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "io"
+  "github.com/evolbioinf/biobox/newick"
+#+end_src
+#+begin_src latex
+  We retrieve the files, the file counter, the template, and the
+  options.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:pt}>>=
+  files := args[0].([]string)
+  fileCounter := args[1].(*int)
+  tmpl := args[2].(*template.Template)
+  options := args[3].(*opts)
+#+end_src
+#+begin_src latex
+  We convert the new tree from nodes of type \ty{newick.Node} to our
+  local node type. This allows us to tailor the nodes to fit the layout
+  task in hand.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func convertTree(v *newick.Node) *node {
+	  root := new(node)
+	  cpTree(v, root)
+	  return root
+  }
+#+end_src
+#+begin_src latex
+  A \ty{node} replicates the fields of a \ty{newick.Node} and has a hook
+  for additional fields we add later.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:pt}>>=
+  type node struct {
+	  child, sib, parent *node
+	  label string
+	  length float64
+	  hasLength bool
+	  //<<Node fields, Ch.~\ref{ch:pt}>>
+  }
+#+end_src
+#+begin_src latex
+  In the function \ty{cpTree} we copy each node. We begin by copying the
+  label and the branch length, then we copy the tree topology.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func cpTree(v *newick.Node, n *node) {
+	  if v == nil { return }
+	  n.label = v.Label
+	  n.length = v.Length
+	  n.hasLength = v.HasLength
+	  //<<Copy tree topology, Ch.~\ref{ch:pt}>>
+	  cpTree(v.Child, n.child)
+	  cpTree(v.Sib, n.sib)
+  }
+#+end_src
+#+begin_src latex
+  The tree topology consists of references to child, sib, and parent.
+#+end_src
+#+begin_src go <<Copy tree topology, Ch.~\ref{ch:pt}>>=
+  if v.Child != nil {
+	  c := new(node)
+	  c.parent = n
+	  n.child = c
+	
+  }
+  if v.Sib != nil {
+	  s := new(node)
+	  s.parent = n.parent
+	  n.sib = s
+  }
+#+end_src
+#+begin_src latex
+  \subsection*{Draw Tree}
+  We draw a tree by constructing its segments. We also add margins and a
+  title to the plot. Then we construct the R script and the R command to
+  run it. The segments are piped into the R script and we run the R
+  command. When we're done with the R script, we delete it.
+#+end_src
+#+begin_src go <<Draw tree, Ch.~\ref{ch:pt}>>=
+  //<<Construct tree segments, Ch.~\ref{ch:pt}>>
+  //<<Add margins, Ch.~\ref{ch:pt}>>
+  //<<Add title, Ch.~\ref{ch:pt}>>
+  //<<Construct R script, Ch.~\ref{ch:pt}>>
+  //<<Construct R command, Ch.~\ref{ch:pt}>>
+  //<<Pipe segments into R command, Ch.~\ref{ch:pt}>>
+  //<<Run R command, Ch.~\ref{ch:pt}>>
+  //<<Delete R script, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  We decide whether the tree is to be drawn in rooted or unrooted
+  format. Then we layout the tree accordingly and store its segments. A
+  special segment is the scale, which we add last.
+#+end_src
+#+begin_src go <<Construct tree segments, Ch.~\ref{ch:pt}>>=
+  var segments []segment
+  rooted := false
+  //<<Is the tree rooted or unrooted? Ch.~\ref{ch:pt}>>
+  if rooted {
+	  //<<Layout rooted tree, Ch.~\ref{ch:pt}>>
+  } else {
+	  //<<Layout unrooted tree, Ch.~\ref{ch:pt}>>
+  }
+  //<<Add scale, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  A segment consists of a start and an end position, a label of the
+  start position, and an angle of that label.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:pt}>>=
+  type segment struct {
+	  x1, y1, x2, y2 float64
+	  l string
+	  a float64
+  }
+#+end_src
+#+begin_src latex
+  By default, we base the layout on the root's number of
+  children. However, the user might have used the switches for rooted or
+  unrooted layout.
+#+end_src
+#+begin_src go <<Is the tree rooted or unrooted? Ch.~\ref{ch:pt}>>=
+  //<<Base layout on the root's number of children, Ch.~\ref{ch:pt}>>
+  //<<Base layout on user options, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  At this point the tree is treated as unrooted, but if the root has two
+  children or less, we set it to rooted.
+#+end_src
+#+begin_src go <<Base layout on the root's number of children, Ch.~\ref{ch:pt}>>=
+  w := root.child
+  n := 0
+  for w != nil {
+	  n++
+	  w = w.sib
+  }
+  if n <= 2 {
+	  rooted = true
+  }
+#+end_src
+#+begin_src latex
+  The default layout can be overridden by the user.
+#+end_src
+#+begin_src go <<Base layout on user options, Ch.~\ref{ch:pt}>>=
+  if options.Rooted {
+	  rooted = true
+  }
+  if options.Unrooted {
+	  rooted = false
+  }
+#+end_src
+#+begin_src latex
+  We layout a rooted tree by setting the x and y coordinates of its
+  nodes in a tree traversal. For setting the y coordinate we refer to a
+  ``global'' y position. Then we collect the branches.
+#+end_src
+#+begin_src go <<Layout rooted tree, Ch.~\ref{ch:pt}>>=
+  setXcoords(root)
+  y := 0.0
+  y = setYcoords(root, y)
+  segments = collectBranchesR(root, segments, options)
+#+end_src
+#+begin_src latex
+  The x coordinates are set recursively by adding the branch length to
+  the parent's x coordinate. This means the root's x coordinate is zero.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func setXcoords(v *node) {
+	  if v == nil { return }
+	  if v.parent != nil {
+		  l := v.length
+		  if !v.hasLength { l = 1.0 }
+		  v.x = l + v.parent.x
+	  }
+	  setXcoords(v.child)
+	  setXcoords(v.sib)
+  }
+#+end_src
+#+begin_src latex
+  We declare fields for the x and y coordinates of a node.
+#+end_src
+#+begin_src go <<Node fields, Ch.~\ref{ch:pt}>>=
+  x, y float64
+#+end_src
+#+begin_src latex
+  The y coordinates are set separately for leaves and internal nodes.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func setYcoords(v *node, y float64) float64 {
+	  if v == nil { return y }
+	  y = setYcoords(v.child, y)
+	  if v.child == nil {
+		  //<<Set y coordinate of leaf, Ch.~\ref{ch:pt}>>
+	  } else {
+		  //<<Set y coordinate of internal node, Ch.~\ref{ch:pt}>>
+	  }
+	  y = setYcoords(v.sib, y)
+	  return y
+  }
+#+end_src
+#+begin_src latex
+  The leaves are spaced evenly along the y axis using the y coordinate
+  passed.
+#+end_src
+#+begin_src go <<Set y coordinate of leaf, Ch.~\ref{ch:pt}>>=
+  v.y = y
+  y++
+#+end_src
+#+begin_src latex
+  Internal nodes are centered on their children.
+#+end_src
+#+begin_src go <<Set y coordinate of internal node, Ch.~\ref{ch:pt}>>=
+  w := v.child
+  min := w.y
+  for w.sib != nil {
+	  w = w.sib
+  }
+  max := w.y
+  v.y = (min + max) / 2.0
+#+end_src
+#+begin_src latex
+  We collect the branches of the rooted tree recursively, treating the
+  root separately from all other nodes.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func collectBranchesR(v *node, segments []segment, o *opts) []segment {
+	  if v == nil { return segments }
+	  if v.parent == nil {
+		  //<<Treat root in rooted tree, Ch.~\ref{ch:pt}>>
+	  } else {
+		  //<<Treat other node in rooted tree, Ch.~\ref{ch:pt}>>
+	  }
+	  segments = collectBranchesR(v.child, segments, o)
+	  segments = collectBranchesR(v.sib, segments, o)
+	  return segments
+  }
+#+end_src
+#+begin_src latex
+  The root may be labeled, in which case we add an empty segment with
+  the label. The \ty{ggplot} layout algorithm centers labels. This can
+  be changed by setting \ty{hjust} to \emph{outward}, but this didn't
+  work reliably when I tested it on larger trees, for example trees with
+  50 leaves or more. So I use the default centered layout and move the
+  labels by padding them with blanks on the left.
+#+end_src
+#+begin_src go <<Treat root in rooted tree, Ch.~\ref{ch:pt}>>=
+  label := ""
+  if v.label != "" && !o.NoLabels {
+	  //<<Pad label on the left, Ch.~\ref{ch:pt}>>
+	  seg := segment{x1: v.x, y1: v.y, x2: v.x,
+		  y2: v.y, l: label}
+	  segments = append(segments, seg)
+  }
+#+end_src
+#+begin_src latex
+  The padding operation is repeated at several points in the code, so we
+  centralize the calculation of the number of pad characters in a call
+  to the function \ty{padding}.
+#+end_src
+#+begin_src go <<Pad label on the left, Ch.~\ref{ch:pt}>>=
+  s := ""
+  for i := 0; i < padding(v.label); i++ {
+	  s += " "
+  }
+  label = s + v.label
+#+end_src
+#+begin_src latex
+  The function padding returns the padding as a function of string
+  length. I tried various combinations of factor and offset, and
+  eventually settled on 2 and 1, respectively.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func padding(s string) int {
+	  f := 2.0
+	  o := 1
+	  x := int(math.Round(f*float64(len(s)+o)))
+	  return x
+  }
+#+end_src
+#+begin_src latex
+  For the other nodes we again pad the label on the left. Then we draw
+  two segments each. Let $(v_x,v_y)$ be the coordinates of the current
+  node, $(p_x,p_y)$ the coordinates of its parent. Then we draw one
+  segment from the parent to the height of $v$, $(p_x,p_y),(p_x,v_y)$,
+  and one from $v$ to that point, $(v_x,v_y),(p_x,v_y)$. The first
+  segment is not labeled, the second one might be labeled at its
+  starting position.
+#+end_src
+#+begin_src go <<Treat other node in rooted tree, Ch.~\ref{ch:pt}>>=
+  label := ""
+  if v.label != "" && !o.NoLabels {
+	  //<<Pad label on the left, Ch.~\ref{ch:pt}>>
+  }
+  p := v.parent
+  s1 := segment{x1: p.x, y1: p.y, x2: p.x, y2: v.y}
+  s2 := segment{x1: v.x, y1: v.y, x2: p.x,
+	  y2: v.y, l: label}
+  segments = append(segments, s1)
+  segments = append(segments, s2)
+#+end_src
+#+begin_src latex
+  The layout of the unrooted tree is based on the number of leaves in
+  the subtree of each internal node. So we compute this, before setting
+  the node coordinates with \ty{setCoords} and collecting the branches
+  with \ty{collectBranchesU}.
+#+end_src
+#+begin_src go <<Layout unrooted tree, Ch.~\ref{ch:pt}>>=
+  numLeaves(root)
+  totalLeaves := root.nl
+  setCoords(root, totalLeaves)
+  segments = collectBranchesU(root, segments, options)
+#+end_src
+#+begin_src latex
+  We declare the node field \ty{nl} to hold the number of leaves in the
+  node's subtree.
+#+end_src
+#+begin_src go <<Node fields, Ch.~\ref{ch:pt}>>=
+  nl int
+#+end_src
+#+begin_src latex
+  The function \ty{numLeaves} is a depth-first traversal that passes the
+  number of leaves up from child to parent.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func numLeaves(v *node) {
+	  if v == nil { return }
+	  numLeaves(v.child)
+	  numLeaves(v.sib)
+	  if v.child == nil {
+		  v.nl = 1
+	  }
+	  if v.parent != nil {
+		  v.parent.nl += v.nl
+	  }
+  }
+#+end_src
+#+begin_src latex
+  When setting the node coordinates, we place the current node, unless
+  it is the root, and then place its children~\cite{bac05:dra}.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func setCoords(v *node, nl int) {
+	  if v == nil { return }
+	  if v.parent != nil {
+		  //<<Place node, Ch.~\ref{ch:pt}>>
+	  }
+	  //<<Place children, Ch.~\ref{ch:pt}>>
+	  setCoords(v.child, nl)
+	  setCoords(v.sib, nl)
+  }
+#+end_src
+#+begin_src latex
+  We place the node according to the formulae given in~\cite{bac05:dra}.
+#+end_src
+#+begin_src go <<Place node, Ch.~\ref{ch:pt}>>=
+  p := v.parent
+  l := v.length
+  if !v.hasLength { l = 1.0 }
+  v.x = p.x + l *
+	  (math.Cos(v.tau + v.omega / 2.0))
+  v.y = p.y + l *
+	  (math.Sin(v.tau + v.omega / 2.0))
+#+end_src
+#+begin_src latex
+  We import \ty{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "math"
+#+end_src
+#+begin_src latex
+  We declare the new node fields \ty{tau} and \ty{omega}.
+#+end_src
+#+begin_src go <<Node fields, Ch.~\ref{ch:pt}>>=
+  tau, omega float64
+#+end_src
+#+begin_src latex
+  We place the children~\cite{bac05:dra}.
+#+end_src
+#+begin_src go <<Place children, Ch.~\ref{ch:pt}>>=
+  eta := v.tau
+  w := v.child
+  for w != nil {
+	  w.omega = float64(w.nl) / float64(nl) * 2.0 * math.Pi
+	  w.tau = eta
+	  eta += w.omega
+	  w = w.sib
+  }
+#+end_src
+#+begin_src latex
+  We recursively collect the branches of the unrooted tree and store
+  them in the slice of segments.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func collectBranchesU(v *node, segments []segment, o *opts) []segment {
+	  if v == nil { return segments }
+	  var seg segment
+	  if v.parent != nil {
+		  //<<Construct segment, Ch.~\ref{ch:pt}>>
+	  }
+	  segments = append(segments, seg)
+	  segments = collectBranchesU(v.child, segments, o)
+	  segments = collectBranchesU(v.sib, segments, o)
+	  return segments
+  }
+#+end_src
+#+begin_src latex
+  A segment starts at the child and ends at the parent. It has a label
+  and if the child is a leaf, that label should have the same direction
+  as the branch~\cite{bac05:dra}. However, we'd like to avoid labels
+  that are upside down and we also have to pad the label with blanks; so
+  we adjust the angles and labels.
+#+end_src
+#+begin_src go <<Construct segment, Ch.~\ref{ch:pt}>>=
+  p := v.parent
+  a := 0.0
+  label := ""
+  if v.child == nil {
+	  a = (v.tau + v.omega / 2.0) * 180.0 / math.Pi
+  }
+  //<<Adjust angle and label, Ch.~\ref{ch:pt}>>
+  seg = segment{x1: v.x, y1: v.y, x2: p.x, y2: p.y,
+	  l: label, a: a}
+#+end_src
+#+begin_src latex
+  If the label is greater 90 degrees and less than 270 degrees, we add
+  180 degrees to it in order to flip it. In that case the label string
+  needs to be padded with blanks on the right hand side, other wise on
+  the left hand side, as we did before.
+#+end_src
+#+begin_src go <<Adjust angle and label, Ch.~\ref{ch:pt}>>=
+  if a > 90 && a < 270 {
+	  a += 180
+	  if !o.NoLabels {
+		  //<<Pad label on the right, Ch.~\ref{ch:pt}>>
+	  }
+  } else if !o.NoLabels {
+	  //<<Pad label on the left, Ch.~\ref{ch:pt}>>
+  }
+#+end_src
+#+begin_src go <<Pad label on the right, Ch.~\ref{ch:pt}>>=
+  label = v.label
+  s := ""
+  for i := 0; i < padding(v.label); i++ {
+	  s += " "
+  }
+  label += s
+#+end_src
+#+begin_src latex
+  The scale is located at the top right hand corner of the tree. To find
+  it, we calculate the plot dimensions.
+#+end_src
+#+begin_src go <<Add scale, Ch.~\ref{ch:pt}>>=
+  //<<Calculate plot dimensions, Ch.~\ref{ch:pt}>>
+  //<<Construct scale, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  The plot dimensions are calculated using the function \ty{findDim}. It
+  takes as argument a structure holding the maxima and minima of x and
+  y. We initialize the maxima to the smallest number and the minima to
+  the largest number.
+#+end_src
+#+begin_src go <<Calculate plot dimensions, Ch.~\ref{ch:pt}>>=
+  dim := new(dimension)
+  dim.xMin = math.MaxFloat64
+  dim.xMax = -dim.xMin
+  dim.yMin = dim.xMin
+  dim.yMax = dim.xMax
+  findDim(root, dim)
+#+end_src
+#+begin_src latex
+  We declare a \ty{dimension} to hold the minima and maxima of x and y.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:pt}>>=
+  type dimension struct {
+	  xMin, xMax float64
+	  yMin, yMax float64
+  }
+#+end_src
+#+begin_src latex
+  Inside \ty{findDim}, the x and y values passed are compared to
+  that of the current node and updated if necessary.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
+  func findDim(v *node, d *dimension) {
+	  if v == nil { return }
+	  if d.xMax < v.x { d.xMax = v.x }
+	  if d.yMax < v.y { d.yMax = v.y }
+	  if d.xMin > v.x { d.xMin = v.x }
+	  if d.yMin > v.y { d.yMin = v.y }
+	  findDim(v.child, d)
+	  findDim(v.sib, d)
+  }
+#+end_src
+#+begin_src latex
+  The scale consists of a line and a number.
+#+end_src
+#+begin_src go <<Construct scale, Ch.~\ref{ch:pt}>>=
+  //<<Draw scale line, Ch.~\ref{ch:pt}>>
+  //<<Draw scale number, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  Let $w$ be the plot width and the offset $\ell$ the decadic logarithm of $w$
+  rounded to the nearest integer,
+  \[
+  \ell=\mbox{round}(\log_{10}(w)).
+  \]
+  Then we choose $10^{\ell}/10$ as the length of the scale. We place it
+  1/10-th of the plot height, $h$, above the top branch, so it starts at
+  $(x_{\rm m},y_{\rm m}+h/10)$.
+#+end_src
+#+begin_src go <<Draw scale line, Ch.~\ref{ch:pt}>>=
+  width := dim.xMax - dim.xMin
+  y := math.Round(math.Log10(width))
+  sl := math.Pow(10, y) / 10.0
+  x1 := dim.xMax
+  height := dim.yMax - dim.yMin
+  y1 := dim.yMax + height / 10.0
+  x2 := x1 - sl
+  s1 := segment{x1: x1, y1: y1, x2: x2, y2: y1}
+  segments = append(segments, s1)
+#+end_src
+#+begin_src latex
+  The label of the scale is placed in its middle, just above the
+  line. The distance between the line and the label is the fraction
+  \ty{RaiseScale} of the plot height.
+#+end_src
+#+begin_src go <<Draw scale number, Ch.~\ref{ch:pt}>>=
+  x := (x1+x2) / 2.0
+  y = y1 + height * options.RaiseScale
+  l := strconv.FormatFloat(sl, 'g', 3, 64)
+  s1 = segment{x1: x, y1: y, x2: x, y2: y, l: l}
+  segments = append(segments, s1)
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "strconv"
+#+end_src
+#+begin_src latex
+  We calculate the margin and store it in \ty{options}. To accommodate
+  the scale, we inflate the maximum y value by 20\% of the plot height.
+#+end_src
+#+begin_src go <<Add margins, Ch.~\ref{ch:pt}>>=
+  options.Xmin = dim.xMin - width * options.Margin
+  options.Xmax = dim.xMax + width * options.Margin
+  options.Ymin = dim.yMin - height * options.Margin
+  options.Ymax = dim.yMax + dim.yMax * 0.2 +
+	  height * options.Margin
+#+end_src
+#+begin_src latex
+  The plot title is the root of the file name plus the counter. If there
+  are no input files, we set the name to \emph{stdin}.
+#+end_src
+#+begin_src go <<Add title, Ch.~\ref{ch:pt}>>=
+  if options.Ps != "" {
+	  options.Title = ""
+  } else {
+	  fn := "stdin"
+	  if len(files) > 0 {
+		  fn = files[*fileCounter]
+	  }
+	  title := strings.Split(fn, ".")[0]
+	  title += "_" + strconv.Itoa(treeCounter)
+	  options.Title = title
+  }
+  *fileCounter++
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  To construct the R script, we open a temporary file and write the
+  script to it.
+#+end_src
+#+begin_src go <<Construct R script, Ch.~\ref{ch:pt}>>=
+  //<<Open temporary script file, Ch.~\ref{ch:pt}>>
+  //<<Write script to temporary file, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  The temporary file has a unique name in the default directory for
+  temporary files.
+#+end_src
+#+begin_src go <<Open temporary script file, Ch.~\ref{ch:pt}>>=
+  script, err := ioutil.TempFile("", "tmp_*.r")
+  if err != nil {
+	  log.Fatal("can't open temprary script file")
+  }
+  defer script.Close()
+#+end_src
+#+begin_src latex
+  We import \ty{ioutil} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "io/ioutil"
+  "log"
+#+end_src
+#+begin_src latex
+  We write the script by executing the template we passed into \ty{scan}
+  with the options as data source.
+#+end_src
+#+begin_src go <<Write script to temporary file, Ch.~\ref{ch:pt}>>=
+  err = tmpl.Execute(script, options)
+  if err != nil {
+	  log.Fatal("can't write R-script")
+  }
+#+end_src
+#+begin_src latex
+  Having written the R script, we construct the R command that executes
+  it. This is based on the scripting front end of R, \ty{Rscript}, which
+  we run in \emph{vanilla} mode to avoid additional output.
+#+end_src
+#+begin_src go <<Construct R command, Ch.~\ref{ch:pt}>>=
+  cmd := exec.Command("Rscript", "--vanilla", script.Name())
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We pipe the segments into the R command via its standard input stream
+  using a goroutine. Labels are printed in double quotes.
+#+end_src
+#+begin_src go <<Pipe segments into R command, Ch.~\ref{ch:pt}>>=
+  stdin, err := cmd.StdinPipe()
+  if err != nil { log.Fatalf("cannot run %q", cmd) }
+  go func() {
+	  for _, s := range segments {
+		  f := "%.3g %.3g %.3g %.3g %q %.3g\n"
+		  str := fmt.Sprintf(f,
+			  s.x1, s.y1, s.x2, s.y2, s.l, s.a)
+		  stdin.Write([]byte(str))
+	  }
+	  stdin.Close()
+  }()
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We run the R command and check for errors.
+#+end_src
+#+begin_src go <<Run R command, Ch.~\ref{ch:pt}>>=
+  err = cmd.Run()
+  if err != nil {
+	  log.Fatalf("can't run %q", cmd)
+  }
+#+end_src
+#+begin_src latex
+  All the trees have been printed, so we delete the R script.
+#+end_src
+#+begin_src go <<Delete R script, Ch.~\ref{ch:pt}>>=
+  err = os.Remove(script.Name())
+  if err != nil {
+	  log.Fatalf("can't remove %q\n", script.Name())
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "os"
+#+end_src
+#+begin_src latex
+  We've finished \ty{plotTree}, time to test it.
+  \section*{Testing}
+  The outline of our testing program contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<plotTree_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:pt}>>
+  )
+
+  func TestPlotTree(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:pt}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests. In each test we compare the postscript
+  output we get with the precomputed postscript output we want. The
+  postscript output of the test runs is written to a unique temporary
+  file that we delete after we have iterated over the tests.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:pt}>>=
+  var tests []*exec.Cmd
+  psf, err := ioutil.TempFile(".", "tmp_*.ps")
+  if err != nil { t.Error("can't open temp file") }
+  ps := psf.Name()
+  //<<Construct tests, Ch.~\ref{ch:pt}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:pt}>>
+  }
+  err = os.Remove(ps)
+  if err != nil { t.Errorf("can't remove %q", ps) }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}, \ty{ioutil}, and \ty{os}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pt}>>=
+  "os/exec"
+  "io/ioutil"
+  "os"
+#+end_src
+#+begin_src latex
+  Our tests run on the Newick tree shown in Figure~\ref{fig:phy}A, which
+  is stored in \ty{newick.nwk}. We draw rooted and unrooted versions of
+  it, with and without node labels.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:pt}>>=
+  f := "newick.nwk"
+  test := exec.Command("./plotTree", "-r", "-p", ps, f)
+  tests = append(tests, test)
+  test = exec.Command("./plotTree", "-u", "-p", ps, f)
+  tests = append(tests, test)
+  test = exec.Command("./plotTree", "-r", "-p", ps, "-n", f)
+  tests = append(tests, test)
+  test = exec.Command("./plotTree", "-u", "-p", ps, "-n", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  When we run a test, we compare the result we get to the result we
+  want. The results we want are stored in the files \ty{r1.ps},
+  \ty{r2.ps}, and so on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:pt}>>=
+  err := test.Run()
+  if err != nil { t.Errorf("couldn't run %q", test) }
+  get, err := ioutil.ReadFile(ps)
+  if err != nil { t.Errorf("couldn't open %q", ps) }
+  f := "r" + strconv.Itoa(i+1) + ".ps"
+  want , err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("couldn't open %q", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv} and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pt}>>=
+  "strconv"
+  "bytes"
+#+end_src
+
