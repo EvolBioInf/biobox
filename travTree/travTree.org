@@ -1,0 +1,364 @@
+#+begin_src latex
+  \section*{Introduction}
+  In a phylogeny each internal node is usually the parent of two
+  children, one on the left, the other on the right:
+  \begin{center}
+    \pstree[levelsep=1cm]{\Tcircle{$p$}}{
+      \Tcircle{$\ell$}
+      \Tcircle{$r$}
+    }
+  \end{center}
+  To traverse such a binary tree, we recursively visit this trio of
+  nodes, parent, left child, right child. Depending on whether the
+  parent is visited first, second, or last, such a traversal is called
+  preorder, inorder, or postorder~\cite[p. 318f]{knu97:ar1}. These
+  three traversal modes visit the nodes of a tree in characteristic
+  patterns. Take for example the Tree in Figure~\ref{fig:tt}A. When
+  traversed preorder, its nodes are visited
+  \begin{center}
+  A, B, H, I, C, D, E, F, G.
+  \end{center}
+  When visited inorder, its nodes are visited
+  \begin{center}
+  H, I, B, D, F, G, E, C, A.
+  \end{center}
+  Finally, when visited postorder, its nodes are visited
+  \begin{center}
+  I, H, G, F, E, D, C, B, A.
+  \end{center}
+
+  \begin{figure}
+    \begin{center}
+      \textbf{A}
+    \end{center}
+    \begin{center}
+      \includegraphics{tt}
+    \end{center}
+    \begin{center}
+      \textbf{B}
+    \end{center}
+    \begin{center}
+      \ty{((H,I)B,(D,(F,G)E)C)A;}
+    \end{center}
+    \caption{A phylogeny (\textbf{A}) and its Newick version
+      (\textbf{B}).}\label{fig:tt}
+  \end{figure}
+
+  The program \ty{travTree} takes a tree in Newick format, like the one
+  shown in Figure~\ref{fig:tt}B, and prints a table of the node it
+  visits in preorder, inorder, or postorder. For each node \ty{travTree}
+  prints the
+  label, the node's parent, the length of its incoming branch, and the node
+  type. Table~\ref{tab:tt} shows the preorder table for the example
+  tree.
+
+  \begin{table}
+    \caption{Preorder traversal of the tree in Figure~\ref{fig:tt}.}\label{tab:tt}
+    \begin{center}
+      \begin{tabular}{cccc}
+	\hline
+	\input{tt}
+      \end{tabular}
+    \end{center}
+  \end{table}
+
+  \section*{Implementation}
+  The outline of \ty{travTree} has hooks for imports, functions, and the
+  logic of the main function.
+#+end_src
+#+begin_src go <<travTree.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:tt}>>
+  )
+  //<<Functions, Ch.~\ref{ch:tt}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:tt}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, prepare the output table, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:tt}>>=
+  //<<Set usage, Ch.~\ref{ch:tt}>>
+  //<<Declare options, Ch.~\ref{ch:tt}>>
+  //<<Parse options, Ch.~\ref{ch:tt}>>
+  //<<Prepare output table, Ch.~\ref{ch:tt}>>
+  //<<Parse input files, Ch.~\ref{ch:tt}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts, the actual usage message, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:tt}>>=
+  u := "travTree [-h] [option]... [foo.nwk]..."
+  p := "Traverse a tree given in Newick format."
+  e := "travTree -i foo.nwk"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tt}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the built-in help option (\ty{-h}), we declare switches for
+  inorder (\ty{-i}) and postorder (\ty{-o}). If neither of these is
+  used, the traversal is preorder. The user can also request the program
+  version (\ty{-v}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:tt}>>=
+  var optI = flag.Bool("i", false, "inorder")
+  var optO = flag.Bool("o", false, "postorder")
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tt}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}, as this stops the
+  program. We make sure the user opted for only one traversal mode.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:tt}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("travTree")
+  }
+  if *optI && *optO {
+	  log.Fatal("please opt for just one traversal mode")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tt}>>=
+  "github.com/evolbioinf/biobox/util"
+  "log"
+#+end_src
+#+begin_src latex
+  The output table is written using a \ty{tabwriter}. This writes to the
+  standard output stream and uses blanks for padding.
+#+end_src
+#+begin_src go <<Prepare output table, Ch.~\ref{ch:tt}>>=
+  out := tabwriter.NewWriter(os.Stdout, 2, 1, 2, ' ', 0)
+#+end_src
+#+begin_src latex
+  We import \ty{tabwriter} and \ty{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tt}>>=
+  "text/tabwriter"
+  "os"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the input line are taken as file names. These
+  files are parsed by applying the function \ty{scan} to each one. The
+  function \ty{scan} takes as arguments the two options that determine
+  the order of traversal, the \ty{tabwriter}, and an indicator of
+  whether we are dealing with the first tree in a potentially longer list.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:tt}>>=
+  files := flag.Args()
+  first := true
+  clio.ParseFiles(files, scan, *optI, *optO, out, &first)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we iterate over the trees. For each tree we print a
+  table header, then traverse the tree, and afterwards flush the
+  \ty{tabwriter}. We also track whether we are dealing with the first
+  tree.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:tt}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:tt}>>
+	  sc := newick.NewScanner(r)
+	  for sc.Scan() {
+		  //<<Dealing with first tree? Ch.~\ref{ch:tt}>>
+		  fmt.Fprint(out, "#Label\tParent\tDist.\tType\n")
+		  root := sc.Tree()
+		  //<<Traverse tree, Ch.~\ref{ch:tt}>>
+		  out.Flush()
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}, \ty{newick}, and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tt}>>=
+  "io"
+  "github.com/evolbioinf/biobox/newick"
+  "fmt"
+#+end_src
+#+begin_src latex
+  We retrieve the arguments through type assertion.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:tt}>>=
+  io := args[0].(bool)
+  po := args[1].(bool)
+  out := args[2].(*tabwriter.Writer)
+  first := args[3].(*bool)
+#+end_src
+#+begin_src latex
+  If we are dealing with the first tree, we toggle
+  \ty{first}. Otherwise, we print a blank line to offset the next node
+  table.
+#+end_src
+#+begin_src go <<Dealing with first tree? Ch.~\ref{ch:tt}>>=
+  if *first {
+	  *first = false
+  } else {
+	  fmt.Fprint(out, "\n")
+  }
+#+end_src
+#+begin_src latex
+  A tree is traversed inorder, postorder, or preorder.
+#+end_src
+#+begin_src go <<Traverse tree, Ch.~\ref{ch:tt}>>=
+  if io {
+	  inorder(root, out)
+  } else if po {
+	  postorder(root, out)
+  } else {
+	  preorder(root, out)
+  }
+#+end_src
+#+begin_src latex
+  During inorder traversal we determine the node type and then print a
+  row in the node table.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:tt}>>=
+  func inorder(v *newick.Node, w *tabwriter.Writer) {
+	  if v == nil { return }
+	  inorder(v.Child, w)
+	  //<<Determine node type, Ch.~\ref{ch:tt}>>
+	  //<<Print row in node table, Ch.~\ref{ch:tt}>>
+	  inorder(v.Sib, w)
+  }
+#+end_src
+#+begin_src latex
+  A node is either a leaf, an internal node, or the root.
+#+end_src
+#+begin_src go <<Determine node type, Ch.~\ref{ch:tt}>>=
+  typ := "leaf"
+  if v.Parent == nil {
+	  typ = "root"
+  } else if v.Child != nil {
+	  typ = "internal"
+  }
+#+end_src
+#+begin_src latex
+  A row in the node table consists of the label, the parent's label, if
+  there is a parent, the branch length, and the node type.
+#+end_src
+#+begin_src go <<Print row in node table, Ch.~\ref{ch:tt}>>=
+  p := "none"
+  if v.Parent != nil {
+	  p = v.Parent.Label
+  }
+  fmt.Fprintf(w, "%s\t%s\t%.3g\t%s\n",
+	  v.Label, p, v.Length, typ)
+#+end_src
+#+begin_src latex
+  We implement postorder traversal.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:tt}>>=
+  func postorder(v *newick.Node, w *tabwriter.Writer) {
+	  if v == nil { return }
+	  postorder(v.Child, w)
+	  postorder(v.Sib, w)
+	  //<<Determine node type, Ch.~\ref{ch:tt}>>
+	  //<<Print row in node table, Ch.~\ref{ch:tt}>>
+  }
+#+end_src
+#+begin_src latex
+  The last traversal type we implement is preorder.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:tt}>>=
+  func preorder(v *newick.Node, w *tabwriter.Writer) {
+	  if v == nil { return }
+	  //<<Determine node type, Ch.~\ref{ch:tt}>>
+	  //<<Print row in node table, Ch.~\ref{ch:tt}>>
+	  preorder(v.Child, w)
+	  preorder(v.Sib, w)
+  }
+#+end_src
+#+begin_src latex
+  The program \ty{travTree} is finished, so we test it.
+
+  \section*{Testing}
+  The outline of our testing program has hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<travTree_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:tt}>>
+  )
+
+  func TestTravTree(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:tt}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests and then iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:tt}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:tt}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:tt}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:tt}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct three tests, preorder, inorder, and postorder. Every time
+  we analyze the tree in file \ty{test.nwk}.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:tt}>>=
+  f := "test.nwk"
+  test := exec.Command("./travTree", f)
+  tests = append(tests, test)
+  test = exec.Command("./travTree", "-i", f)
+  tests = append(tests, test)
+  test = exec.Command("./travTree", "-o", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We run a test and compare what we get with what we want, which is
+  stored in files \ty{r1.txt}, \ty{r2.txt}, and \ty{r3.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:tt}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q", test)
+  }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want , err := ioutil.ReadFile(f)
+  if err != nil {
+	  t.Errorf("couldn't open %q", f)
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:tt}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

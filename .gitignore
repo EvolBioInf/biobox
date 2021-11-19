@@ -46,6 +46,7 @@ doc/simNorm.tex
 doc/simOrf.tex
 doc/testMeans.tex
 doc/translate.tex
+doc/travTree.tex
 doc/util.tex
 doc/var.tex
 doc/watterson.tex
@@ -84,6 +85,7 @@ simNorm/simNorm
 simOrf/simOrf
 testMeans/testMeans
 translate/translate
+travTree/travTree
 var/var
 watterson/watterson
 wrapSeq/wrapSeq
