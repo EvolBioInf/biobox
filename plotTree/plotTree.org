@@ -92,7 +92,7 @@
   function of the plot dimensions to accommodate leaf labels, which
   might otherwise be truncated (\ty{-m}). Another switch to fine tune
   the graphic raises the scale label as a fraction of the plot's
-  height (\ty{-s}).
+  height (\ty{-r}). The scale itself can also be set (\ty{-s}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
   var optV = flag.Bool("v", false, "print program version " +
@@ -105,7 +105,8 @@
   var optW = flag.Float64("w", 0.0, "width of postscript plot in cm")
   var optHH = flag.Float64("H", 0.0, "height of postscript plot in cm")
   var optM = flag.Float64("m", 0.1, "margin as fraction of plot width and height")
-  var optS = flag.Float64("s", 0.03, "raise scale label as fraction of plot height")
+  var optRR = flag.Float64("R", 0.01, "raise scale label as fraction of plot height")
+  var optS = flag.Float64("s", 0.0, "scale")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -128,7 +129,8 @@
   opts.Width = *optW / 2.54
   opts.Height = *optHH / 2.54
   opts.Margin = *optM
-  opts.RaiseScale = *optS
+  opts.RaiseScale = *optRR
+  opts.Scale = *optS
 #+end_src
 #+begin_src latex
   We define the \ty{opts} structure and add a hook for additional
@@ -141,7 +143,7 @@
 	  NoLabels bool
 	  Ps string
 	  Width, Height, Margin float64
-	  RaiseScale float64
+	  RaiseScale, Scale float64
 	  //<<Opts fields, Ch.~\ref{ch:pt}>>
   }
 #+end_src
@@ -218,7 +220,8 @@
   p <- ggplot(d, aes(V1, V2, xend=V3, yend=V4))
   p <- p + theme_void()
   p <- p + geom_segment()
-  p <- p + geom_text(aes(label=V5,angle=V6))
+  p <- p + geom_text(aes(label=as.character(V5),
+			 angle=V6, hjust=V7, vjust=V8))
   p <- p + theme(plot.title=element_text(hjust=0.5))
   p <- p + ggtitle("{{.Title}}")
   p <- p + xlim({{.Xmin}}, {{.Xmax}})
@@ -402,13 +405,14 @@
 #+end_src
 #+begin_src latex
   A segment consists of a start and an end position, a label of the
-  start position, and an angle of that label.
+  start position, an angle of that label, a horizontal adjustment, and a
+  vertical adjustment.
 #+end_src
 #+begin_src go <<Types, Ch.~\ref{ch:pt}>>=
   type segment struct {
 	  x1, y1, x2, y2 float64
 	  l string
-	  a float64
+	  a, h, v float64
   }
 #+end_src
 #+begin_src latex
@@ -535,43 +539,15 @@
 #+begin_src latex
   The root may be labeled, in which case we add an empty segment with
   the label. The \ty{ggplot} layout algorithm centers labels. This can
-  be changed by setting \ty{hjust} to \emph{outward}, but this didn't
-  work reliably when I tested it on larger trees, for example trees with
-  50 leaves or more. So I use the default centered layout and move the
-  labels by padding them with blanks on the left.
+  be changed by setting \ty{hjust}. This works, but the labels are
+  jammed right up to the line, so I pad them with a blank.
 #+end_src
 #+begin_src go <<Treat root in rooted tree, Ch.~\ref{ch:pt}>>=
-  label := ""
   if v.label != "" && !o.NoLabels {
-	  //<<Pad label on the left, Ch.~\ref{ch:pt}>>
+	  label := " " + v.label
 	  seg := segment{x1: v.x, y1: v.y, x2: v.x,
-		  y2: v.y, l: label}
+		  y2: v.y, l: label, v: 0.5}
 	  segments = append(segments, seg)
-  }
-#+end_src
-#+begin_src latex
-  The padding operation is repeated at several points in the code, so we
-  centralize the calculation of the number of pad characters in a call
-  to the function \ty{padding}.
-#+end_src
-#+begin_src go <<Pad label on the left, Ch.~\ref{ch:pt}>>=
-  s := ""
-  for i := 0; i < padding(v.label); i++ {
-	  s += " "
-  }
-  label = s + v.label
-#+end_src
-#+begin_src latex
-  The function padding returns the padding as a function of string
-  length. I tried various combinations of factor and offset, and
-  eventually settled on 2 and 1, respectively.
-#+end_src
-#+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
-  func padding(s string) int {
-	  f := 2.0
-	  o := 1
-	  x := int(math.Round(f*float64(len(s)+o)))
-	  return x
   }
 #+end_src
 #+begin_src latex
@@ -586,12 +562,12 @@
 #+begin_src go <<Treat other node in rooted tree, Ch.~\ref{ch:pt}>>=
   label := ""
   if v.label != "" && !o.NoLabels {
-	  //<<Pad label on the left, Ch.~\ref{ch:pt}>>
+	  label = " " + v.label
   }
   p := v.parent
   s1 := segment{x1: p.x, y1: p.y, x2: p.x, y2: v.y}
   s2 := segment{x1: v.x, y1: v.y, x2: p.x,
-	  y2: v.y, l: label}
+	  y2: v.y, l: label, v: 0.5}
   segments = append(segments, s1)
   segments = append(segments, s2)
 #+end_src
@@ -704,43 +680,37 @@
   A segment starts at the child and ends at the parent. It has a label
   and if the child is a leaf, that label should have the same direction
   as the branch~\cite{bac05:dra}. However, we'd like to avoid labels
-  that are upside down and we also have to pad the label with blanks; so
+  that are upside down and we also have to pad the label with a blank; so
   we adjust the angles and labels.
 #+end_src
 #+begin_src go <<Construct segment, Ch.~\ref{ch:pt}>>=
   p := v.parent
   a := 0.0
+  hjust := 0.0
   label := ""
   if v.child == nil {
 	  a = (v.tau + v.omega / 2.0) * 180.0 / math.Pi
   }
   //<<Adjust angle and label, Ch.~\ref{ch:pt}>>
   seg = segment{x1: v.x, y1: v.y, x2: p.x, y2: p.y,
-	  l: label, a: a}
+	  l: label, a: a, h: hjust, v: 0.5}
 #+end_src
 #+begin_src latex
   If the label is greater 90 degrees and less than 270 degrees, we add
-  180 degrees to it in order to flip it. In that case the label string
-  needs to be padded with blanks on the right hand side, other wise on
-  the left hand side, as we did before.
+  180 degrees to it in order to flip it. In that case the label
+  is padded with a blank on the right hand side and we set the
+  horizontal adjustment to 1.
 #+end_src
 #+begin_src go <<Adjust angle and label, Ch.~\ref{ch:pt}>>=
   if a > 90 && a < 270 {
 	  a += 180
+	  hjust = 1.0
 	  if !o.NoLabels {
-		  //<<Pad label on the right, Ch.~\ref{ch:pt}>>
+		  label = v.label + " "
 	  }
   } else if !o.NoLabels {
-	  //<<Pad label on the left, Ch.~\ref{ch:pt}>>
+	  label = " " + v.label
   }
-#+end_src
-#+begin_src go <<Pad label on the right, Ch.~\ref{ch:pt}>>=
-  label = v.label
-  s := ""
-  for i := 0; i < padding(v.label); i++ {
-	  s += " "
-  }
-  label += s
 #+end_src
 #+begin_src latex
   The scale is located at the top right hand corner of the tree. To find
@@ -796,36 +766,51 @@
   //<<Draw scale number, Ch.~\ref{ch:pt}>>
 #+end_src
 #+begin_src latex
+  To draw the scale line, we need its length and its coordinates. The
+  scale length is either given by the user or calculated by us.
+#+end_src
+#+begin_src go <<Draw scale line, Ch.~\ref{ch:pt}>>=
+  scaleLen := options.Scale
+  if scaleLen == 0.0 {
+	  //<<Determine scale length, Ch.~\ref{ch:pt}>>
+  }
+  //<<Determine scale coordinates, Ch.~\ref{ch:pt}>>
+  s1 := segment{x1: x1, y1: y, x2: x2, y2: y}
+  segments = append(segments, s1)
+#+end_src
+#+begin_src latex
   Let $w$ be the plot width and the offset $\ell$ the decadic logarithm of $w$
   rounded to the nearest integer,
   \[
   \ell=\mbox{round}(\log_{10}(w)).
   \]
-  Then we choose $10^{\ell}/10$ as the length of the scale. We place it
-  1/10-th of the plot height, $h$, above the top branch, so it starts at
-  $(x_{\rm m},y_{\rm m}+h/10)$.
+  Then we choose $10^{\ell}/10$ as the length of the scale. Recall, the
+  user can set a length, but this should be a good starting point.
 #+end_src
-#+begin_src go <<Draw scale line, Ch.~\ref{ch:pt}>>=
+#+begin_src go <<Determine scale length, Ch.~\ref{ch:pt}>>=
   width := dim.xMax - dim.xMin
   y := math.Round(math.Log10(width))
-  sl := math.Pow(10, y) / 10.0
-  x1 := dim.xMax
-  height := dim.yMax - dim.yMin
-  y1 := dim.yMax + height / 10.0
-  x2 := x1 - sl
-  s1 := segment{x1: x1, y1: y1, x2: x2, y2: y1}
-  segments = append(segments, s1)
+  scaleLen = math.Pow(10, y) / 10.0
 #+end_src
 #+begin_src latex
-  The label of the scale is placed in its middle, just above the
-  line. The distance between the line and the label is the fraction
-  \ty{RaiseScale} of the plot height.
+  We place it 1/10-th of the plot height, $h$, above the top branch, so
+  it starts at $(x_{\rm m},y_{\rm m}+h/10)$.
+#+end_src
+#+begin_src go <<Determine scale coordinates, Ch.~\ref{ch:pt}>>=
+  x1 := dim.xMax
+  height := dim.yMax - dim.yMin
+  y := dim.yMax + height / 10.0
+  x2 := x1 - scaleLen
+#+end_src
+#+begin_src latex
+  The label of the scale is placed in its middle. We use a small
+  fraction of the plot height to raise it above the line.
 #+end_src
 #+begin_src go <<Draw scale number, Ch.~\ref{ch:pt}>>=
   x := (x1+x2) / 2.0
-  y = y1 + height * options.RaiseScale
-  l := strconv.FormatFloat(sl, 'g', 3, 64)
-  s1 = segment{x1: x, y1: y, x2: x, y2: y, l: l}
+  y += options.RaiseScale*height
+  l := strconv.FormatFloat(scaleLen, 'g', 3, 64)
+  s1 = segment{x1: x, y1: y, x2: x, y2: y, l: l, h: 0.5}
   segments = append(segments, s1)
 #+end_src
 #+begin_src latex
@@ -839,6 +824,7 @@
   the scale, we inflate the maximum y value by 20\% of the plot height.
 #+end_src
 #+begin_src go <<Add margins, Ch.~\ref{ch:pt}>>=
+  width := dim.xMax - dim.xMin
   options.Xmin = dim.xMin - width * options.Margin
   options.Xmax = dim.xMax + width * options.Margin
   options.Ymin = dim.yMin - height * options.Margin
@@ -928,9 +914,9 @@
   if err != nil { log.Fatalf("cannot run %q", cmd) }
   go func() {
 	  for _, s := range segments {
-		  f := "%.3g %.3g %.3g %.3g %q %.3g\n"
+		  f := "%.3g %.3g %.3g %.3g %q %.3g %.3g %.3g\n"
 		  str := fmt.Sprintf(f,
-			  s.x1, s.y1, s.x2, s.y2, s.l, s.a)
+			  s.x1, s.y1, s.x2, s.y2, s.l, s.a, s.h, s.v)
 		  stdin.Write([]byte(str))
 	  }
 	  stdin.Close()
