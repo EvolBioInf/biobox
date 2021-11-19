@@ -1,0 +1,287 @@
+#+begin_src latex
+  \section*{Introduction}
+  Life is based on the translation of DNA into protein. The program
+  \ty{translate} takes a DNA sequence and prints its translation
+  according to the genetic code shown in Table~\ref{tab:gc}. The
+  user can set the translation frame as 1, 2, or 3 on the forward strand
+  and -1, -2, or -3 on the reverse.
+
+    \begin{table}
+      \caption{The genetic code; numbers are the codon
+	positions.}\label{tab:gc}
+      \begin{center}
+	\input{gc}
+      \end{center}
+    \end{table}
+
+  \section*{Implementation}
+  The implementation of \ty{translate} has hooks for imports, functions,
+  and the logic of the main function.
+#+end_src
+#+begin_src go <<translate.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:tr}>>
+  )
+  //<<Functions, Ch.~\ref{ch:tr}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:tr}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, construct the genetic code, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:tr}>>=
+  //<<Set usage, Ch.~\ref{ch:tr}>>
+  //<<Declare options, Ch.~\ref{ch:tr}>>
+  //<<Parse options, Ch.~\ref{ch:tr}>>
+  //<<Construct genetic code, Ch.~\ref{ch:tr}>>
+  //<<Parse input files, Ch.~\ref{ch:tr}>>
+#+end_src
+#+begin_src latex
+  The usage consists of three parts, the actual usage message, an
+  explanation of the program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:tr}>>=
+  u := "translate [-h] [option]... [foo.fasta]..."
+  p := "Translate DNA sequences."
+  e := "translate -f 2 foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tr}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the built-in help option (\ty{-h}), we declare an option to
+  select a frame (\ty{-f}) and one for printing the program version
+  (\ty{-v}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:tr}>>=
+  var optF = flag.Int("f", 1, "reading frame -3|-2|-1|1|2|3")
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tr}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}, as this would stop the
+  program. We also check that \ty{-f} has a sensible value. If not,
+  bail with a friendly message.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:tr}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("tranlate")
+  }
+  if *optF < -3 || *optF > 3 {
+	  m := "please use a reading frame " +
+		  "between -3 and 3"
+	  log.Fatal(m)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tr}>>=
+  "github.com/evolbioinf/biobox/util"
+  "log"
+#+end_src
+#+begin_src latex
+  The genetic code is a mapping of codons to amino acids
+  (Table~\ref{tab:gc}). We encode it as a map between strings
+  representing codons and bytes representing amino acids.
+#+end_src
+#+begin_src go <<Construct genetic code, Ch.~\ref{ch:tr}>>=
+  gc := make(map[string]byte)
+  dna := "TCAG"
+  aa := "FFLLSSSSYY**CC*W" +
+	  "LLLLPPPPHHQQRRRR" +
+	  "IIIMTTTTNNKKSSRR" +
+	  "VVVVAAAADDEEGGGG"
+  codon := make([]byte, 3)
+  n := 0
+  //<<Iterate over codons and amino acids, Ch.~\ref{ch:tr}>>
+#+end_src
+#+begin_src latex
+  We iterate over the codons and the amino acids using a triple nested
+  loop over the nucleotides in the order in which they are used in
+  Table~\ref{tab:gc}, \ty{T}, \ty{C}, \ty{A}, \ty{G}. This allows us to
+  think carefully about genes.
+#+end_src
+#+begin_src go <<Iterate over codons and amino acids, Ch.~\ref{ch:tr}>>=
+  for i := 0; i < 4; i++ {
+	  for j := 0; j < 4; j++ {
+		  for k := 0; k < 4; k++ {
+			  codon[0] = dna[i]
+			  codon[1] = dna[j]
+			  codon[2] = dna[k]
+			  gc[string(codon)] = aa[n]
+			  n++
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as input files. We
+  iterate over them with the function \ty{scan}, which takes as
+  arguments the genetic code and the translation frame.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:tr}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, gc, *optF)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan} we retrieve the options just passed and iterate over the
+  sequences. Each sequence is translated and printed.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:tr}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  gc := args[0].(map[string]byte)
+	  frame := args[1].(int)
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  seq := sc.Sequence()
+		  //<<Translate sequence, Ch.~\ref{ch:tr}>>
+		  //<<Print translation, Ch.~\ref{ch:tr}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tr}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  We translate a sequence
+#+end_src
+#+begin_src go <<Translate sequence, Ch.~\ref{ch:tr}>>=
+  if frame < 0 {
+	  seq.ReverseComplement()
+	  frame *= -1
+  }
+  d := seq.Data()
+  aa := make([]byte, len(d) / 3)
+  j := 0
+  for i := frame-1; i < len(seq.Data())-2; i += 3 {
+	  codon := string(d[i:i+3])
+	  aa[j] = gc[codon]
+	  j++
+  }
+#+end_src
+#+begin_src latex
+  We construct a new sequence from the translation. Its header is the
+  original header with ``\ty{- translated}'' appended. We print the new
+  sequence using its \ty{String} method.
+#+end_src
+#+begin_src go <<Print translation, Ch.~\ref{ch:tr}>>=
+  h := seq.Header() + " - translated"
+  aaSeq := fasta.NewSequence(h, aa)
+  fmt.Println(aaSeq)
+#+end_src
+#+begin_src latex
+  We import \ty{fasta} an \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:tr}>>=
+  "github.com/evolbioinf/fasta"
+  "fmt"
+#+end_src
+#+begin_src latex
+  We are finished with \ty{translate}, let's test it.
+  \section*{Testing}
+  The outline of our testing program has hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<translate_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:tr}>>
+  )
+  func TestTranslate(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:tr}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests and then iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:tr}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:tr}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:tr}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:tr}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We test translation on the forward and on the reverse strands. The
+  input file is always \ty{test.fasta}, a random sequence.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:tr}>>=
+  f := "test.fasta"
+  //<<Test forward translation, Ch.~\ref{ch:tr}>>
+  //<<Test reverse translation, Ch.~\ref{ch:tr}>>
+#+end_src
+#+begin_src latex
+  We construct four forward tests, one with the default frame, the other
+  three for frames 1, 2, and 3.
+#+end_src
+#+begin_src go <<Test forward translation, Ch.~\ref{ch:tr}>>=
+  test := exec.Command("./translate", f)
+  tests = append(tests, test)
+  test = exec.Command("./translate", "-f", "1", f)
+  tests = append(tests, test)
+  test = exec.Command("./translate", "-f", "2", f)
+  tests = append(tests, test)
+  test = exec.Command("./translate", "-f", "3", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We also go through the three reverse frames.
+#+end_src
+#+begin_src go <<Test reverse translation, Ch.~\ref{ch:tr}>>=
+  test = exec.Command("./translate", "-f", "-1", f)
+  tests = append(tests, test)
+  test = exec.Command("./translate", "-f", "-2", f)
+  tests = append(tests, test)
+  test = exec.Command("./translate", "-f", "-3", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We run a test and compare the output we get with the precomputed
+  output we want, which is stored in files \ty{r1.fasta}, \ty{r2.fasta},
+  and so on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:tr}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("couldn't run %q", test) }
+  f := "r" + strconv.Itoa(i+1) + ".fasta"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("couldn't read %q", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:tr}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

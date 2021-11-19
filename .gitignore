@@ -44,6 +44,7 @@ doc/shustring.tex
 doc/simNorm.tex
 doc/simOrf.tex
 doc/testMeans.tex
+doc/translate.tex
 doc/util.tex
 doc/var.tex
 doc/watterson.tex
@@ -81,6 +82,7 @@ shustring/shustring
 simNorm/simNorm
 simOrf/simOrf
 testMeans/testMeans
+translate/translate
 var/var
 watterson/watterson
 wrapSeq/wrapSeq
