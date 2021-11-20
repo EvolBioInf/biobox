@@ -71,9 +71,9 @@ func (s *Scanner) Tree() *Node {
 		t := tokens[i]
 		if t == "(" {
 			if v == nil {
-				v = newNode()
+				v = NewNode()
 			}
-			c := newNode()
+			c := NewNode()
 			v.Child = c
 			c.Parent = v
 			v = v.Child
@@ -82,7 +82,7 @@ func (s *Scanner) Tree() *Node {
 			v = v.Parent
 		}
 		if t == "," {
-			s := newNode()
+			s := NewNode()
 			s.Parent = v.Parent
 			v.Sib = s
 			v = v.Sib
@@ -139,7 +139,9 @@ func scanTrees(data []byte, atEOF bool) (advance int,
 	}
 	return 0, nil, nil
 }
-func newNode() *Node {
+
+// NewNode returns a new node with a unique Id.
+func NewNode() *Node {
 	n := new(Node)
 	n.Id = nodeId
 	nodeId++
