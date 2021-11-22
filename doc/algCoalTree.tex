@@ -1,0 +1,21 @@
+\begin{algorithmic}[1]
+\REQUIRE $n$ \COMMENT{sample size}
+\REQUIRE $\mathrm{tree}$ \COMMENT{Array: $n$ leaves, $n-1$ internal nodes}
+\ENSURE Tree topology
+\FOR{$i\leftarrow n$ \TO $2$}
+   \STATE $p\leftarrow 2\times n - i + 1$ \COMMENT{Parent} %%, $n+1\le p\le 2n-1$}		  
+   \STATE $c\leftarrow i\times \mathrm{ran()} + 1$ \COMMENT{Draw first
+     child, $1\le c\le i$}
+   \STATE $\mathrm{tree}[p].\mathrm{child}1\leftarrow\mathrm{tree}[c]$ 
+   \STATE $\mathrm{tree}[p].\mathrm{child}1.\mathrm{parent}\leftarrow \mathrm{tree}[p]$
+   \STATE $\mathrm{tree}[c]\leftarrow\mathrm{tree}[i]$
+   \COMMENT{Replace first child}
+   \STATE $c\leftarrow (i-1)\times\mathrm{ran()} + 1$ \COMMENT{Draw second
+   child $1\le c\le
+     i-1$}
+   \STATE $\mathrm{tree}[p].\mathrm{child2}\leftarrow\mathrm{tree}[c]$
+   \STATE $\mathrm{tree}[p].\mathrm{child2}.\mathrm{parent}\leftarrow\mathrm{tree}[p]$
+   \STATE $\mathrm{tree}[c]\leftarrow\mathrm{tree}[p]$
+   \COMMENT{Replace second child by parent}
+\ENDFOR
+\end{algorithmic}

@@ -1,0 +1,8 @@
+github.com/evolbioinf/biobox/newick v0.0.0-20211119161501-576d171cf5f4 h1:EO4Oj2fcHXcJItPcXePs4SUEeMtz3eei6UfB6Hup76E=
+github.com/evolbioinf/biobox/newick v0.0.0-20211119161501-576d171cf5f4/go.mod h1:Eqcc5yg2JE/Gd1fHIRkmgZgp5rBRCZCq4ylo0W6ZSro=
+github.com/evolbioinf/biobox/util v0.0.0-20211119161501-576d171cf5f4 h1:8a0WnyXtNhmvr6LU34E4eXCmUh7qMV39fcgdNaJpBPM=
+github.com/evolbioinf/biobox/util v0.0.0-20211119161501-576d171cf5f4/go.mod h1:17MTo94/LbSztH2mRy4o43PEquKPvfDVEm0N/hIjmsA=
+github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c h1:TkHWkaNNpQC+/HCKjAi85vXC8HC7py2YPMSBUOkGmkU=
+github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c/go.mod h1:Jh4QPiChVHZHe7fwj+xcSs6kUcQbQVzsd/ht3PIoaaU=
+github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e h1:P7BV6YKTRXTG3nAebzKBLVjNMdm5Rok/6IQYFY+QG1Q=
+github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e/go.mod h1:kPJhClPhTozhqGfmcFJVxhz0J1xX/yBvDa8FBTlxbm4=

@@ -1,0 +1,18 @@
+\begin{algorithmic}[1]
+\REQUIRE $n$ \COMMENT{sample size}
+\REQUIRE $\mathrm{tree}$ \COMMENT{Array: $n$ leaves, $n-1$ internal nodes}
+\ENSURE Node times
+\FOR{$i\leftarrow 1$ \TO $n$}
+   \STATE $\mathrm{tree}[i].\mathrm{time}\leftarrow 0$
+   \ENDFOR
+\STATE $t\leftarrow 0$   
+\FOR{$i\leftarrow n$ \TO $2$}
+   \STATE $\lambda\leftarrow {i\choose 2}$ \COMMENT{Parameter for
+     exponential distribution}
+   \STATE $r\leftarrow \mathrm{rexp}(\lambda)$
+   \COMMENT{Random time to CA with expectation $1/\lambda$}
+   \STATE $t\leftarrow t + r$ \COMMENT{Times always increase}
+   \STATE $v\leftarrow 2n - i + 1$ \COMMENT{Internal node $n+1,n+2,...,2n-1$}
+   \STATE $\mathrm{tree}[v].\mathrm{time}\leftarrow t$
+\ENDFOR
+\end{algorithmic}
