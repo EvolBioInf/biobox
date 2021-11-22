@@ -505,7 +505,7 @@
 #+end_src
 #+begin_src latex
   A child is not the first child, if its Id is different from that of
-  its parent's child.
+  its parent's first child.
 #+end_src
 #+begin_src go <<Is $v$ not a first child? Ch.~\ref{ch:new}>>=
   if v.Parent != nil && v.Parent.Child.Id != v.Id {
