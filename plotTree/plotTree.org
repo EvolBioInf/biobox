@@ -283,7 +283,8 @@
   Inside \ty{scan}, we retrieve the arguments. Then we iterate over the
   trees, and count each one. A tree is represented by its root node,
   which we convert from the root returned by the scanner. Then we draw
-  the newly converted tree.
+  the newly converted tree. Having drawn all the trees in the file, we
+  increment the file counter.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
   func scan(r io.Reader, args ...interface{}) {
@@ -295,6 +296,7 @@
 		  root := convertTree(sc.Tree())
 		  //<<Draw tree, Ch.~\ref{ch:pt}>>
 	  }
+	  //<<Increment file counter, Ch.~\ref{ch:pt}>>
   }
 #+end_src
 #+begin_src latex
@@ -951,6 +953,12 @@
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
   "os"
+#+end_src
+#+begin_src latex
+  There is still the file counter to increment.
+#+end_src
+#+begin_src go <<Increment file counter, Ch.~\ref{ch:pt}>>=
+  *fileCounter++
 #+end_src
 #+begin_src latex
   We've finished \ty{plotTree}, time to test it.
