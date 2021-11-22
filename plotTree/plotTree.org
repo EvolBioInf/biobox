@@ -840,20 +840,20 @@
 	  options.Title = ""
   } else {
 	  fn := "stdin"
-	  if len(files) > 0 {
+	  if len(files) > *fileCounter {
 		  fn = files[*fileCounter]
 	  }
-	  title := strings.Split(fn, ".")[0]
+	  title := strings.Split(path.Base(fn), ".")[0]
 	  title += "_" + strconv.Itoa(treeCounter)
 	  options.Title = title
   }
-  *fileCounter++
 #+end_src
 #+begin_src latex
-  We import \ty{strings}.
+  We import \ty{strings} and \ty{path}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
   "strings"
+  "path"
 #+end_src
 #+begin_src latex
   To construct the R script, we open a temporary file and write the
