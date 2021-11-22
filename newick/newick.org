@@ -488,7 +488,6 @@
   about each node, $v$:
   \begin{enumerate}
   \item Is $v$ not a first child? Then it is delimited by a comma.
-  \item Is $v$ a leaf? Then it is marked by its label.
   \item Is $v$ an internal node? Then it is a recursive structure in
     parentheses.
   \item Is $v$ the root? Then it is marked by a semicolon.
@@ -500,7 +499,6 @@
 		  return
 	  }
 	  //<<Is $v$ not a first child? Ch.~\ref{ch:new}>>
-	  //<<Is $v$ a leaf? Ch.~\ref{ch:new}>>
 	  //<<Is $v$ an internal node? Ch.~\ref{ch:new}>>
 	  //<<Is $v$ the root? Ch.~\ref{ch:new}>>
   }
@@ -561,10 +559,10 @@
 	  fmt.Fprint(w, "(")
   }
   writeTree(v.Child, w)
+  printLabel(w, v)
   writeTree(v.Sib, w)
-  if v.Child != nil {
+  if v.Parent != nil && v.Sib == nil {
 	  fmt.Fprint(w, ")")
-	  printLabel(w, v)
   }
 #+end_src
 #+begin_src latex
@@ -604,7 +602,7 @@
   }
   defer f.Close()
   sc := NewScanner(f)
-  want := `(((A:0.2,B:0.3,(D:0.5,E:0.3):0.2):0.3,F:0.7):0.3):0;`
+  want := `(((A:0.2,B:0.3):0.3,(D:0.5,E:0.3):0.2):0.3,F:0.7):0;`
   //<<Scan trees, Ch.~\ref{ch:new}>>
 #+end_src
 #+begin_src latex

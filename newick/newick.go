@@ -154,17 +154,14 @@ func writeTree(v *Node, w *bytes.Buffer) {
 	if v.Parent != nil && v.Parent.Child.Id != v.Id {
 		fmt.Fprint(w, ",")
 	}
-	if v.Child == nil {
-		printLabel(w, v)
-	}
 	if v.Child != nil {
 		fmt.Fprint(w, "(")
 	}
 	writeTree(v.Child, w)
+	printLabel(w, v)
 	writeTree(v.Sib, w)
-	if v.Child != nil {
+	if v.Parent != nil && v.Sib == nil {
 		fmt.Fprint(w, ")")
-		printLabel(w, v)
 	}
 	if v.Parent == nil {
 		fmt.Fprint(w, ";")
