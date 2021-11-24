@@ -5,12 +5,12 @@ packs = util newick
 
 all:
 	test -d bin || mkdir bin
+	for pack in $(packs); do \
+		make -C $$pack; \
+	done
 	for prog in $(progs); do \
 		make -C $$prog; \
 		cp $$prog/$$prog bin; \
-	done
-	for pack in $(packs); do \
-		make -C $$pack; \
 	done
 .PHONY: doc
 doc:
