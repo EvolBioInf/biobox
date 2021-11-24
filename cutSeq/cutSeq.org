@@ -181,7 +181,7 @@
 	  e, _ := strconv.Atoi(f[1])
 	  r.start = s
 	  r.end = e
-	  //<<Check region, Ch.~ref{ch:cut}>>
+	  //<<Check region, Ch.~\ref{ch:cut}>>
 	  regions = append(regions, r)
   }
 #+end_src
