@@ -93,18 +93,23 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  The help option, \ty{-h}, is always implied, so we only declare the
+  The help option, \ty{-h}, is always implied. We declare two other
+  options. The input lines to \ty{rep2plot} might be very long, so the
+  user can increase the maximum token size read. We also declare the
   version, \ty{-v}.
 #+end_src
 #+begin_src go <<Delcare options, Ch.~\ref{ch:r2p}>>=
+  t := 128 * 1026
+  var optT = flag.Int("t", t, "maximum scan token size")
   var optV = flag.Bool("v", false, "print program version " +
 	  "and other information")
 #+end_src
 #+begin_src latex
-  We import \ty{flag}.
+  We import \ty{flag} and \ty{bufio}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
   "flag"
+  "bufio"
 #+end_src
 #+begin_src latex
   We parse the options and respond to \ty{-v}.
@@ -127,36 +132,56 @@
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:r2p}>>=
   files := flag.Args()
-  clio.ParseFiles(files, scan)
+  clio.ParseFiles(files, scan, *optT)
 #+end_src
 #+begin_src latex
-  Inside scan we iterate across the input and ignore hashed lines. The
-  remaining lines are converted to segments, which are printed after
-  we've collected all of them. So we declare a variable for
-  segments. And since segments are built from x- and y-positions, we
-  also declare variables for them. Each position is either on the
-  forward strand or not, and we reserve space for that information, too.
+  Inside scan we retrieve the maximum scan token size, create the
+  scanner, scan the file, check the scanner for error, and print the
+  segments.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:r2p}>>=
   func scan(r io.Reader, args ...interface{}) {
-	  var xp, yp []int
-	  var xf, yf []bool
-	  var segments []Segment
-	  sc := bufio.NewScanner(r)
-	  for sc.Scan() {
-		  line := sc.Text()
-		  if line[0] == '#' { continue }
-		  //<<Convert line to segments, Ch.~\ref{ch:r2p}>>
-	  }
+	  t := args[0].(int)
+	  //<<Create scanner, Ch.~\ref{ch:r2p}>>
+	  //<<Scan file, Ch.~\ref{ch:r2p}>>
+	  //<<Check scanner, Ch.~\ref{ch:r2p}>>
 	  //<<Print segments, Ch.~\ref{ch:r2p}>>
   }
 #+end_src
 #+begin_src latex
-  We import \ty{io} and \ty{bufio}.
+  We import \ty{io}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
   "io"
-  "bufio"
+#+end_src
+#+begin_src latex
+  The scanner has the maximum scan token size set by the user.
+#+end_src
+#+begin_src go <<Create scanner, Ch.~\ref{ch:r2p}>>=
+  b := make([]byte, 2)
+  scanner := bufio.NewScanner(r)
+  scanner.Buffer(b, t)
+#+end_src
+#+begin_src latex
+  We import \ty{bufio}.
+#+end_src
+#+begin_src latex
+  We iterate across the input and ignore hashed lines. The remaining
+  lines are converted to segments, which are printed after we've
+  collected all of them. So we declare a variable for segments. And
+  since segments are built from x- and y-positions, we also declare
+  variables for them. Each position is either on the forward strand or
+  not, and we reserve space for that information, too.
+#+end_src
+#+begin_src go <<Scan file, Ch.~\ref{ch:r2p}>>=
+  var xp, yp []int
+  var xf, yf []bool
+  var segments []Segment
+  for scanner.Scan() {
+	  line := scanner.Text()
+	  if line[0] == '#' { continue }
+	  //<<Convert line to segments, Ch.~\ref{ch:r2p}>>
+  }
 #+end_src
 #+begin_src latex
   A segment consists of a pair of points, which we denote by a quartet
@@ -175,7 +200,7 @@
 #+begin_src go <<Convert line to segments, Ch.~\ref{ch:r2p}>>=
   fields := strings.Fields(line)
   ml, err := strconv.Atoi(fields[0])
-  if err != nil { log.Fatal(err) }
+  if err != nil { log.Fatalf("can't convert %q", fields[0]) }
   matches := fields[3:]
   //<<Reset coordinate variables, Ch.~\ref{ch:r2p}>>
   for _, match := range matches {
@@ -209,8 +234,12 @@
 #+end_src
 #+begin_src go <<Extract x- and y-coordinates, Ch.~\ref{ch:r2p}>>=
   sa := strings.Split(match, ":")
+  if len(sa) < 2 {
+	  m := "please stream 2 sequences though repeater"
+	  log.Fatal(m)
+  }
   p, err := strconv.Atoi(sa[1])
-  if err != nil { log.Fatal(err) }
+  if err != nil { log.Fatalf("can't convert %q", sa[1]) }
   if match[1] == '1' {
 	  //<<Record position on x-axis, Ch.~\ref{ch:r2p}>>
   } else {
@@ -243,15 +272,16 @@
   We have now established a set of positions on the x- and y-axes and
   their strandedness. We also know the length of the match. So we are
   now ready to construct the segments. We do this by forming all pairs
-  of x- and y-positions.
+  of x- and y-positions. A segment might lean forward or backward, so we
+  orient it before we store it.
 #+end_src
 #+begin_src go <<Construct segments, Ch.~\ref{ch:r2p}>>=
-  var x2, y2 int
   for i, x1 := range xp {
 	  for j, y1 := range yp {
-		  y2 = y1 + ml - 1
-		  //<<Find $x_2$, Ch.~\ref{ch:r2p}>>
+		  y2 := y1 + ml - 1
+		  x2 := x1 + ml - 1
 		  s := Segment{x1: x1, y1: y1, x2: x2, y2: y2}
+		  //<<Orient segment, Ch.~\ref{ch:r2p}>>
 		  segments = append(segments, s)
 	  }
   }
@@ -260,15 +290,20 @@
   If the positions of a match of length $\ell$ are both located on the
   forward strand or both are on the reverse strand, $x_2\leftarrow
   x_1+\ell-1$. Such a match is a forward-leaning segment. Otherwise, the
-  match leans backward, that is, $x_2\leftarrow x_1$ and $x_1\leftarrow
-  x_1 + \ell - 1$.
+  match leans backward, which is achieved by swapping $x_1$ and $x_2$.
 #+end_src
-#+begin_src go <<Find $x_2$, Ch.~\ref{ch:r2p}>>=
-  if (xf[i] && yf[j]) || (!xf[i] && !yf[j]) {
-	  x2 = x1 + ml - 1
-  } else {
-	  x2 = x1
-	  x1 = x1 - ml + 1
+#+begin_src go <<Orient segment, Ch.~\ref{ch:r2p}>>=
+  if xf[i] != yf[j] {
+	  s.x1, s.x2 = s.x2, s.x1
+  }
+#+end_src
+#+begin_src latex
+  We're done with the scanner and report any error it might have
+  encountered.
+#+end_src
+#+begin_src go <<Check scanner, Ch.~\ref{ch:r2p}>>=
+  if scanner.Err() != nil {
+	  log.Fatal(scanner.Err())
   }
 #+end_src
 #+begin_src latex
@@ -316,15 +351,14 @@
   sort.Sort(SegmentSlice(segments))
   j := 1
   for i := 1; i < len(segments); i++ {
-	  if segments[i-1].x1 != segments[i].x1 ||
-		  segments[i-1].y1 != segments[i].y1 ||
-		  segments[i-1].x2 != segments[i].x2 ||
-		  segments[i-1].y2 != segments[i].y2 {
+	  if segments[i-1] != segments[i] {
 		  segments[j] = segments[i]
 		  j++
 	  }
   }
-  segments = segments[:j]
+  if len(segments) > 0 {
+	  segments = segments[:j]
+  }
 #+end_src
 #+begin_src latex
   We import \ty{sort}.
