@@ -463,9 +463,11 @@
   We run the command.
 #+end_src
 #+begin_src go <<Run R command, Ch.~\ref{ch:ps}>>=
-  err = rcmd.Run()
-  if err != nil {
-	  log.Fatalf("can't run %q", rcmd)
+  if len(data) > 0 {
+	  err = rcmd.Run()
+	  if err != nil {
+		  log.Fatalf("can't run %q", rcmd)
+	  }
   }
 #+end_src
 #+begin_src latex
