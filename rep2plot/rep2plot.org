@@ -23,12 +23,12 @@
   Each match has a length, a count of at least two, the sequence, and at
   least two positions. So, the first match is 37 nucleotides long and
   starts on the forward strand of sequence 1 at position 3292 and on the
-  forward straind of sequence 2 on position 3287. Such a match can be
+  forward strand of sequence 2 on position 3287. Such a match can be
   read as a segment in a dot plot. If we write its start and end
   positions $(x_1, y_1, x_2, y_2)$, we get $(3292,3287,3328,3323)$. The
   program \ty{rep2plot} transforms \ty{repeater} output to such
   segments, which can then be rendered with \ty{plotSeg}
-  (Chapter~\ref{ch:ps})) to give Figure~\ref{fig:ppAdh}.
+  (Chapter~\ref{ch:ps}) to give Figure~\ref{fig:ppAdh}.
 
   \begin{figure}
     \begin{center}
@@ -36,16 +36,15 @@
     \end{center}
     \caption{Segment plot of the matches between the \emph{Adh} loci in
       \emph{Drosophila melanogaster} and
-      \emph{D. guanche} using \ty{rep2plot} and \ty{plotSeg} (Ch.~\ref{ch:ps}).}\label{fig:ppAdh}
+      \emph{D. guanche} using \ty{rep2plot} and \ty{plotSeg} (Chapter~\ref{ch:ps}).}\label{fig:ppAdh}
   \end{figure}
 
   There is one slight complication, though. DNA is double-stranded. So
   each matching string occurs twice, on the forward and on the reverse
   strand, where repeater also gives the forward coordinates. For
   example, the second match in our list is identical to the first, bar
-  the strand. We'd like to avoid printing each segment twice and do this
-  by grouping duplicates through sorting, which makes it easy to remove
-  them.
+  the strand. We'd like to avoid printing each segment twice, and do this
+  by grouping duplicates through sorting, which helps us remove them.
 #+end_src
 #+begin_src latex
   \section*{Implementation}
@@ -71,7 +70,7 @@
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:r2p}>>=
   //<<Set usage, Ch.~\ref{ch:r2p}>>
-  //<<Delcare options, Ch.~\ref{ch:r2p}>>
+  //<<Declare options, Ch.~\ref{ch:r2p}>>
   //<<Parse options, Ch.~\ref{ch:r2p}>>
   //<<Parse input files, Ch.~\ref{ch:r2p}>>
 #+end_src
@@ -81,9 +80,9 @@
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:r2p}>>=
   u := "rep2plot [-h -v] [file]..."
-  p := "Convert repeater output to pipePlot input."
+  p := "Convert repeater output to plotSeg input."
   e := "cat f1.fasta f2.fasta | repeater -m 12 -r -p | " +
-	  "rep2plot | pipePlot"
+	  "rep2plot | plotSeg"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -93,23 +92,18 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  The help option, \ty{-h}, is always implied. We declare two other
-  options. The input lines to \ty{rep2plot} might be very long, so the
-  user can increase the maximum token size read. We also declare the
+  The help option, \ty{-h}, is always implied, so we only declare the
   version, \ty{-v}.
 #+end_src
-#+begin_src go <<Delcare options, Ch.~\ref{ch:r2p}>>=
-  t := 128 * 1026
-  var optT = flag.Int("t", t, "maximum scan token size")
+#+begin_src go <<Declare options, Ch.~\ref{ch:r2p}>>=
   var optV = flag.Bool("v", false, "print program version " +
 	  "and other information")
 #+end_src
 #+begin_src latex
-  We import \ty{flag} and \ty{bufio}.
+  We import \ty{flag}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
   "flag"
-  "bufio"
 #+end_src
 #+begin_src latex
   We parse the options and respond to \ty{-v}.
@@ -132,38 +126,25 @@
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:r2p}>>=
   files := flag.Args()
-  clio.ParseFiles(files, scan, *optT)
+  clio.ParseFiles(files, scan)
 #+end_src
 #+begin_src latex
-  Inside scan we retrieve the maximum scan token size, create the
-  scanner, scan the file, check the scanner for error, and print the
-  segments.
+  Inside scan, we create a reader, use it to scan the file, and print
+  the segments read during the scan.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:r2p}>>=
   func scan(r io.Reader, args ...interface{}) {
-	  t := args[0].(int)
-	  //<<Create scanner, Ch.~\ref{ch:r2p}>>
+	  reader := bufio.NewReader(r)
 	  //<<Scan file, Ch.~\ref{ch:r2p}>>
-	  //<<Check scanner, Ch.~\ref{ch:r2p}>>
 	  //<<Print segments, Ch.~\ref{ch:r2p}>>
   }
 #+end_src
 #+begin_src latex
-  We import \ty{io}.
+  We import \ty{io} and \ty{bufio}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:r2p}>>=
   "io"
-#+end_src
-#+begin_src latex
-  The scanner has the maximum scan token size set by the user.
-#+end_src
-#+begin_src go <<Create scanner, Ch.~\ref{ch:r2p}>>=
-  b := make([]byte, 2)
-  scanner := bufio.NewScanner(r)
-  scanner.Buffer(b, t)
-#+end_src
-#+begin_src latex
-  We import \ty{bufio}.
+  "bufio"
 #+end_src
 #+begin_src latex
   We iterate across the input and ignore hashed lines. The remaining
@@ -172,15 +153,22 @@
   since segments are built from x- and y-positions, we also declare
   variables for them. Each position is either on the forward strand or
   not, and we reserve space for that information, too.
+
+  Note that we use a buffered reader rather than a buffered scanner to
+  read the input. That's because there may be very long lines in our
+  input and a reader imposes no limits on line length, while a scanner
+  does.
 #+end_src
 #+begin_src go <<Scan file, Ch.~\ref{ch:r2p}>>=
   var xp, yp []int
   var xf, yf []bool
   var segments []Segment
-  for scanner.Scan() {
-	  line := scanner.Text()
-	  if line[0] == '#' { continue }
-	  //<<Convert line to segments, Ch.~\ref{ch:r2p}>>
+  line, err := reader.ReadString('\n')
+  for err == nil {
+	  if line[0] != '#' {
+		  //<<Convert line to segments, Ch.~\ref{ch:r2p}>>
+	  }
+	  line, err = reader.ReadString('\n')
   }
 #+end_src
 #+begin_src latex
@@ -298,18 +286,9 @@
   }
 #+end_src
 #+begin_src latex
-  We're done with the scanner and report any error it might have
-  encountered.
-#+end_src
-#+begin_src go <<Check scanner, Ch.~\ref{ch:r2p}>>=
-  if scanner.Err() != nil {
-	  log.Fatal(scanner.Err())
-  }
-#+end_src
-#+begin_src latex
   We print the segments as four tab-delimited columns that we align
   using a tab writer. But recall that each segment may appear twice, so
-  we remove any duplicates before we print.
+  we remove duplicates before we print.
 #+end_src
 #+begin_src go <<Print segments, Ch.~\ref{ch:r2p}>>=
   //<<Set up tab writer, Ch.~\ref{ch:r2p}>>
@@ -345,7 +324,7 @@
 #+end_src
 #+begin_src latex
   To remove duplicate segments, we sort them and squeeze the duplicates
-  from the slice.
+  from the sorted slice.
 #+end_src
 #+begin_src go <<Remove duplicated segments, Ch.~\ref{ch:r2p}>>=
   sort.Sort(SegmentSlice(segments))
