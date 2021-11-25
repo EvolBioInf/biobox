@@ -12,7 +12,8 @@ import (
 )
 
 type Scanner struct {
-	s *bufio.Scanner
+	r    *bufio.Reader
+	text string
 }
 type Node struct {
 	Id                 int
@@ -25,7 +26,12 @@ type Node struct {
 var nodeId = 1
 
 func (s *Scanner) Scan() bool {
-	return s.s.Scan()
+	var err error
+	s.text, err = s.r.ReadString(';')
+	if err == nil {
+		return true
+	}
+	return false
 }
 func (s *Scanner) Tree() *Node {
 	var root *Node
@@ -107,7 +113,7 @@ func (s *Scanner) Tree() *Node {
 	return root
 }
 func (s *Scanner) Text() string {
-	return s.s.Text()
+	return s.text
 }
 
 // String turns a tree into its Newick string.
@@ -121,23 +127,8 @@ func (n *Node) String() string {
 // phylogenies.
 func NewScanner(r io.Reader) *Scanner {
 	sc := new(Scanner)
-	sc.s = bufio.NewScanner(r)
-	sc.s.Split(scanTrees)
+	sc.r = bufio.NewReader(r)
 	return sc
-}
-func scanTrees(data []byte, atEOF bool) (advance int,
-	token []byte, err error) {
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
-	if i := bytes.IndexByte(data, ';'); i >= 0 {
-		return i + 1, data[0 : i+1], nil
-	}
-	if atEOF {
-		err := fmt.Errorf("open tree: %q", string(data))
-		return len(data), data, err
-	}
-	return 0, nil, nil
 }
 
 // NewNode returns a new node with a unique Id.

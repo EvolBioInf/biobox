@@ -89,12 +89,13 @@
   //<<Functions, Ch.~\ref{ch:new}>>
 #+end_src
 #+begin_src latex
-  We use a scanner that wraps the scanner provided by the \ty{bufio}
-  package.
+  We use a scanner that wraps the reader provided by the \ty{bufio}
+  package. The scanner has a hook for additional fields.
 #+end_src
 #+begin_src go <<Types, Ch.~\ref{ch:new}>>=
   type Scanner struct {
-	  s *bufio.Scanner
+	  r *bufio.Reader
+	  //<<Scanner fields, Ch.~\ref{ch:new}>>
   }
 #+end_src
 #+begin_src latex
@@ -108,20 +109,29 @@
 #+end_src
 #+begin_src go <<Methods, Ch.~\ref{ch:new}>>=
   func (s *Scanner) Scan() bool {
-	  return s.s.Scan()
+	  var err error
+	  s.text, err = s.r.ReadString(';')
+	  if err == nil {
+		  return true
+	  }
+	  return false
   }
 #+end_src
 #+begin_src latex
-  Our scanner splits the input string using the split function
-  \ty{scanTrees}.
+  We add the scanner field \ty{text}.
+#+end_src
+#+begin_src go <<Scanner fields, Ch.~\ref{ch:new}>>=
+  text string
+#+end_src
+#+begin_src latex
+  We construct a scanner.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:new}>>=
   // NewScanner returns a scanner for scanning Newick-formatted
   // phylogenies.
   func NewScanner(r io.Reader) *Scanner {
 	  sc := new(Scanner)
-	  sc.s = bufio.NewScanner(r)
-	  sc.s.Split(scanTrees)
+	  sc.r = bufio.NewReader(r)
 	  return sc
   }
 #+end_src
@@ -130,74 +140,6 @@
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:new}>>=
   "io"
-#+end_src
-#+begin_src latex
-  The split function \ty{scanTrees} is patterned on the four possible
-  states of the one of the split functions provided by the library,
-  \ty{SplitLines}:
-  \begin{enumerate}
-  \item We have reached the end of file with no data left, or
-  \item we have found a phylogeny terminated by a semicolon, or
-  \item we are at the end of the file and have a tree that isn't
-    terminated, or
-  \item we just ask for more data.
-  \end{enumerate}
-#+end_src
-#+begin_src go <<Functions, Ch.~\ref{ch:new}>>=
-  func scanTrees(data []byte, atEOF bool) (advance int,
-	  token []byte, err error) {
-	  //<<End of file and no data?, Ch.~\ref{ch:new}>>
-	  //<<Found phylogeny?, Ch.~\ref{ch:new}>>
-	  //<<End of file and some data?, Ch.~\ref{ch:new}>>
-	  //<<Request more data, Ch.~\ref{ch:new}>>
-  }
-#+end_src
-#+begin_src latex
-  If we are at the end of the file and have no more data. So we don't
-  advance, and return a nil token and a nil error.
-#+end_src
-#+begin_src go <<End of file and no data?, Ch.~\ref{ch:new}>>=
-  if atEOF && len(data) == 0 {
-	  return 0, nil, nil
-  }
-#+end_src
-#+begin_src latex
-  If we find a semicolon, we have found a tree. We advance just beyond
-  it and return it, including the terminal semicolon.
-#+end_src
-#+begin_src go <<Found phylogeny?, Ch.~\ref{ch:new}>>=
-  if i := bytes.IndexByte(data, ';'); i >= 0 {
-	  return i + 1, data[0:i+1], nil
-  }
-#+end_src
-#+begin_src latex
-  We import \ty{bytes}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:new}>>=
-  "bytes"
-#+end_src
-#+begin_src latex
-  If we reach the end of file and there is still some data, we have a
-  tree without terminal semicolon. Something has gone wrong and we throw
-  an error.
-#+end_src
-#+begin_src go <<End of file and some data?, Ch.~\ref{ch:new}>>=
-  if atEOF {
-	  err := fmt.Errorf("open tree: %q", string(data))
-	  return len(data), data, err
-  }
-#+end_src
-#+begin_src latex
-  We import \ty{fmt}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:new}>>=
-  "fmt"
-#+end_src
-#+begin_src latex
-  Having run out of data, we request more.
-#+end_src
-#+begin_src go <<Request more data, Ch.~\ref{ch:new}>>=
-  return 0, nil, nil
 #+end_src
 #+begin_src latex
   Our scanner method \ty{Tree} takes the text-version of a tree and
@@ -216,12 +158,12 @@
   }
 #+end_src
 #+begin_src latex
-  The \ty{Scanner} method \ty{Text} wraps the corresponding library
-  method.
+  The \ty{Scanner} method \ty{Text} wraps access to the \ty{text}
+  fields.
 #+end_src
 #+begin_src go <<Methods, Ch.~\ref{ch:new}>>=
   func (s *Scanner) Text() string {
-	  return s.s.Text()
+	  return s.text
   }
 #+end_src
 #+begin_src latex
@@ -484,6 +426,12 @@
   }
 #+end_src
 #+begin_src latex
+  We import \ty{bytes}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:new}>>=
+  "bytes"
+#+end_src
+#+begin_src latex
   To convert our tree to Newick, we traverse it and ask four questions
   about each node, $v$:
   \begin{enumerate}
@@ -511,6 +459,12 @@
   if v.Parent != nil && v.Parent.Child.Id != v.Id {
 	  fmt.Fprint(w, ",")
   }
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:new}>>=
+  "fmt"
 #+end_src
 #+begin_src latex
   If a node has no child, it is a leaf characterized by its
