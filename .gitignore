@@ -49,6 +49,7 @@ doc/testMeans.tex
 doc/translate.tex
 doc/travTree.tex
 doc/util.tex
+doc/upgma.tex
 doc/var.tex
 doc/watterson.tex
 doc/wrapSeq.tex
@@ -88,6 +89,7 @@ simOrf/simOrf
 testMeans/testMeans
 translate/translate
 travTree/travTree
+upgma/upgma
 var/var
 watterson/watterson
 wrapSeq/wrapSeq

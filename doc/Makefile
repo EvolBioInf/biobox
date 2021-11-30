@@ -2,7 +2,7 @@ src = al.tex blast2dot.tex cchar.tex cutSeq.tex dnaDist.tex drawKt.tex drawSt.te
 	genTree.tex getSeq.tex histogram.tex keyMat.tex mum2plot.tex mutator.tex newick.tex naiveMatcher.tex numAl.tex \
 	pam.tex plotLine.tex plotSeg.tex plotTree.tex ranseq.tex randomizeSeq.tex ranDot.tex \
 	rep2plot.tex rpois.tex sblast.tex shustring.tex simNorm.tex simOrf.tex \
-	testMeans.tex translate.tex travTree.tex repeater.tex revComp.tex util.tex var.tex watterson.tex wrapSeq.tex
+	testMeans.tex translate.tex travTree.tex repeater.tex revComp.tex upgma.tex util.tex var.tex watterson.tex wrapSeq.tex
 
 all: $(src) bioboxDoc.pdf 
 %.tex:	../*/%.org bioboxDoc.tex

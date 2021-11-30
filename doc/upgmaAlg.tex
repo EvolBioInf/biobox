@@ -1,0 +1,16 @@
+  \begin{algorithmic}[1]
+    \REQUIRE $n$ \COMMENT{sample size}
+    \REQUIRE $d$ \COMMENT{$n\times n$ distance matrix}
+    \REQUIRE $t$ \COMMENT{$n$ nodes}
+    \ENSURE Root of tree, $r$
+    \FOR{$i\leftarrow n$ \TO $2$}
+    \STATE Find smallest entry in $d$, $d_{jk}$
+    \STATE Construct $r$ as parent of $c_j$ and $c_k$
+    \STATE $\mbox{height}(r)\leftarrow d_{jk}/2$
+    \STATE $d_{.r}\leftarrow d_{.r}\leftarrow (d_{.j}+d_{.k})/2$
+    \STATE $d\leftarrow d\backslash\{d_j,d_k\}$
+    \STATE $c\leftarrow c\backslash\{c_j,c_k\}$
+    \STATE $c\leftarrow c\cup r$
+    \ENDFOR
+    \STATE Convert node heights to branch lengths
+\end{algorithmic}
