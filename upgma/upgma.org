@@ -220,18 +220,11 @@
 #+end_src
 #+begin_src latex
   We cluster the nodes by adding nodes \ty{c1} and \ty{c2} as children
-  of \ty{root}. We also set the parent references, which we shall need
-  later on when calculating the branch lengths.
+  of \ty{root}.
 #+end_src
 #+begin_src go <<Cluster nodes, Ch.~\ref{ch:upgma}>>=
-  c1.Parent = root
-  c2.Parent = root
-  root.Child = c1
-  w := root.Child
-  for w.Sib != nil {
-	  w = w.Sib
-  }
-  w.Sib = c2
+  root.AddChild(c1)
+  root.AddChild(c2)
 #+end_src
 #+begin_src latex
   We replace the matrix entries and the entries in the nodes array.
