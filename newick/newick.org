@@ -358,11 +358,35 @@
 	  if v == nil {
 		  v = NewNode()
 	  }
-	  c := NewNode()
-	  v.Child = c
-	  c.Parent = v
+	  v.AddChild(NewNode())
 	  v = v.Child
   }
+#+end_src
+#+begin_src latex
+  Inside \texttt{AddChild}, we set the parent link. The child is either
+  assigned to the \texttt{Child} link or after scanning the sibling
+  list.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:new}>>=
+  // Method AddChild adds a child node.
+  func (n *Node) AddChild(v *Node) {
+	  v.Parent = n
+	  if n.Child == nil {
+		  n.Child = v
+	  } else {
+		  //<<Scan sibling list, Ch.~\ref{ch:new}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We walk along the sibling list and extend it by the new node.
+#+end_src
+#+begin_src go <<Scan sibling list, Ch.~\ref{ch:new}>>=
+  w := n.Child
+  for w.Sib != nil {
+	  w = w.Sib
+  }
+  w.Sib = v
 #+end_src
 #+begin_src latex
   On a right parenthesis we move to the parent.

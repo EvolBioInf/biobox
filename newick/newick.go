@@ -79,9 +79,7 @@ func (s *Scanner) Tree() *Node {
 			if v == nil {
 				v = NewNode()
 			}
-			c := NewNode()
-			v.Child = c
-			c.Parent = v
+			v.AddChild(NewNode())
 			v = v.Child
 		}
 		if t == ")" {
@@ -114,6 +112,20 @@ func (s *Scanner) Tree() *Node {
 }
 func (s *Scanner) Text() string {
 	return s.text
+}
+
+// Method AddChild adds a child node.
+func (n *Node) AddChild(v *Node) {
+	v.Parent = n
+	if n.Child == nil {
+		n.Child = v
+	} else {
+		w := n.Child
+		for w.Sib != nil {
+			w = w.Sib
+		}
+		w.Sib = v
+	}
 }
 
 // String turns a tree into its Newick string.
