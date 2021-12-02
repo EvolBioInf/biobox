@@ -11,17 +11,10 @@
   \begin{figure}
     \begin{center}
       \begin{tabular}{cc}
-      \textbf{A} & \textbf{B}\\
-      \begin{tabular}{clllll}
-	5\\
-	S1 & 0 & 0.19 & 0.00502 & 0.0537 & 0.186\\
-	S2 & 0.19 & 0 & 0.19 & 0.188 & 0.0489\\
-	S3 & 0.00502 & 0.19 & 0 & 0.0539 & 0.186\\
-	S4 & 0.0537 & 0.188 & 0.0539 & 0 & 0.184\\
-	S5 & 0.186 & 0.0489 & 0.186 & 0.184 & 0\\
-      \end{tabular}
-      &
-      \scalebox{0.5}{\includegraphics{upgma}}
+	\textbf{A} & \textbf{B}\\
+	\input{dm}
+	&
+	\scalebox{0.5}{\includegraphics{upgma}}
       \end{tabular}
     \end{center}
     \caption{A distance matrix (\textbf{A}) gets converted by
@@ -186,7 +179,6 @@
   //<<Construct node array, Ch.~\ref{ch:upgma}>>
   for i := n; i > 1; i-- {
 	  if printMat {
-		  fmt.Printf("#Round %d\n", n - i + 1)
 		  fmt.Printf("%s", dm)
 	  }
 	  //<<Pick nodes to be clustered, Ch.~\ref{ch:upgma}>>
