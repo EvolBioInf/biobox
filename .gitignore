@@ -29,6 +29,7 @@ doc/mum2plot.tex
 doc/mutator.tex
 doc/naiveMatcher.tex
 doc/newick.tex
+doc/nj.tex
 doc/numAl.tex
 doc/pam.tex
 doc/plotLine.tex
@@ -70,6 +71,7 @@ keyMat/keyMat
 mum2plot/mum2plot
 mutator/mutator
 naiveMatcher/naiveMatcher
+nj/nj
 numAl/numAl
 pam/pam
 plotLine/plotLine

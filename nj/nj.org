@@ -1,0 +1,476 @@
+#+begin_src latex
+  \section*{Phylogeny Reconstruction}
+  Phylogeny reconstruction from distance matrices is often done using
+  one of two methods, UPGMA and neighbor joining. The UPGMA method is
+  implemented in the program \ty{upgma} described in
+  Chapter~\ref{ch:upgma}, while we now implement the neighbor joining
+  method in the program \ty{nj}. \ty{nj} takes as input a distance
+  matrix like the one in Figure~\ref{fig:nj}A and returns the
+  corresponding tree in Newick format, plotted as Figure~\ref{fig:nj}B.
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{cc}
+	\textbf{A} & \textbf{B}\\
+	\input{dm} & \scalebox{0.5}{\includegraphics{nj}}
+      \end{tabular}
+    \end{center}
+    \caption{A distance matrix (\textbf{A}) is transformed by the
+      program \ty{nj} into a tree, which can be plotted using the
+      program \ty{plotTree} (\textbf{B}).}\label{fig:nj}
+    \end{figure}
+
+  We implement the neighbor-joining algorithm as described
+  in~\cite[p. 110f]{hau17:bio}. Given the $n\times n$ distance matrix
+  $d$,
+  \begin{itemize}
+  \item compute the row sums of $d$
+    \[
+    r_i=\sum_jd_{ij}
+    \]
+  \item compute a supplementary matrix, $s$,
+    \[
+    s_{ij}=d_{ij}-(r_i+r_j)/(n-2)
+    \]
+  \item cluster a pair of taxa with smallest $s_{ij}$ in node $c$ with
+    \[
+    d_{kc}=(d_{ik}+d_{jk}-d_{ij})/2
+    \]
+  \item calculate the branch lengths from the new cluster, $c$, to its children, $i$ and $j$,
+    \[
+    d_{ic}=\frac{(n-2)d_{ij}+r_i-r_j}{2(n-2)}
+    \]
+    \[
+    d_{jc}=\frac{(n-2)d_{ij}+r_j-r_i}{2(n-2)}
+    \]
+  \end{itemize}
+  Repeat this until there are only three clusters left, call them
+  $i,j,k$. Then form the root, $r$, and add the remaining clusters as its
+  children with branch lengths
+  \[
+  d_{ir}=(d_{ij}+d_{ik}-d_{jk})/2
+  \]
+  \[
+  d_{jr}=(d_{ji}+d_{jk}-d_{ik})/2
+  \]
+  \[
+  d_{kr}=(d_{ki}+d_{kj}-d_{ij})/2
+  \]
+
+  \section*{Implementation}
+  The outline of \ty{nj} has hooks for imports, functions, and the logic
+  of the main function.
+#+end_src
+#+begin_src go <<nj.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:nj}>>
+  )
+
+  //<<Functions, Ch.~\ref{ch:nj}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:nj}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:nj}>>=
+  //<<Set usage, Ch.~\ref{ch:nj}>>
+  //<<Declare options, Ch.~\ref{ch:nj}>>
+  //<<Parse options, Ch.~\ref{ch:nj}>>
+  //<<Parse input files, Ch.~\ref{ch:nj}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of
+  \ty{nj}'s purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:nj}>>=
+  u := "nj [-h] [option]... [foo.dist]..."
+  p := "Calculate neighbor-joining tree."
+  e := "nj foo.dist"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nj}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version (\ty{-v}), we declare an option for printing
+  the intermediate distance matrices, \ty{-m}.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:nj}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optM = flag.Bool("m", false, "print intermediate " +
+	  "matrices")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nj}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}, as this terminates the
+  program.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:nj}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("nj")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nj}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. These are parsed using the function \ty{scan}, which in
+  turn takes the \ty{-m} option as argument.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:nj}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optM)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve \ty{-m} and iterate over the distance
+  matrices in the input.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:nj}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  printMat := args[0].(bool)
+	  sc := dist.NewScanner(r)
+	  for sc.Scan() {
+		  dm := sc.DistanceMatrix()
+		  //<<Process distance matrix, Ch.~\ref{ch:nj}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{dist}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nj}>>=
+  "io"
+  "github.com/evolbioinf/dist"
+#+end_src
+#+begin_src latex
+  We make the distance matrix symmetrical and calculate its
+  supplement. Then we calculate the tree and print it.
+#+end_src
+#+begin_src go <<Process distance matrix, Ch.~\ref{ch:nj}>>=
+  dm.MakeSymmetrical()
+  //<<Calculate supplementary matrix, Ch.~\ref{ch:nj}>>
+  var root *newick.Node
+  //<<Calculate tree, Ch.~\ref{ch:nj}>>
+  fmt.Println(root)
+#+end_src
+#+begin_src latex
+  We import \ty{newick} and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nj}>>=
+  "github.com/evolbioinf/biobox/newick"
+  "fmt"
+#+end_src
+#+begin_src latex
+  We calculate the row sums and from them the supplementary matrix by
+  function calls.
+#+end_src
+#+begin_src go <<Calculate supplementary matrix, Ch.~\ref{ch:nj}>>=
+  r := rowSums(dm)
+  sm := smat(dm, r)
+#+end_src
+#+begin_src latex
+  We calculate the row sums.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:nj}>>=
+  func rowSums(dm *dist.DistMat) []float64 {
+	  n := len(dm.Names)
+	  r := make([]float64, n)
+	  for i := 0; i < n; i++ {
+		  for j := 0; j < n; j++ {
+			  r[i] += dm.Matrix[i][j]
+		  }
+	  }
+	  return r
+  }
+#+end_src
+#+begin_src latex
+  We calculate the supplementary matrix.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:nj}>>=
+  func smat(dm *dist.DistMat, r []float64) *dist.DistMat {
+	  n := len(dm.Names)
+	  sm := dist.NewDistMat(n)
+	  for i := 0; i < n-1; i++ {
+		  for j := i+1; j < n; j++ {
+			  sm.Matrix[i][j] = dm.Matrix[i][j] -
+				  (r[i] + r[j]) / float64(n - 2)
+			  sm.Matrix[j][i] = sm.Matrix[i][j]
+		  }
+	  }
+	  return sm
+  }
+#+end_src
+#+begin_src latex
+  Apart from the two distance matrices, we also need the node array as
+  prerequisite for calculating the tree. While we iterate over the steps
+  of the tree computation, we print the current distance matrix, if
+  desired. Then we construct the intermediate tree.
+
+  After the loop to construct the tree, we finish its construction.
+#+end_src
+#+begin_src go <<Calculate tree, Ch.~\ref{ch:nj}>>=
+  //<<Construct node array, Ch.~\ref{ch:nj}>>
+  for i := n; i > 3; i-- {
+	  if printMat {
+		  //<<Print matrices, Ch.~\ref{ch:nj}>>
+	  }
+	  //<<Construct intermediate tree, Ch.~\ref{ch:nj}>>
+  }
+  if printMat {
+	  //<<Print matrices, Ch.~\ref{ch:nj}>>
+  }
+  //<<Finish tree, Ch.~\ref{ch:nj}>>
+#+end_src
+#+begin_src latex
+  The intermediate tree is constructed by picking a pair of nodes,
+  clustering it, and replacing the clustered nodes by their new parent.
+#+end_src
+#+begin_src go <<Construct intermediate tree, Ch.~\ref{ch:nj}>>=
+  <<Pick nodes for clustering, Ch.~\ref{ch:nj}>>
+  <<Cluster nodes, Ch.~\ref{ch:nj}>>
+  <<Replace clustered nodes, Ch.~\ref{ch:nj}>>
+#+end_src
+#+begin_src latex
+  The node array starts out with the $n$ leaves.
+#+end_src
+#+begin_src go <<Construct node array, Ch.~\ref{ch:nj}>>=
+  n := len(dm.Names)
+  t := make([]*newick.Node, n)
+  for i := 0; i < n; i++ {
+	  t[i] = newick.NewNode()
+	  t[i].Label = dm.Names[i]
+  }
+#+end_src
+#+begin_src latex
+  We delegate matrix printing to a function call.
+#+end_src
+#+begin_src go <<Print matrices, Ch.~\ref{ch:nj}>>=
+  printMatrices(dm, sm, r)
+#+end_src
+#+begin_src latex
+  For each pair of matrices, we print a single matrix in PHYLIP format
+  with the distances in the top triangle and the supplementary distances
+  in the bottom triangle. The last column holds the row sums. Printing
+  is done using a tab writer.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:nj}>>=
+  func printMatrices(dm, sm *dist.DistMat, r []float64) {
+	  w := tabwriter.NewWriter(os.Stdout, 1, 0, 2, ' ', 0)
+	  n := len(dm.Names)
+	  fmt.Fprintf(w, "%d\n", n)
+	  w.Flush()
+	  for i := 0; i < n; i++ {
+		  fmt.Fprintf(w, "%s", dm.Names[i])
+		  //<<Print row of distances, Ch.~\ref{ch:nj}>>
+		  fmt.Fprintf(w, "\t%.3g\n", r[i])
+	  }
+	  w.Flush()
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{tabwriter} and \ty{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nj}>>=
+  "text/tabwriter"
+  "os"
+#+end_src
+#+begin_src latex
+  Within a row we switch between distances and supplementary distance.
+#+end_src
+#+begin_src go <<Print row of distances, Ch.~\ref{ch:nj}>>=
+  for j := 0; j < n; j++ {
+	  x := sm.Matrix[i][j]
+	  if i < j {
+		  x = dm.Matrix[i][j]
+	  }
+	  fmt.Fprintf(w, "\t%.3g", x)
+  }
+#+end_src
+#+begin_src latex
+  We pick the two nodes to be clustered and set their branch lengths.
+#+end_src
+#+begin_src go <<Pick nodes for clustering, Ch.~\ref{ch:nj}>>=
+  _, mj, mk := sm.Min()
+  c1 := t[mj]
+  c2 := t[mk]
+  root = newick.NewNode()
+  l := fmt.Sprintf("(%s,%s)", c1.Label, c2.Label)
+  root.Label = l
+  x := float64(i-2) * dm.Matrix[mj][mk]
+  denom := float64(2*(i-2))
+  c1.Length = (x + r[mj] - r[mk]) / denom
+  c2.Length = (x + r[mk] - r[mj]) / denom
+  c1.HasLength = true
+  c2.HasLength = true
+#+end_src
+#+begin_src latex
+  We cluster the nodes by adding them as child nodes to \ty{root}.
+#+end_src
+#+begin_src go <<Cluster nodes, Ch.~\ref{ch:nj}>>=
+  root.AddChild(c1)
+  root.AddChild(c2)
+#+end_src
+#+begin_src latex
+  We replace the nodes just clustered in the distance matrix and in the
+  node array. Then we recalculate the row sums and the supplementary
+  matrix.
+#+end_src
+#+begin_src go <<Replace clustered nodes, Ch.~\ref{ch:nj}>>=
+  //<<Replace entries in matrix, Ch.~\ref{ch:nj}>>
+  //<<Replace entries in node array, Ch.~\ref{ch:nj}>>
+  r = rowSums(dm)
+  sm = smat(dm, r)
+#+end_src
+#+begin_src latex
+  We calculate the new distances in the original matrix, delete the
+  taxon pair from it, and append the new distances.
+#+end_src
+#+begin_src go <<Replace entries in matrix, Ch.~\ref{ch:nj}>>=
+  data := make([]float64, i-2)
+  k := 0
+  for j := 0; j < i; j++ {
+	  if j == mj || j == mk { continue }
+	  data[k] = (dm.Matrix[j][mj] +
+		   dm.Matrix[j][mk] - dm.Matrix[mj][mk]) / 2.0
+	  k++
+  }
+  dm.DeletePair(mj, mk)
+  dm.Append(root.Label, data)
+#+end_src
+#+begin_src latex
+  We remove the nodes picked and append their parent, the current root.
+#+end_src
+#+begin_src go <<Replace entries in node array, Ch.~\ref{ch:nj}>>=
+  k = 0
+  for j := 0; j < i; j++ {
+	  if j == mj || j == mk { continue }
+	  t[k] = t[j]
+	  k++
+  }
+  t = t[:k]
+  t = append(t, root)
+#+end_src
+#+begin_src latex
+  To cluster the last three nodes, we set their branch lengths and add
+  them to their root.
+#+end_src
+#+begin_src latex
+  There are now three taxa left. We connect them to generate the final
+  tree. In that tree, we have labeled the internal nodes to help make
+  sense of the printed matrices. So in a last step, we remove these
+  labels again, as phylogenies only have leaf labels.
+#+end_src
+#+begin_src go <<Finish tree, Ch.~\ref{ch:nj}>>=
+  <<Cluster last three nodes, Ch.~\ref{ch:nj}>>
+  <<Reset internal node labels, Ch.~\ref{ch:nj}>>
+#+end_src
+#+begin_src go <<Cluster last three nodes, Ch.~\ref{ch:nj}>>=
+  c1 := t[0]
+  c2 := t[1]
+  c3 := t[2]
+  //<<Set branch lengths, Ch.~\ref{ch:nj}>>
+  root = newick.NewNode()
+  root.AddChild(c1)
+  root.AddChild(c2)
+  root.AddChild(c3)
+#+end_src
+#+begin_src latex
+  We set the branch length as described in the Introduction.
+#+end_src
+#+begin_src go <<Set branch lengths, Ch.~\ref{ch:nj}>>=
+  c1.Length = (dm.Matrix[0][1] + dm.Matrix[0][2] -
+	  dm.Matrix[1][2]) / 2.0
+  c2.Length = (dm.Matrix[1][0] + dm.Matrix[1][2] -
+	  dm.Matrix[0][2]) / 2.0
+  c3.Length = (dm.Matrix[2][0] + dm.Matrix[2][1] -
+	  dm.Matrix[0][1]) / 2.0
+  c1.HasLength = true
+  c2.HasLength = true
+  c3.HasLength = true
+#+end_src
+#+begin_src latex
+  We reset the internal node labels by a function call.
+#+end_src
+#+begin_src go <<Reset internal node labels, Ch.~\ref{ch:nj}>>=
+  resetLabels(root)
+#+end_src
+#+begin_src latex
+  The function \ty{resetLabels} recursively traverses the tree. At each
+  internal node we set the label to the empty string.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:nj}>>=
+  func resetLabels(v *newick.Node) {
+	  if v == nil { return }
+	  resetLabels(v.Child)
+	  resetLabels(v.Sib)
+	  if v.Child != nil {
+		  v.Label = ""
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We have finished \ty{nj}, time to test it.
+
+  \section*{Testing}
+  The outline of our testing code has hooks for imports and the testing
+  logic.
+#+end_src
+#+begin_src go <<nj_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:nj}>>
+  )
+
+  func TestNj(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:nj}>>
+  }
+#+end_src
+#+begin_src latex
+  We test \ty{nj} by running it on the distance matrix in
+  Figure~\ref{fig:nj}A, which is contained in the file \ty{test.phy}. We
+  run the test with printing of the intermediate matrices. Then we
+  compare the result we get with the result we want, which is stored in
+  \ty{r.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:nj}>>=
+  cmd := exec.Command("./nj", "-m", "test.phy")
+  get, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("can't run %q", cmd)
+  }
+  want, err := ioutil.ReadFile("r.txt")
+  if err != nil {
+	  t.Errorf("can't open r.txt")
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:nj}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
