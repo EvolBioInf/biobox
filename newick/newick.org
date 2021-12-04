@@ -502,14 +502,15 @@
 #+end_src
 #+begin_src latex
   In \ty{printLabel}, we first clean up the label. Then we print it,
-  followed, perhaps, by the branch length.
+  followed, perhaps, by the branch length. The root has no parent and
+  hence no branch length.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:new}>>=
   func printLabel(w *bytes.Buffer, v *Node) {
 	  label := v.Label
 	  //<<Clean up label, Ch.~\ref{ch:new}>>
 	  fmt.Fprintf(w, "%s", label)
-	  if v.HasLength {
+	  if v.HasLength && v.Parent != nil {
 		  fmt.Fprintf(w, ":%.3g", v.Length)
 	  }
   }
@@ -580,7 +581,7 @@
   }
   defer f.Close()
   sc := NewScanner(f)
-  want := `(((A:0.2,B:0.3):0.3,(D:0.5,E:0.3):0.2):0.3,F:0.7):0;`
+  want := `(((A:0.2,B:0.3):0.3,(D:0.5,E:0.3):0.2):0.3,F:0.7);`
   //<<Scan trees, Ch.~\ref{ch:new}>>
 #+end_src
 #+begin_src latex

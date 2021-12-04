@@ -179,7 +179,7 @@ func printLabel(w *bytes.Buffer, v *Node) {
 		label = strings.ReplaceAll(label, " ", "_")
 	}
 	fmt.Fprintf(w, "%s", label)
-	if v.HasLength {
+	if v.HasLength && v.Parent != nil {
 		fmt.Fprintf(w, ":%.3g", v.Length)
 	}
 }
