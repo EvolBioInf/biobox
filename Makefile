@@ -1,7 +1,7 @@
 progs = al blast2dot cchar cutSeq dnaDist drawKt drawSt fasta2tab genTree getSeq histogram keyMat mum2plot mutator naiveMatcher nj numAl pam \
 plotLine plotSeg plotTree randomizeSeq ranDot ranseq rep2plot repeater revComp rpois sblast shustring simNorm simOrf testMeans \
 translate travTree upgma var watterson wrapSeq
-packs = util newick
+packs = util
 
 all:
 	test -d bin || mkdir bin

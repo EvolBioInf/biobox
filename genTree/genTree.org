@@ -125,7 +125,7 @@
 #+end_src
 #+begin_src go <<Calculate trees, Ch.~\ref{ch:gt}>>=
   n := *optN
-  tree := make([]*newick.Node, 2*n-1)
+  tree := make([]*nwk.Node, 2*n-1)
   for ii := 0; ii < *optI; ii++ {
 	  //<<Construct tree, Ch.~\ref{ch:gt}>>
 	  if !*optA {
@@ -135,10 +135,10 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{newick}.
+  We import \ty{nwk}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:gt}>>=
-  "github.com/evolbioinf/biobox/newick"
+  "github.com/evolbioinf/nwk"
 #+end_src
 #+begin_src latex
   A tree is constructed in four steps: We allocate the nodes, set their
@@ -155,7 +155,7 @@
 #+end_src
 #+begin_src go <<Allocate nodes, Ch.~\ref{ch:gt}>>=
   for i := 0; i < 2*n-1; i++ {
-	  tree[i] = newick.NewNode()
+	  tree[i] = nwk.NewNode()
   }
 #+end_src
 #+begin_src latex
@@ -206,24 +206,8 @@
 #+begin_src go <<Pick first child, Ch.~\ref{ch:gt}>>=
   r := ran.Intn(i)
   c := tree[r]
-  addChild(p, c)
+  p.AddChild(c)
   tree[r] = tree[i-1]
-#+end_src
-#+begin_src latex
-  The function \ty{addChild} first sets the child's parent, then adds
-  the child to the parent's other children, if are any.
-#+end_src
-#+begin_src go <<Functions, Ch.~\ref{ch:gt}>>=
-  func addChild(p, c *newick.Node) {
-	  c.Parent = p
-	  if p.Child == nil {
-		  p.Child = c
-	  } else {
-		  w := p.Child
-		  for w.Sib != nil { w = w.Sib }
-		  w.Sib = c
-	  }
-  }
 #+end_src
 #+begin_src latex
   We pick the second child and replace it by the current parent, which
@@ -232,7 +216,7 @@
 #+begin_src go <<Pick second child, Ch.~ref{ch:gt}>>=
   r = ran.Intn(i-1)
   c = tree[r]
-  addChild(p, c)
+  p.AddChild(c)
   tree[r] = p
 #+end_src
 #+begin_src latex
@@ -249,7 +233,7 @@
   starting from the leaves.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:gt}>>=
-  func setBranchLen(v *newick.Node) {
+  func setBranchLen(v *nwk.Node) {
 	  if v == nil { return }
 	  setBranchLen(v.Child)
 	  l := 0.0
@@ -274,7 +258,7 @@
   of the branch length and $\theta$.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:gt}>>=
-  func addMut(v *newick.Node, t float64, r *rand.Rand) {
+  func addMut(v *nwk.Node, t float64, r *rand.Rand) {
 	  if v == nil { return }
 	  //<<Calculate the number of mutations, Ch.~\ref{ch:gt}>>
 	  addMut(v.Child, t, r)
@@ -329,7 +313,7 @@
   We label the leaves.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:gt}>>=
-  func labelLeaves(v *newick.Node, nc int) int {
+  func labelLeaves(v *nwk.Node, nc int) int {
 	  if v == nil { return nc }
 	  nc = labelLeaves(v.Child, nc)
 	  if v.Child == nil {
@@ -350,7 +334,7 @@
   And we label the internal nodes.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:gt}>>=
-  func labelInternalNodes(v *newick.Node, nc int) int {
+  func labelInternalNodes(v *nwk.Node, nc int) int {
 	  if v == nil { return nc }
 	  if v.Child != nil {
 		  nc++

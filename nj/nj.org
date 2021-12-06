@@ -167,15 +167,15 @@
 #+begin_src go <<Process distance matrix, Ch.~\ref{ch:nj}>>=
   dm.MakeSymmetrical()
   //<<Calculate supplementary matrix, Ch.~\ref{ch:nj}>>
-  var root *newick.Node
+  var root *nwk.Node
   //<<Calculate tree, Ch.~\ref{ch:nj}>>
   fmt.Println(root)
 #+end_src
 #+begin_src latex
-  We import \ty{newick} and \ty{fmt}.
+  We import \ty{nwk} and \ty{fmt}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:nj}>>=
-  "github.com/evolbioinf/biobox/newick"
+  "github.com/evolbioinf/nwk"
   "fmt"
 #+end_src
 #+begin_src latex
@@ -253,9 +253,9 @@
 #+end_src
 #+begin_src go <<Construct node array, Ch.~\ref{ch:nj}>>=
   n := len(dm.Names)
-  t := make([]*newick.Node, n)
+  t := make([]*nwk.Node, n)
   for i := 0; i < n; i++ {
-	  t[i] = newick.NewNode()
+	  t[i] = nwk.NewNode()
 	  t[i].Label = dm.Names[i]
   }
 #+end_src
@@ -311,7 +311,7 @@
   _, mj, mk := sm.Min()
   c1 := t[mj]
   c2 := t[mk]
-  root = newick.NewNode()
+  root = nwk.NewNode()
   l := fmt.Sprintf("(%s,%s)", c1.Label, c2.Label)
   root.Label = l
   x := float64(i-2) * dm.Matrix[mj][mk]
@@ -387,7 +387,7 @@
   c2 := t[1]
   c3 := t[2]
   //<<Set branch lengths, Ch.~\ref{ch:nj}>>
-  root = newick.NewNode()
+  root = nwk.NewNode()
   root.AddChild(c1)
   root.AddChild(c2)
   root.AddChild(c3)
@@ -417,7 +417,7 @@
   internal node we set the label to the empty string.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:nj}>>=
-  func resetLabels(v *newick.Node) {
+  func resetLabels(v *nwk.Node) {
 	  if v == nil { return }
 	  resetLabels(v.Child)
 	  resetLabels(v.Sib)

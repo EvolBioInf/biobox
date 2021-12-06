@@ -289,7 +289,7 @@
 #+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
   func scan(r io.Reader, args ...interface{}) {
 	  //<<Retrieve arguments, Ch.~\ref{ch:pt}>>
-	  sc := newick.NewScanner(r)
+	  sc := nwk.NewScanner(r)
 	  treeCounter := 0
 	  for sc.Scan() {
 		  treeCounter++
@@ -300,11 +300,11 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{io} and \ty{newick}.
+  We import \ty{io} and \ty{nwk}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
   "io"
-  "github.com/evolbioinf/biobox/newick"
+  "github.com/evolbioinf/nwk"
 #+end_src
 #+begin_src latex
   We retrieve the files, the file counter, the template, and the
@@ -317,19 +317,19 @@
   options := args[3].(*opts)
 #+end_src
 #+begin_src latex
-  We convert the new tree from nodes of type \ty{newick.Node} to our
+  We convert the new tree from nodes of type \ty{nwk.Node} to our
   local node type. This allows us to tailor the nodes to fit the layout
   task in hand.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
-  func convertTree(v *newick.Node) *node {
+  func convertTree(v *nwk.Node) *node {
 	  root := new(node)
 	  cpTree(v, root)
 	  return root
   }
 #+end_src
 #+begin_src latex
-  A \ty{node} replicates the fields of a \ty{newick.Node} and has a hook
+  A \ty{node} replicates the fields of a \ty{nwk.Node} and has a hook
   for additional fields we add later.
 #+end_src
 #+begin_src go <<Types, Ch.~\ref{ch:pt}>>=
@@ -346,7 +346,7 @@
   label and the branch length, then we copy the tree topology.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
-  func cpTree(v *newick.Node, n *node) {
+  func cpTree(v *nwk.Node, n *node) {
 	  if v == nil { return }
 	  n.label = v.Label
 	  n.length = v.Length

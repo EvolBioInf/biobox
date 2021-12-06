@@ -134,15 +134,15 @@
 #+begin_src go <<Process distance matrix, Ch.~\ref{ch:upgma}>>=
   dm.MakeSymmetrical()
   n := len(dm.Names)
-  var root *newick.Node
+  var root *nwk.Node
   <<Calculate tree, Ch.~\ref{ch:upgma}>>
   fmt.Println(root)
 #+end_src
 #+begin_src latex
-  We import \ty{newick} and \ty{fmt}.
+  We import \ty{nwk} and \ty{fmt}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:upgma}>>=
-  "github.com/evolbioinf/biobox/newick"
+  "github.com/evolbioinf/nwk"
   "fmt"
 #+end_src
 #+begin_src latex
@@ -191,9 +191,9 @@
   The node array initially consists of $n$ leaves.
 #+end_src
 #+begin_src go <<Construct node array, Ch.~\ref{ch:upgma}>>=
-  t := make([]*newick.Node, n)
+  t := make([]*nwk.Node, n)
   for i := 0; i < n; i++ {
-	  t[i] = newick.NewNode()
+	  t[i] = nwk.NewNode()
 	  t[i].Label = dm.Names[i]
   }
 #+end_src
@@ -205,7 +205,7 @@
   md, mj, mk := dm.Min()
   c1 := t[mj]
   c2 := t[mk]
-  root = newick.NewNode()
+  root = nwk.NewNode()
   l := fmt.Sprintf("(%s,%s)", c1.Label, c2.Label)
   root.Label = l
   root.Length = md / 2
@@ -272,7 +272,7 @@
   internal nodes.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:upgma}>>=
-  func branchLengths(v *newick.Node) {
+  func branchLengths(v *nwk.Node) {
 	  if v == nil { return }
 	  branchLengths(v.Child)
 	  branchLengths(v.Sib)
