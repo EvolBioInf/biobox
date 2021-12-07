@@ -25,10 +25,10 @@ doc/genTree.tex
 doc/getSeq.tex
 doc/histogram.tex
 doc/keyMat.tex
+doc/midRoot.tex
 doc/mum2plot.tex
 doc/mutator.tex
 doc/naiveMatcher.tex
-doc/newick.tex
 doc/nj.tex
 doc/numAl.tex
 doc/pam.tex
@@ -68,6 +68,7 @@ genTree/genTree
 getSeq/getSeq
 histogram/histogram
 keyMat/keyMat
+midRoot/midRoot
 mum2plot/mum2plot
 mutator/mutator
 naiveMatcher/naiveMatcher

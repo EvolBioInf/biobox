@@ -1,0 +1,375 @@
+#+begin_src latex
+  \section*{Introduction}
+  A phylogeny summarizes the evolutionary relationships between a sample
+  of organisms. For example, the imaginary Newick tree in
+  Figure~\ref{fig:mr}A plotted Figure~\ref{fig:mr}B shows the genealogy
+  of six organisms, also called \emph{taxa}. The branches have lengths
+  proportional to a measure of evolutionary change, often the number of
+  mutations per site. The phylogeny is drawn in radial layout to
+  emphasize that it has no root. In other words, the most recent common
+  ancestor of the taxa is unknown. This is a standard result of many
+  algorithms for reconstructing phylogenies, for example the neighbor
+  joining algorithm~\cite{sai87:nei}. Still, in reality there was a
+  common ancestor. A popular method for placing it on the tree is called
+  midpoint rooting, where the root is located midpoint between the most
+  distant taxa. In our example tree, the most distant pair of taxa is
+  $t_1$/$t_4$. Rooting the phylogeny midpoint between them returns
+  Figure~\ref{fig:mr}C, where the branch leading to $t_1$ was broken
+  into a branch leading from the root to $t_1$ and a shorter branch
+  leading from the root to the rest of the tree.
+
+  \begin{figure}[ht]
+    \begin{center}
+      \textbf{A}
+    \end{center}
+    \begin{center}
+      \ty{(t4:0.009106,(t1:0.053575,(t3:0.002138,t5:0.002862)}\\
+      \ty{:0.019425):0.015394,(t2:0.001169,t6:0.002031):0.005694);}
+    \end{center}
+    \begin{center}
+      \input{labelsMr1}
+      \begin{tabular}{cc}
+	\textbf{B} & \textbf{C}\\
+	\scalebox{0.8}{\includegraphics{mr1}} & \scalebox{0.8}{\includegraphics{mr2}}
+      \end{tabular}
+    \end{center}
+    \caption{An example phylogeny in Newick notation (\textbf{A}) 
+      plotted as an unrooted tree (\textbf{B}) and as a rooted tree
+      after midpoint rooting between $t_1$ and $t_4$ (\textbf{C}) using \ty{midRoot}.}\label{fig:mr}
+  \end{figure}
+
+  The program \texttt{midRoot} reads one or more trees and prints their
+  midpoint rooted versions. 
+
+  \section*{Implementation}
+  The outline of \texttt{midRoot} has hooks
+  for imports, functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<midRoot.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:mr}>>
+  )
+  //<<Functions, Ch.~\ref{ch:mr}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:mr}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:mr}>>=
+  //<<Set usage, Ch.~\ref{ch:mr}>>
+  //<<Declare options, Ch.~\ref{ch:mr}>>
+  //<<Parse options, Ch.~\ref{ch:mr}>>
+  //<<Parse input files, Ch.~\ref{ch:mr}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{midRoot}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:mr}>>=
+  u := "midRoot [-h] [option]... [foo.nwk]..."
+  p := "Add midpoint root to a tree."
+  e := "midRoot foo.nwk"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mr}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version (\ty{-v}), we declare an option of printing the
+  pair of most distant taxa (\ty{-p}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:mr}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optP = flag.Bool("p", false, "print most distant pair")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mr}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v} as stops the program.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:mr}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("midRoot")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mr}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. We parse each of these files using the function \ty{scan},
+  which takes the pair printing option as argument.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:mr}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optP)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the pair printing option and iterate
+  over the input. For each tree we read, we find the most distant taxa,
+  perhaps print them, reroot the tree, and print it.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mr}>>=
+  func scan (r io.Reader, args ...interface{}) {
+	  printPair := args[0].(bool)
+	  sc := nwk.NewScanner(r)
+	  for sc.Scan() {
+		  root := sc.Tree()
+		  //<<Find most distant taxa, Ch.~\ref{ch:mr}>>
+		  //<<Print most distant taxa?, Ch.~\ref{ch:mr}>>
+		  //<<Reroot tree, Ch.~\ref{ch:mr}>>
+		  fmt.Println(root)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mr}>>=
+  "fmt"
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mr}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  To find the most distant taxa, we collect the leaves of the tree. Then
+  we calculate their pairwise distances and remember the maximum.
+#+end_src
+#+begin_src go <<Find most distant taxa, Ch.~\ref{ch:mr}>>=
+  var leaves []*nwk.Node
+  leaves = collectLeaves(root, leaves)
+  n := len(leaves)
+  max := -math.MaxFloat64
+  var mi, mj int
+  for i := 0; i < n-1; i++ {
+	  for j := i+1; j < n; j++ {
+		  //<<Calculate distance, Ch.~\ref{ch:mr}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{nwk} and \ty{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mr}>>=
+  "github.com/evolbioinf/nwk"
+  "math"
+#+end_src
+#+begin_src latex
+  We collect the leaves.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mr}>>=
+  func collectLeaves(v *nwk.Node, l []*nwk.Node) []*nwk.Node {
+	  if v == nil { return l }
+	  l = collectLeaves(v.Child, l)
+	  l = collectLeaves(v.Sib, l)
+	  if v.Child == nil {
+		  l = append(l, v)
+	  }
+	  return l
+  }
+#+end_src
+#+begin_src latex
+  To find the distance between two leaves, we find their lowest common
+  ancestor and sum the distances from that ancestor to the leaves. Then
+  we compare the distance to the current maximum.
+#+end_src
+#+begin_src go <<Calculate distance, Ch.~\ref{ch:mr}>>=
+  l1 := leaves[i]
+  l2 := leaves[j]
+  a := l1.LCA(l2)
+  d := l1.UpDistance(a) + l2.UpDistance(a)
+  //<<Compare distance to maximum, Ch.~\ref{ch:mr}>>
+#+end_src
+#+begin_src latex
+  If the current distance exceeds the last maximum distance we found, we
+  update the maximum and its indexes.
+#+end_src
+#+begin_src go <<Compare distance to maximum, Ch.~\ref{ch:mr}>>=
+  if max < d {
+	  max = d
+	  mi = i
+	  mj = j
+  }
+#+end_src
+#+begin_src latex
+  We might be asked to print the two taxa we just found and their
+  distance.
+#+end_src
+#+begin_src go <<Print most distant taxa?, Ch.~\ref{ch:mr}>>=
+  if printPair {
+	  fmt.Printf("# d(%s, %s): %.3g\n",
+		  leaves[mi].Label, leaves[mj].Label, max)
+  }
+#+end_src
+#+begin_src latex
+  Consider again the tree in Figure~\ref{fig:mr}A. The pair of leaves
+  with the largest distance happens to be $t_1$ and $t_4$. Since $t_1$
+  is further removed from their lowest common ancestor, we start
+  climbing at $t_1$ and immediately find the edge to split.
+
+  To clarify what we do next, consider Figure~\ref{fig:rr}A, which is
+  Figure~\ref{fig:mr}A with all nodes labeled and no branch lengths. We
+  find the edge to split (Figure~\ref{fig:rr}B), add the new root, $n_5$
+  (Figure~\ref{fig:rr}C), and rearrange the tree such that $n_5$ ends up
+  as the root (Figure~\ref{fig:rr}D).
+    \begin{figure}
+      \begin{center}
+	\input{labelsMr2}
+	\begin{tabular}{cc}
+	    \textbf{A} & \textbf{B}\\
+	    \scalebox{0.4}{\includegraphics{smallU}} & \scalebox{0.4}{\includegraphics{smallR}}\\
+	    \textbf{C} & \textbf{D}\\
+	    \scalebox{0.4}{\includegraphics{smallR2}} & \scalebox{0.4}{\includegraphics{smallR3}}
+	  \end{tabular}
+      \end{center}
+      \caption{Rooting a tree. (\textbf{A}) is drawn in the unrooted,
+	radial layout often used in biology, even though internally it is
+	rooted on $n_1$. This rooting is made explicit in (\textbf{B}),
+	where we wish to reroot the tree on edge $(t_1,n_2)$ marked by
+	$||$.  In (\textbf{C}) the future new root $n_5$ is added to the
+	tree by splitting $(t_1,n_2)$. (\textbf{D}) is the newly rooted
+	tree. It is obtained by picking up (\textbf{C}) at $n_5$ and
+	shaking it~\cite[p. 373]{knu97:ar1}.}\label{fig:rr}
+    \end{figure}
+#+end_src
+#+begin_src go <<Reroot tree, Ch.~\ref{ch:mr}>>=
+  //<<Find edge to split, Ch.~\ref{ch:mr}>>
+  //<<Insert root, Ch.~\ref{ch:mr}>>
+  //<<Adjust branch lengths, Ch.~\ref{ch:mr}>>
+  //<<Rearrange tree, Ch.~\ref{ch:mr}>>
+#+end_src
+#+begin_src latex
+  To find the edge to split, we climb towards to root either from node
+  $i$ or node $j$, whichever is most distant from their common ancestor.
+#+end_src
+#+begin_src go <<Find edge to split, Ch.~\ref{ch:mr}>>=
+  l1 := leaves[mi]
+  l2 := leaves[mj]
+  a := l1.LCA(l2)
+  v := l1
+  if l1.UpDistance(a) < l2.UpDistance(a) { v = l2 }
+  s := v.Length
+  for s < max / 2.0 {
+	  v = v.Parent
+	  s += v.Length
+  }
+#+end_src
+#+begin_src latex
+  The edge $(v,p)$ is to be split. We create the new root, $r$. Then we
+  add $r$ as a child to $p$, remove $v$ as a child from $p$, and add $v$
+  as a child of $r$.
+#+end_src
+#+begin_src go <<Insert root, Ch.~\ref{ch:mr}>>=
+  r := nwk.NewNode()
+  p := v.Parent
+  p.AddChild(r)
+  p.RemoveChild(v)
+  r.AddChild(v)
+#+end_src
+#+begin_src latex
+  To find the new branch lengths, $d(v,r)$ and $d(p,r)$, let $m$ be the
+  distance between the leaves we're considering and $s$ the sum of the
+  branch lengths up to $p$. Then $d(v,r)=s - m/2$ and
+  $d(p,r)=v.\mbox{Length}-d(v,r)$.
+#+end_src
+#+begin_src go <<Adjust branch lengths, Ch.~\ref{ch:mr}>>=
+  x2 := s - max / 2.0
+  x1 := v.Length - x2
+  v.Length = x1
+  r.Length = x2
+#+end_src
+#+begin_src latex
+  We now turn the provisional new root $r$ into the actual root. Donald
+  Knuth described the process for this as picking up the tree by $n_5$
+  in Figure~\ref{fig:rr}C and shaking it to get
+  figure~\ref{fig:rr}D~\cite[p. 371]{knu97:ar1}. More formally, this is
+  done by climbing from $n_5$ to the old root, $n_1$, and at every step
+  converting the parent to to a child node and adjusting the branch
+  lengths accordingly. For this purpose we apply the function
+  \ty{parentToChild} to the new root, before assigning it to the
+  variable \ty{root}, which gets us from Figure~\ref{fig:rr}C to
+  Figure~\ref{fig:rr}D.
+#+end_src
+#+begin_src go <<Rearrange tree, Ch.~\ref{ch:mr}>>=
+  parentToChild(r)
+  root = r
+#+end_src
+#+begin_src latex
+  Inside \ty{parentToChild}, we climb as far as we can and then exchange
+  parent and child.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mr}>>=
+  func parentToChild(v *nwk.Node) {
+	  if v.Parent.Parent != nil {
+		  parentToChild(v.Parent)
+	  }
+	  p := v.Parent
+	  p.RemoveChild(v)
+	  v.AddChild(p)
+	  p.Length = v.Length
+	  p.HasLength = true
+  }
+#+end_src
+#+begin_src latex
+  The program \ty{midRoot} is finished, so let's test it.
+  \section*{Testing}
+  The outline of our testing program has hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<midRoot_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:mr}>>
+  )
+
+  func TestMidRoot(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:mr}>>
+  }
+#+end_src
+#+begin_src latex
+  We run the program with the pair printing option on the tree shown in
+  Figure~\ref{fig:mr}A stored in \ty{test.nwk}. Then we compare the tree
+  we get to the tree we want stored in \ty{r.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:mr}>>=
+  cmd := exec.Command("./midRoot", "-p", "test.nwk")
+  get, err := cmd.Output()
+  if err != nil {
+	  t.Errorf("can't run %q", cmd)
+  }
+  want, err := ioutil.ReadFile("r.txt")
+  if err != nil {
+	  t.Errorf("can't optn r.txt")
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:mr}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+
