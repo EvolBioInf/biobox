@@ -43,6 +43,7 @@ doc/repeater.tex
 doc/revComp.tex
 doc/rpois.tex
 doc/sblast.tex
+doc/sequencer.tex
 doc/shustring.tex
 doc/simNorm.tex
 doc/simOrf.tex
@@ -86,6 +87,7 @@ repeater/repeater
 revComp/revComp
 rpois/rpois
 sblast/sblast
+sequencer/sequencer
 shustring/shustring
 simNorm/simNorm
 simOrf/simOrf
@@ -107,3 +109,4 @@ plotSeg/segTmpl.txt
 plotSeg/makeRes.sh
 plotTree/treeTmpl.txt
 genTree/makeTests.sh
+sequencer/makeRes.sh

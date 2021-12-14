@@ -1,0 +1,441 @@
+#+begin_src latex
+  \section*{Introduction}
+  Sequencing machines generate reads of DNA sequences, which, depending
+  on the sequencing technology, are usually only a few dozen to a few
+  hundred nucleotides long. This is tiny compared to most chromosomes,
+  which means that rather than reading a chromosome in one fell swoop,
+  many reads have to be assembled into the underlying template. This
+  sequencing technique is known as \emph{shotgun sequencing}, and I
+  think of the subsequent assembly as doing a giant jigsaw puzzle.
+
+  The popularity of shotgun sequencing has led to the development of a
+  whole class of programs for carrying out genome assembly. To test such
+  programs, it is handy to have a ready source of sequencing reads. The
+  program \ty{sequencer} generates such reads. It takes as input one ore
+  more template sequences and sequences each one to the specified
+  coverage. Sequencing can be single-end or paired-end, and the user can
+  set both the read length and---in paired end sequencing---the insert
+  length. Input sequences may be linear or circular.
+
+  \section*{Implementation}
+  The outline of \ty{sequencer} has hooks for imports, types, functions, and
+  the logic of the main function.
+#+end_src
+#+begin_src go <<sequencer.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:seq}>>
+  )
+  //<<Types, Ch.~\ref{ch:seq}>>
+  //<<Functions, Ch.~\ref{ch:seq}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:seq}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, and parse the input sequences.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:seq}>>=
+  //<<Set usage, Ch.~\ref{ch:seq}>>
+  //<<Declare options, Ch.~\ref{ch:seq}>>
+  //<<Parse options, Ch.~\ref{ch:seq}>>
+  //<<Parse input files, Ch.~\ref{ch:seq}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{sequencer}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:seq}>>=
+  u := "sequencer [-h] [option]... [foo.fasta]..."
+  p := "Simulate a DNA sequencing maching."
+  e := "sequencer -c 20 foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version (\ty{-v}), we declare options for the coverage,
+  to set the mean read and insert length, paired-end \emph{vs.}
+  single-end, the error rate, a seed for the random number generator,
+  and whether the genome is circular. The ten options are listed in
+  Table~\ref{tab:seq}.
+  \begin{table}
+    \caption{Options of \ty{sequencer}.}\label{tab:seq}
+    \begin{center}
+      \begin{tabular}{clll}\hline
+	\# & Option & Meaning & Default\\\hline
+	1 & \ty{-v} & version & false\\
+	2 & \ty{-c} & coverage & 1\\
+	3 & \ty{-r} & mean read length & 100\\
+	4 & \ty{-R} & standard deviation of read length & 0\\
+	5 & \ty{-p} & paired end & false\\
+	6 & \ty{-i} & mean insert length & 500\\
+	7 & \ty{-I} & standard deviation of insert length & 0\\
+	8 & \ty{-e} & sequencing error & $10^{-3}$\\
+	9 & \ty{-s} & seed for random number generator & internal\\
+	10 & \ty{-o} & circular genome & linear\\\hline
+      \end{tabular}
+    \end{center}
+  \end{table}
+  We begin by declaring the coverage and the read length, whether or not
+  we are using paired-end sequencing, and the insert length. The
+  standard deviation of the read and insert length is by default zero,
+  that is, their length is constant, but the user can change that, in
+  which their lengths are drawn from a normal distribution with the
+  specified mean and standard deviation.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:seq}>>=
+  var optC = flag.Float64("c", 1.0, "coverage")
+  var optR = flag.Float64("r", 100.0, "mean read length")
+  var optRR = flag.Float64("R", 0.0, "standard deviation of " +
+	  "read length")
+  var optP = flag.Bool("p", false, "paired end")
+  var optI = flag.Float64("i", 500.0, "mean insert length")
+  var optII = flag.Float64("I", 0.0, "standard deviation of " +
+	  "insert length")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We declare the sequencing error, the seed for the random number
+  generator, the option for circular genomes, and the version.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:seq}>>=
+  var optE = flag.Float64("e", 0.001, "error rate")
+  var optS = flag.Int("s", 0, "seed for random number generator")
+  var optO = flag.Bool("o", false, "circular template")
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+#+end_src
+#+begin_src latex
+  We parse the options and first respond to \ty{-v}, as this stops the
+  program. We also seed the random number generator and collect the
+  options, so that we can conveniently pass them around.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:seq}>>=
+  flag.Parse()
+  //<<Respond to \ty{-v}, Ch.~\ref{ch:seq}>>
+  //<<Seed random number generator, Ch.~\ref{ch:seq}>>
+  //<<Collect options, Ch.~\ref{ch:seq}>>
+#+end_src
+#+begin_src latex
+  We write the version, if desired.
+#+end_src
+#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:seq}>>=
+  if *optV {
+	  util.PrintInfo("sequencer")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  We seed the random number generator either from the seed provided by
+  the user or from the current time.
+#+end_src
+#+begin_src go <<Seed random number generator, Ch.~\ref{ch:seq}>>=
+  seed := int64(*optS)
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  rn := rand.New(rand.NewSource(int64(seed)))
+#+end_src
+#+begin_src latex
+  We import \ty{time} and \ty{rand}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
+  "time"
+  "math/rand"
+#+end_src
+#+begin_src latex
+  To collect the options, we declare the structure \ty{opts}, whose
+  fields reflect the names of the options.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:seq}>>=
+  type opts struct {
+	  c, r, R, i, I, e float64
+	  p, o bool
+  }
+#+end_src
+#+begin_src latex
+  We initialize a variable of type \ty{opts} and collect the options.
+#+end_src
+#+begin_src go <<Collect options, Ch.~\ref{ch:seq}>>=
+  op := new(opts)
+  op.c = *optC
+  op.r = *optR
+  op.R = *optRR
+  op.i = *optI
+  op.I = *optII
+  op.e = *optE
+  op.p = *optP
+  op.o = *optO
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. We parse each one of them in turn using the function
+  \ty{scan}, which takes the options and the random number generator as
+  arguments.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:seq}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, op, rn)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the arguments just passed and sequence
+  each entry in the FASTA file.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:seq}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:seq}>>
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  seq := sc.Sequence()
+		  //<<Carry out sequencing, Ch.~\ref{ch:seq}>>
+	  }
+  }
+#+end_srcn
+#+begin_src latex
+  We import \ty{io} and \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  We retrieve the options and the random number generator using type
+  assertion.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:seq}>>=
+  op := args[0].(*opts)
+  rn := args[1].(*rand.Rand)
+#+end_src
+#+begin_src latex
+  We prepare the sequence, compute coverage as the number of nucleotides
+  to be sequenced, and declare variables for the number of nucleotides
+  sequenced and for counting the reads. Then we iterate until the number
+  of nucleotides sequenced exceeds the coverage. Inside this loop we
+  branch between paired-end and single-end sequencing.
+#+end_src
+#+begin_src go <<Carry out sequencing, Ch.~\ref{ch:seq}>>=
+  n := len(seq.Data())
+  //<<Prepare sequence, Ch.~\ref{ch:seq}>>
+  cov := int(math.Round(float64(n) * op.c))
+  var ns, rc int
+  for ns < cov {
+	  if op.p {
+		  //<<Paired-end sequencing, Ch.~\ref{ch:seq}>>
+	  } else {
+		  //<<Single-end sequencing, Ch.~\ref{ch:seq}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
+  "math"
+#+end_src
+#+begin_src latex
+  In preparation of our sequencing run, we store the forward and the
+  reverse strand in a slice of byte slices.
+#+end_src
+#+begin_src go <<Prepare sequence, Ch.~\ref{ch:seq}>>=
+  se := make([][]byte, 2)
+  se[0] = make([]byte, n)
+  copy(se[0], seq.Data())
+  se[1] = make([]byte, n)
+  seq.ReverseComplement()
+  copy(se[1], seq.Data())
+#+end_src
+#+begin_src latex
+  In paired-end sequencing, we pick an insert position and length. If
+  the insert is either located inside the template or the template is
+  circular, we sequence the first read mate, followed by the second read
+  mate.
+#+end_src
+#+begin_src go <<Paired-end sequencing, Ch.~\ref{ch:seq}>>=
+  pos := rn.Intn(n)
+  il := int(math.Round(rn.NormFloat64() * op.I + op.i))
+  if pos + il < n || op.o {
+	  //<<Sequence first read mate, Ch.~\ref{ch:seq}>>
+	  //<<Sequence second read mate, Ch.~\ref{ch:seq}>>
+  }
+#+end_src
+#+begin_src latex
+  We pick a read length and sequence the first read mate. Negative read
+  lengths are folded to positive. Each nucleotide is mutated according
+  to the error rate using a call to \ty{mutate}, which we write in a
+  moment.
+#+end_src
+#+begin_src go <<Sequence first read mate, Ch.~\ref{ch:seq}>>=
+  rc++
+  fmt.Printf(">Read%d mate=1\n", rc)
+  rl := int(math.Round(rn.NormFloat64() * op.R + op.r))
+  if rl < 0 { rl *= -1 }
+  for i := pos; i < pos + rl; i++ {
+	  c := se[0][i % n]
+	  c = mutate(c, rn, op.e)
+	  fmt.Printf("%c", c)
+  }
+  fmt.Printf("\n")
+  ns += rl
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  In \ty{mutate} we change the given nucleotide to one of the three
+  others with the error probability.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:seq}>>=
+  const dna = "ACGT"
+  func mutate(c byte, r *rand.Rand, e float64) byte {
+	  if r.Float64() >= e { return c }
+	  m := dna[r.Intn(4)]
+	  for m == c {
+		  m = dna[r.Intn(4)]
+	  }
+	  return m
+  }
+#+end_src
+#+begin_src latex
+  We look up the start position on the reverse strand, draw a new read
+  length, and sequence the second read mate.
+#+end_src
+#+begin_src go <<Sequence second read mate, Ch.~\ref{ch:seq}>>=
+  pos = n - (pos + il - 1)
+  fmt.Printf(">Read%d mate=2\n", rc)
+  rl = int(math.Round(rn.NormFloat64() * op.R + op.r))
+  if rl < 0 { rl *= -1 }
+  for i := pos; i < pos + rl; i++ {
+	  c := se[1][i % n]
+	  c = mutate(c, rn, op.e)
+	  fmt.Printf("%c", c)
+  }
+  fmt.Printf("\n")
+  ns += rl
+#+end_src
+#+begin_src latex
+  In single-end sequencing, we pick a read position, length, and
+  strand. Then we check that we are either inside the sequence or the
+  sequence is circular. If so, we sequence it.
+#+end_src
+#+begin_src go <<Single-end sequencing, Ch.~\ref{ch:seq}>>=
+  pos := rn.Intn(n)
+  rl := int(math.Round(rn.NormFloat64() * op.R + op.r))
+  if rl < 0 { rl *= -1 }
+  strand := 0
+  if rn.Float64() < 0.5 { strand = 1 }
+  if pos + rl < n || op.o {
+	  //<<Sequence single read, Ch.~\ref{ch:seq}>>
+  }
+#+end_src
+#+begin_src latex
+  We increment the read counter and print the read header. Then we
+  iterate over the nucleotides of the read and print them before we add
+  them to the number of nucleotides sequenced.
+#+end_src
+#+begin_src go <<Sequence single read, Ch.~\ref{ch:seq}>>=
+  rc++
+  fmt.Printf(">Read%d\n", rc)
+  for i := pos; i  < pos + rl; i++ {
+	  c := se[strand][i % n]
+	  c = mutate(c, rn, op.e)
+	  fmt.Printf("%c", c)
+  }
+  fmt.Printf("\n")
+  ns += rl
+#+end_src
+#+begin_src latex
+  We're finished with \ty{sequencer}, let's test it.
+  \section*{Testing}
+  The outline of our testing program contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<sequencer_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:seq}>>
+  )
+  func TestSequencer(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:seq}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct our tests and then iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:seq}>>=
+  tests := make([]*exec.Cmd, 0)
+  //<<Contruct tests, Ch.~\ref{ch:seq}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:seq}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:seq}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct four tests, each of which uses the 1 kb random sequence
+  in \ty{test.fasta} as template and a seed for the random number
+  generator to freeze the results.
+#+end_src
+#+begin_src go <<Contruct tests, Ch.~\ref{ch:seq}>>=
+  f := "test.fasta"
+  test := exec.Command("./sequencer", "-s", "3", f)
+  tests = append(tests, test)
+  test = exec.Command("./sequencer", "-s", "3", "-p", f)
+  tests = append(tests, test)
+  test = exec.Command("./sequencer", "-s", "3", "-c", "2", f)
+  tests = append(tests, test)
+  test = exec.Command("./sequencer", "-s", "3", "-r", "50", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  When we run a test, we compare the result we get with the result we
+  want, which is stored in files \ty{r1.txt}, \ty{r2.txt}, and so on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:seq}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Errorf("can't run %q", test)
+  }
+  f = "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil {
+	  t.Errorf("can't open %q", f)
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:seq}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src
+
