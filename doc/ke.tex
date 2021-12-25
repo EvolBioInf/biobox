@@ -1,0 +1,30 @@
+\begin{tabular}{ccc}
+  \textbf{A} & \textbf{B} & \textbf{C}\\
+  \setlength{\tabcolsep}{0pt}
+  \begin{tabular}{ccccccccccccc}
+    & &   &   &   &   &   &   &   &   & 1 & 1 & 1\\
+    &1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 0 & 1 & 2\\
+    $q$\textcolor{white}{a} &\ty{A} & \ty{C} &\textbf{\ty{C}} & \textbf{\ty{G}}\\
+    $s$\textcolor{white}{a}&\ty{A}&\ty{G}&\ty{G}&\ty{T}&\ty{A}&\ty{C}&\ty{G}&\textbf{\ty{C}}&\textbf{\ty{G}}&\ty{T}&\ty{T}&\ty{C}\\
+    &&&&&$\ell$&&&&&$r$
+  \end{tabular}
+  &
+  \newcommand{\rd}[1]{\raisebox{2pt}{\dotnode{#1}}}
+  \begin{tabular}{|c|c|c|c|c|c|c|c|}
+    \hline
+    &\ty{-} & \ty{A} & \ty{C} & \ty{G} & \ty{C} & \ty{G} & \ty{T}\\\hline
+    \ty{-}&\rd{4}&&&&&&\\\hline
+    \ty{A}&&&&&&&\\\hline
+    \ty{C}&&&\rd{3}&\rd{2}&&&\\\hline
+    \ty{C}&&&&&&&\\\hline
+    \ty{G}&&&&&&\rd{1}&\\\hline
+  \end{tabular}
+  \ncline[nodesep=2pt]{->}{1}{2}
+  \ncline[nodesep=2pt]{->}{2}{3}
+  \ncline[nodesep=2pt]{->}{3}{4}
+  &
+  \begin{tabular}{cc}
+    \ty{AC-CG}\\
+    \ty{ACGCG}
+  \end{tabular}
+\end{tabular}

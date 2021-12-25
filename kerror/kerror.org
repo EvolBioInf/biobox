@@ -1,0 +1,446 @@
+
+#+begin_src latex
+  \section*{Introduction}
+  Blast is an algorithm for quickly finding local alignments between a
+  short query and a potentially long subject. However, we might be
+  interested in finding global rather than local alignments of the query
+  in the subject. For example, the query might be a PCR primer and the
+  subject the chromosome we'd like to scan for binding sites. So the
+  alignment we are looking for is global in the query and local in the
+  subject. One method to calculate this is known as $k$-error
+  alignment~\cite{bae92:fas}, where an alignment can contain up to $k$
+  gaps or mismatches.
+
+  Again, we can use exact matching to zoom in on promising subject
+  regions. How do we choose the regions of the query for matching? Let's
+  say we are allowed a single error. It must be located either in the
+  left or the right half of the query, leaving the other half error
+  free. In other words, if we divide the query into $k+1$ regions, one
+  of them must be error-free and can be detected by exact matching. So
+  we divide the query into regions of length $|q|/(k+1)$.
+
+  Let one such region match at $q[i]$ and $s[j]$. Then we align $q$ with
+  the corresponding fragment in $s$ expanded on either side by $k$
+  positions, that is, with $s[\ell...r]$, where $\ell=j-i-k+1$ and
+  $r=j+|q|-i+k$. An example for picking the subject region is shown in
+  Figure~\ref{fig:ke}A, which leads to the dynamic programming matrix in
+  Figure~\ref{fig:ke}B.
+
+  \begin{figure}
+    \begin{center}
+      \input{ke}
+    \end{center}
+    \caption{Example for picking the subject interval, $s[\ell...r]$
+      for aligning with the query, $q$ with $k=1$ using the exact
+      match in bold (\textbf{A}); the corresponding dynamic
+      programming matrix (\textbf{B}) with a possible trace back, and
+      the final alignment (\textbf{C}).}\label{fig:ke}
+  \end{figure}
+
+  The trace back starts at the maximum of the bottom row of the
+  programming matrix and ends upon reaching the top row
+  (Figure~\ref{fig:ke}C). This can be thought of as an overlap
+  alignment, where any overhanging subject residues in the final result
+  are chopped off.
+
+  The program \ty{kerror} reads query sequences from file and iterates
+  over files containing subject sequences. Each subject is aligned with
+  all queries and for each combination the viable alignments are
+  printed.
+
+  \section*{Implementation}
+  Our implementation of \ty{kerror} has hooks for imports, types,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<kerror.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:ke}>>
+  )
+  //<<Types, Ch.~\ref{ch:ke}>>
+  //<<Functions, Ch.~\ref{ch:ke}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:ke}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:ke}>>=
+  //<<Set usage, Ch.~\ref{ch:ke}>>
+  //<<Declare options, Ch.~\ref{ch:ke}>>
+  //<<Parse options, Ch.~\ref{ch:ke}>>
+  //<<Parse input files, Ch.~\ref{ch:ke}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  program's purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:ke}>>=
+  u := "kerror [-h] [option]... query.fasta [subject.fasta]..."
+  p := "Calculate k-error alignments between a short " +
+	  "query and a long subject."
+  e := "kerror -k 3 query.fasta subject.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ke}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version, \ty{-v}, we declare an option for the
+  number of errors allowed, options for scoring pairs of residues
+  and gaps, and an option to print the fragment list.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:ke}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optK = flag.Int("k", 1, "number of errors")
+  var optA = flag.Float64("a", 1, "match")
+  var optI = flag.Float64("i", -3, "mismatch")
+  var optM = flag.String("m", "", "file containing score matrix")
+  var optO = flag.Float64("o", -5, "gap opening")
+  var optE = flag.Float64("e", -2, "gap extension")
+  var optL = flag.Bool("l", false, "print fragment list")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ke}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options, respond to \ty{-v} as this stops the program,
+  respond to \ty{-m}, and collect the remaining option values.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:ke}>>=
+  flag.Parse()
+  //<<Respond to \ty{-v}, Ch.~\ref{ch:ke}>>
+  //<<Respond to \ty{-m}, Ch.~\ref{ch:ke}>>
+  //<<Collect option values, Ch.~\ref{ch:ke}>>
+#+end_src
+#+begin_src latex
+  We print the version.
+#+end_src
+#+begin_src go <<Respond to \ty{-v}, Ch.~\ref{ch:ke}>>=
+  if *optV {
+	  util.PrintInfo("kerror")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ke}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  We generate the score matrix either by reading it from a file or by
+  constructing it from the match and the mismatch score.
+#+end_src
+#+begin_src go <<Respond to \ty{-m}, Ch.~\ref{ch:ke}>>=
+  var sm *pal.ScoreMatrix
+  if *optM == "" {
+	  sm = pal.NewScoreMatrix(*optA, *optI)
+  } else {
+	  f, err := os.Open(*optM)
+	  if err != nil { log.Fatalf("can't open %q", *optM) }
+	  sm = pal.ReadScoreMatrix(f)
+	  f.Close()
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{os}, \ty{log}, and \ty{pal}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ke}>>=
+  "os"
+  "log"
+  "github.com/evolbioinf/pal"
+#+end_src
+#+begin_src latex
+  There are four option values we pass to the alignment algorithm, gap
+  opening and closing, $k$, and list printing. We do this via the struct
+  \ty{opts}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:ke}>>=
+  type opts struct {
+	  o, e float64
+	  k int
+	  l bool
+  }
+#+end_src
+#+begin_src latex
+  We collect the option values.
+#+end_src
+#+begin_src go <<Collect option values, Ch.~\ref{ch:ke}>>=
+  op := new(opts)
+  op.k = *optK
+  op.o = *optO
+  op.e = *optE
+  op.l = *optL
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as input files. The
+  first of these is the query file, from which we read the query
+  sequences. If it doesn't exist, we bail with message. Then we call
+  \ty{ParseFiles}, which takes as arguments a list of files, to each of
+  which it applies the function \ty{scan}, which in turn takes as
+  arguments the name of the queries, the score matrix, and the options
+  we just collected.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:ke}>>=
+  files := flag.Args()
+  var queries []*fasta.Sequence
+  if len(files) < 1 {
+	  log.Fatal("please enter query file")
+  } else {
+	  //<<Read queries, Ch.~\ref{ch:ke}>>
+  }
+  clio.ParseFiles(files[1:], scan, queries, sm, op)
+#+end_src
+#+begin_src latex
+  We import \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ke}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  We read the queries.
+#+end_src
+#+begin_src go <<Read queries, Ch.~\ref{ch:ke}>>=
+  f, err := os.Open(files[0])
+  if err != nil { log.Fatalf("can't open %q", files[0]) }
+  sc := fasta.NewScanner(f)
+  for sc.ScanSequence() {
+	  q := sc.Sequence()
+	  queries = append(queries, q)
+  }
+  f.Close()
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the arguments, iterate across the
+  subject sequences, and for each subject iterate across the queries.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:ke}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:ke}>>
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  subject := sc.Sequence()
+		  //<<Iterate across queries, Ch.~\ref{ch:ke}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ke}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  We retrieve the arguments by type assertion.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:ke}>>=
+  queries := args[0].([]*fasta.Sequence)
+  sm := args[1].(*pal.ScoreMatrix)
+  op := args[2].(*opts)
+#+end_src
+#+begin_src latex
+  As we iterate across the queries, we divide each one into $k+1$
+  fragments. These fragments are either printed, or we use them to align
+  the query with the subject.
+#+end_src
+#+begin_src go <<Iterate across queries, Ch.~\ref{ch:ke}>>=
+  for _, query := range queries {
+	  //<<Divide query into fragments, Ch.~\ref{ch:ke}>>
+	  if op.l {
+		  //<<Print query fragments, Ch.~\ref{ch:ke}>>
+	  } else {
+		  //<<Align query with subject, Ch.~\ref{ch:ke}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We divide the query into fragments and also store the fragment
+  starts. At the end we adjust the last fragment added.
+#+end_src
+#+begin_src go <<Divide query into fragments, Ch.~\ref{ch:ke}>>=
+  fragments := make([]string, 0)
+  starts := make([]int, 0)
+  q := query.Data()
+  m := len(q)
+  r := m / (op.k + 1)
+  for i := 0; i <= m-r; i += r {
+    f := q[i:i+r]
+    fragments = append(fragments, string(f))
+    starts = append(starts, i)
+  }
+  //<<Adjust last fragment, Ch.~\ref{ch:ke}>>
+#+end_src
+#+begin_src latex
+  Since fragment lengths are integers, it is quite likely that they do
+  not add up to the query length. In that case the last fragment doesn't
+  end at the query end; we make sure it does.
+#+end_src
+#+begin_src go <<Adjust last fragment, Ch.~\ref{ch:ke}>>=
+  nf := len(fragments)
+  fragments[nf-1] = string(q[starts[nf-1]:])
+#+end_src
+#+begin_src latex
+  We print the query fragments using a tab writer.
+#+end_src
+#+begin_src go <<Print query fragments, Ch.~\ref{ch:ke}>>=
+  w := tabwriter.NewWriter(os.Stdout, 1, 0, 1, ' ', 0)
+  fmt.Fprintf(w, "#Id\tStart\tFragment\n")
+  for i, f := range fragments {
+	  fmt.Fprintf(w, "%d\t%d\t%s\n", i+1, starts[i], f)
+  }
+  w.Flush()
+#+end_src
+#+begin_src latex
+  We import \ty{tabwriter} and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ke}>>=
+  "text/tabwriter"
+  "fmt"
+#+end_src
+#+begin_src latex
+  To align the query with the subject, we search for the
+  fragments. Next, we iterate over the matches and for each match
+  construct the subject fragment, align it with the query, and print the
+  result. A subject fragment has coordinates $\ell...r$ and we construct
+  it only from fragments that lie outside the last fragment
+  aligned. Hence we declare variables $\ell, r$ outside the search loop.
+#+end_src
+#+begin_src go <<Align query with subject, Ch.~\ref{ch:ke}>>=
+  var matches []kt.Match
+  //<<Search for fragments, Ch.~\ref{ch:ke}>>
+  var l, r int
+  for _, match := range matches {
+	  //<<Construct subject fragment, Ch.~\ref{ch:ke}>>
+	  //<<Align query with fragment, Ch.~\ref{ch:ke}>>
+	  //<<Print alignment, Ch.~\ref{ch:ke}>>
+  }
+#+end_src
+#+begin_src latex 
+  We import \ty{kt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ke}>>=
+  "github.com/evolbioinf/kt"
+#+end_src
+#+begin_src latex
+  We look for the query fragments using a keyword tree.
+#+end_src
+#+begin_src go <<Search for fragments, Ch.~\ref{ch:ke}>>=
+  ktree := kt.NewKeywordTree(fragments)
+  matches = ktree.Search(subject.Data(), fragments)
+#+end_src
+#+begin_src latex
+  If we have a match outside the previous fragment interval, we
+  construct the new subject fragment as explained in the
+  Introduction. We make sure the fragment borders don't lie outside the
+  subject sequence.
+#+end_src
+#+begin_src go <<Construct subject fragment, Ch.~\ref{ch:ke}>>=
+  if match.Position < r && match.Position > l { continue }
+  i := starts[match.Pattern]
+  j := match.Position
+  l = j - i - op.k
+  if l < 0 { l = 0 }
+  r = j + m - i + op.k
+  if r > len(subject.Data()) { r = len(subject.Data()) }
+  sbjctFrag := subject.Data()[l:r]
+  sf := fasta.NewSequence(subject.Header(), sbjctFrag)
+#+end_src
+#+begin_src latex
+  We align the query and the subject fragment and trim any flanking gaps
+  from the query.
+#+end_src
+#+begin_src go <<Align query with fragment, Ch.~\ref{ch:ke}>>=
+  oal := pal.NewOverlapAlignment(query, sf, sm, op.o, op.e)
+  oal.Align()
+  oal.SetSubjectStart(l)
+  oal.TrimQuery()
+#+end_src
+#+begin_src latex
+  We print only alignments that have fewer than $k$ errors. We also set
+  the subject length, as this is not the same as the length of the
+  fragment we used in the dynamic programming.
+#+end_src
+#+begin_src go <<Print alignment, Ch.~\ref{ch:ke}>>=
+  e := oal.Mismatches() + oal.Gaps()
+  if e <= op.k {
+	  oal.SetSubjectLength(len(subject.Data()))
+	  fmt.Printf("%s\n", oal)
+  }
+#+end_src
+#+begin_src latex
+  We're done with \ty{kerror}, time to test it.
+
+  \section*{Testing}
+  Our outline for testing has hooks for imports and for the testing logic.
+#+end_src
+#+begin_src go <<kerror_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:ke}>>
+  )
+
+  func TestKerror(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:ke}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests and then run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:ke}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:ke}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:ke}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:ke}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct two tests, one for printing the fragment list, the other
+  for running an alignment. In each case the query is located in
+  \ty{q.fasta} and the subject in \ty{s.fasta}.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:ke}>>=
+  test := exec.Command("./kerror", "-l", "q.fasta", "s.fasta")
+  tests = append(tests, test)
+  test = exec.Command("./kerror", "-k", "6", "q.fasta", "s.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  For each test, we compare what we get with what we want, which is
+  contained in files \ty{r1.txt} and \ty{r2.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:ke}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("can't run %q", test) }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("can't open %q", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("want:\n%s\nget:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil} and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:ke}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

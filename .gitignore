@@ -24,6 +24,7 @@ doc/fasta2tab.tex
 doc/genTree.tex
 doc/getSeq.tex
 doc/histogram.tex
+doc/kerror.tex
 doc/keyMat.tex
 doc/midRoot.tex
 doc/mum2plot.tex
@@ -68,6 +69,7 @@ fasta2tab/fasta2tab
 genTree/genTree
 getSeq/getSeq
 histogram/histogram
+kerror/kerror
 keyMat/keyMat
 midRoot/midRoot
 mum2plot/mum2plot
