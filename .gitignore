@@ -15,6 +15,7 @@ doc/rd*.ps
 # LaTeX files of individual programs
 doc/al.tex
 doc/blast2dot.tex
+doc/bwt.tex
 doc/cchar.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
@@ -60,6 +61,7 @@ doc/wrapSeq.tex
 # Programs
 al/al
 blast2dot/blast2dot
+bwt/bwt
 cchar/cchar
 cutSeq/cutSeq
 dnaDist/dnaDist

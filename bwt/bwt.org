@@ -1,0 +1,350 @@
+#+begin_src latex
+  \section*{Introduction}
+  A simple, but effective method for compressing a string is to
+  summarize runs of identical characters. For example a sequence
+  \[
+  \ty{TTAAAATTTA}
+  \]
+  could be compressed as
+  \[
+  \ty{T}_2\ty{A}_4\ty{T}_3\ty{A}
+  \]
+  Now, the most efficient compression would be to sort the characters to
+  give $\ty{A}_5\ty{T}_5$, but this is irreversible. Still, sorting is
+  not a bad idea when applied to the rotations of a string. For our
+  example the string rotations are shown in Table~\ref{tab:bw}A and
+  their sorted version in Table~\ref{tab:bw}B. Notice the sentinel
+  character, \ty{\$}, at the end. The last column in the sorted rotation
+  is the transform,
+  \[
+  \ty{ATTAAATTT\$A}
+  \]
+  It is called the Burrows-Wheeler transform published by Michael
+  Burrows and David Wheeler~\cite{bur94:blo}.
+
+  \begin{table}
+    \caption{Rotation (\textbf{A}) and sorted rotation
+      (\textbf{B}).}\label{tab:bw}
+    \begin{center}
+    \begin{tabular}{cc}
+      \textbf{A} & \textbf{B}\\
+      \begin{minipage}{2.5cm}
+  \begin{verbatim}
+    TTAAAATTTA$
+    TAAAATTTA$T
+    AAAATTTA$TT
+    AAATTTA$TTA
+    AATTTA$TTAA
+    ATTTA$TTAAA
+    TTTA$TTAAAA
+    TTA$TTAAAAT
+    TA$TTAAAATT
+    A$TTAAAATTT
+    $TTAAAATTTA
+  \end{verbatim}
+      \end{minipage}
+      &
+      \begin{minipage}{2.5cm}
+  \begin{verbatim}
+    $TTAAAATTTA
+    A$TTAAAATTT
+    AAAATTTA$TT
+    AAATTTA$TTA
+    AATTTA$TTAA
+    ATTTA$TTAAA
+    TA$TTAAAATT
+    TAAAATTTA$T
+    TTA$TTAAAAT
+    TTAAAATTTA$
+    TTTA$TTAAAA
+  \end{verbatim}
+      \end{minipage}
+    \end{tabular}
+    \end{center}
+  \end{table}
+
+  In longer texts the transform clusters identical characters into runs,
+  which can then be compressed. The transform can be reversed, or
+  decoded, using the simple linear-time algorithm listed
+  in~\cite[p. 26]{adj08:bur}.
+
+  Given the suffix array, $\mbox{sa}$ of text $T$, we can look up the
+  transform as $T[sa[i]-1]$, if we realize that the character to the
+  left of the first suffix, $T[sa[i]-1]$ must be the sentinel. This way
+  we can transform a string without rotating it first.
+
+  The program \ty{bwt} takes as input a sequence in FASTA format and
+  returns its transform. It can also read a transformed sequence and
+  decode it.
+  \section*{Implementation}
+  Our implementation of \ty{bwt} contains hooks for imports, functions,
+  and the logic of the main function.
+#+end_src
+#+begin_src go <<bwt.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:bw}>>
+  )
+  //<<Functions, Ch.~\ref{ch:bw}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:bw}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:bw}>>=
+  //<<Set usage, Ch.~\ref{ch:bw}>>
+  //<<Declare options, Ch.~\ref{ch:bw}>>
+  //<<Parse options, Ch.~\ref{ch:bw}>>
+  //<<Parse input files, Ch.~\ref{ch:bw}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{bwt}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:bw}>>=
+  u := "bwt [-h] [option]... [foo.fasta]..."
+  p := "Compute the Burrows-Wheeler transform."
+  e := "bwt foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:bw}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version (\ty{-v}), we declare an option for decoding
+  \ty{-d}.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:bw}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optD = flag.Bool("d", false, "decode")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:bw}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v} as this stops the program.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:bw}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("bwt")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:bw}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as input files. We
+  parse each of them using the function \ty{scan}, which in turn takes
+  the decode option (\ty{-d}) as argument.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:bw}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optD)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan} we retrieve the decode option, iterate over the
+  sequences and transform each one before we print it.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:bw}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  decode := args[0].(bool)
+	  var in, out *fasta.Sequence
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  in = sc.Sequence()
+		  //<<Transform sequence, Ch.~\ref{ch:bw}>>
+		  fmt.Printf("%s\n", out)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}, \ty{fasta}, and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:bw}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+  "fmt"
+#+end_src
+#+begin_src latex
+  We either decode or encode the sequence.
+#+end_src
+#+begin_src go <<Transform sequence, Ch.~\ref{ch:bw}>>=
+  if decode {
+	  //<<Decode sequence, Ch.~\ref{ch:bw}>>
+  } else {
+	  //<<Encode sequence, Ch.~\ref{ch:bw}>>
+  }
+#+end_src
+#+begin_src latex
+  For decoding we follow Algorithm 2.1 in~\cite[p. 26]{adj08:bur}. It
+  relies on a set of auxiliary arrays, which we construct and then
+  calculate. The original sequence is decoded from them.
+#+end_src
+#+begin_src go <<Decode sequence, Ch.~\ref{ch:bw}>>=
+  //<<Construct auxiliary arrays, Ch.~\ref{ch:bw}>>
+  //<<Calculate auxiliary arrays, Ch.~\ref{ch:bw}>>
+  //<<Extract original sequence, Ch.~\ref{ch:bw}>>
+#+end_src
+#+begin_src latex
+  There are three auxiliary arrays, a character count, \ty{count}
+  (called $K$ in the algorithm), the first position of each character in
+  the first column of the sorted rotation, \ty{first} ($M$), and the prior
+  count of the current character, \ty{prior} ($C$).
+#+end_src
+#+begin_src go <<Construct auxiliary arrays, Ch.~\ref{ch:bw}>>=
+  var count, first [256]int
+  var prior []int
+  transform := in.Data()
+  prior = make([]int, len(transform))
+#+end_src
+#+begin_src latex
+  We iterate across the transform and compute the prior count of each
+  character, which also gives us their total counts. Then we locate the
+  first occurrence of each character in the first column of the
+  rotation, where the characters appear in alphabetical order. Hence the
+  position of their first appearance is the cumulative sum of their
+  counts.
+#+end_src
+#+begin_src go <<Calculate auxiliary arrays, Ch.~\ref{ch:bw}>>=
+  for i, t := range transform {
+	  prior[i] = count[t]
+	  count[t]++
+  }
+  s := 0
+  for i, c := range count {
+	  first[i] = s
+	  s += c
+  }
+#+end_src
+#+begin_src latex
+  We check the sentinel \ty{\$} appears exactly once. Then we start the
+  reconstruction of the original string from the sentinel's position in
+  the transform. At the end, we drop the sentinel from the output.
+#+end_src
+#+begin_src go <<Extract original sequence, Ch.~\ref{ch:bw}>>=
+  o := make([]byte, len(transform))
+  if c := bytes.Count(transform, []byte("$")); c != 1 {
+	  m := "sentinel, $, appears %d times rather than once"
+	  log.Fatalf(m, c)
+  }
+  i := bytes.IndexByte(transform, '$')
+  for j := len(transform) - 1; j > -1; j-- {
+	  o[j] = transform[i]
+	  i = prior[i] + first[transform[i]]
+  }
+  h := in.Header() + " - decoded"
+  out = fasta.NewSequence(h, o[:len(o)-1])
+#+end_src
+#+begin_src latex
+  We import \ty{bytes} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:bw}>>=
+  "bytes"
+  "log"
+#+end_src
+#+begin_src latex
+  To encode the sequence from its suffix array, as explained in the
+  Introduction.
+#+end_src
+#+begin_src go <<Encode sequence, Ch.~\ref{ch:bw}>>=
+  data := in.Data()
+  sent := byte('$')
+  data = append(data, sent)
+  sa := esa.Sa(data)
+  o := make([]byte, len(data))
+  for i, s := range sa {
+	  o[i] = sent
+	  if s > 0 { o[i] = data[s-1] }
+  }
+  h := in.Header() + " - bwt"
+  out = fasta.NewSequence(h, o)
+#+end_src
+#+begin_src latex
+  We import \ty{esa}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:bw}>>=
+  "github.com/evolbioinf/esa"
+#+end_src
+#+begin_src latex
+  We've finished with \ty{bwt}, time to test it.
+
+  \section*{Testing}
+  The outline of our testing program has hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<bwt_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:bw}>>
+  )
+
+  func TestBwt(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:bw}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests and run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:bw}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:bw}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:bw}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:bw}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct two tests, which run on the test word used in
+  Figure~\ref{fig:bw} as input contained in \ty{t1.fasta} and as
+  transformed input in \ty{t2.fasta}.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:bw}>>=
+  test := exec.Command("./bwt", "t1.fasta")
+  tests = append(tests, test)
+  test = exec.Command("./bwt", "-d", "t2.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We compare the result we get with the result we want stored in
+  \ty{r1.fasta} and \ty{r2.fasta}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:bw}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("can't run %s", test) }
+  f := "r" + strconv.Itoa(i+1) + ".fasta"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("can't read %q", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:bw}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src
