@@ -1,0 +1,207 @@
+#+begin_src latex
+  \section*{Introduction}
+  Genes are often represented by their start and end positions, and
+  their strand. An example are the two genes in Figure~\ref{fig:dg}A,
+  the first on the forward strand, the second on the reverse.
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{ccc}
+	\textbf{A} & \textbf{B} & \textbf{C}\\
+	\begin{tabular}{rrc}
+	  100  & 400 & +\\
+	  600  &  1500 -
+	\end{tabular}
+	&
+	\begin{tabular}{rr}
+	  100 & 0\\
+	  100 & 1\\
+	  400 & 1\\
+	  400 & 0\\
+	  600 & 0\\
+	  600 & -1\\
+	  1500 & -1\\
+	  1500 & 0\\
+	  100 & 0\\
+	\end{tabular}
+	&
+	\includegraphics{dg}
+      \end{tabular}
+    \end{center}
+    \caption{Gene coordinates (\textbf{A}) are transformed by
+      \ty{drawGene} to x/y coordinates (\textbf{B}), which can be
+      plotted with \ty{plotLine} (\textbf{C}).}\label{fig:dg}
+  \end{figure}
+
+  A simple way to draw such data is to convert it to x/y
+  coordinates with genes on the forward strand represented by rectangles
+  above the zero line and genes on the reverse strand below, as shown
+  in Figure~\ref{fig:bw}B and plotted in Figure~\ref{fig:bw}C. The
+  program \ty{drawGenes} takes data like that in Figure~\ref{fig:bw}A
+  and converts it the x/y coordinates in Figure~\ref{fig:bw}B, ready
+  for plotting.
+
+  \section*{Implementation}
+  Our outline of \ty{drawGenes} has hooks for imports and functions.
+#+end_src
+#+begin_src go <<drawGenes.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:dg}>>
+  )
+
+  //<<Functions, Ch.~\ref{ch:dg}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:dg}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:dg}>>=
+  //<<Set usage, Ch.~\ref{ch:dg}>>
+  //<<Declare options, Ch.~\ref{ch:dg}>>
+  //<<Parse options, Ch.~\ref{ch:dg}>>
+  //<<Parse input files, Ch.~\ref{ch:dg}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{drawGenes}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:dg}>>=
+  u := "drawGenes [-h|-v] foo.txt"
+  p := "Convert gene coordinates to x/y coordinates for plotting."
+  e := "drawGenes foo.txt | plotLine -x Position -Y \"-10:10\""
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dg}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We only declare the version, \ty{-v}.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:dg}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dg}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}, as this would stop the
+  program.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:dg}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("drawGenes")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dg}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. Each of them is parsed by \ty{scan}.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:dg}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan} we iterate over the input and draw a box for each
+  gene. At the end we close the boxes with a line to the smallest
+  x-position.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:dg}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  sc := bufio.NewScanner(r)
+	  min := math.MaxFloat64
+	  for sc.Scan() {
+		  fields := strings.Fields(sc.Text())
+		  //<<Draw gene, Ch.~\ref{ch:dg}>>
+	  }
+	  fmt.Printf("%g\t0\n", min)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}, \ty{bufio}, \ty{math}, \ty{strings}, and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dg}>>=
+  "io"
+  "bufio"
+  "math"
+  "strings"
+  "fmt"
+#+end_src
+#+begin_src latex
+  A gene has a start position, an end position, and a strand. Start and
+  end position determine its x-coordinates, the strand the y-coordinate.
+#+end_src
+#+begin_src go <<Draw gene, Ch.~\ref{ch:dg}>>=
+  x1, err := strconv.ParseFloat(fields[0], 64)
+  if err != nil { log.Fatalf("can't convert %q", fields[0]) }
+  x2, err := strconv.ParseFloat(fields[1], 64)
+  if err != nil { log.Fatalf("can't convert %q", fields[0]) }
+  y := 1
+  if fields[2] == "-" { y = -1 }
+  fmt.Printf("%g\t0\n%g\t%d\n%g\t%d\n%g\t0\n",
+	  x1, x1, y, x2, y, x2)
+  if x1 < min { min = x1 }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dg}>>=
+  "strconv"
+  "log"
+#+end_src
+#+begin_src latex
+  We have finished \ty{drawGenes}, let's test it.
+  \section*{Testing}
+  The outline of our testing code has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<drawGenes_test.go>>=
+  package main
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:dg}>>
+  )
+  func TestDrawGenes(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:dg}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a test by applying \ty{drawGenes} to the gene coordinates
+  in \ty{t.txt}. We compare the result we get with the result we want
+  contained in \ty{r.txt}.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:dg}>>=
+  test := exec.Command("./drawGenes", "t.txt")
+  get, err := test.Output()
+  if err != nil { t.Errorf("can't run %q", test) }
+  want, err := ioutil.ReadFile("r.txt")
+  if err != nil { t.Errorf("can't open %q", "r.txt") }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dg}>>=
+  "os/exec"
+  "io/ioutil"
+  "bytes"
+#+end_src
+

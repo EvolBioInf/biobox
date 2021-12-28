@@ -19,6 +19,7 @@ doc/bwt.tex
 doc/cchar.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
+doc/drawGenes.tex
 doc/drawKt.tex
 doc/drawSt.tex
 doc/fasta2tab.tex
@@ -65,6 +66,7 @@ bwt/bwt
 cchar/cchar
 cutSeq/cutSeq
 dnaDist/dnaDist
+drawGenes/drawGenes
 drawKt/drawKt
 drawSt/drawSt
 fasta2tab/fasta2tab
