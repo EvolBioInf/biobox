@@ -1,0 +1,445 @@
+#+begin_src latex
+  \section*{Introduction}
+  Compression works best on runs of small integers, like zeros and
+  ones. However, zeros and ones don't directly correspond to printing
+  characters. Moreover, we'd like to transform runs of any kind of
+  character to runs of zeros.
+
+  To do this, we start from an alphabet, say DNA, where each residue of
+  the four is associated with a number:
+  \begin{center}
+    \begin{tabular}{c|c}
+      Residue & Number\\\hline
+      \ty{A} & 0\\
+      \ty{C} & 1\\
+      \ty{G} & 2\\
+      \ty{T} & 3
+    \end{tabular}
+  \end{center}
+  We encode the sequence \ty{GTTT}. The first \ty{G} is looked up in the
+  alphabet, where it's a 2. Then we move the \ty{G} to the front of the
+  alphabet to get
+  \begin{center}
+    \begin{tabular}{c|c}
+      Residue & Number\\\hline
+      \ty{G} & 0\\
+      \ty{A} & 1\\
+      \ty{C} & 2\\
+      \ty{T} & 3
+    \end{tabular}
+  \end{center}
+  The next residue is a \ty{T}, encoded as 3. Now the alphabet is
+  \begin{center}
+    \begin{tabular}{c|c}
+      Residue & Number\\\hline
+      \ty{T} & 0\\
+      \ty{G} & 1\\
+      \ty{A} & 2\\
+      \ty{C} & 3
+      \end{tabular}
+  \end{center}
+  The third and the fourth \ty{T} are encoded as zero to yield
+  \[
+  2\ 3\ 0\ 0
+  \]
+
+  Not surprisingly, this technique is called ``move to front''. It is
+  reversible using the same reasoning. We start from the original
+  alphabet and a sequence of integers, say that above. The initial 2
+  corresponds to \ty{G}. Then we move the \ty{G} to front, find \ty{T}
+  for 3, and so on.
+
+  The program \ty{mtf} reads a text in FASTA format and encodes it as
+  integers by move to front. It can also decode a list of integers
+  separated by blanks. Two alphabets are supported, DNA and printing
+  ASCII characters.
+
+  \section*{Implementation}
+  Our outline of \ty{mtf} has hooks for imports, functions, and the
+  logic of the main function.
+#+end_src
+#+begin_src go <<mtf.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:mt}>>
+  )
+  //<<Functions, Ch.~\ref{ch:mt}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:mt}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:mt}>>=
+  //<<Set usage, Ch.~\ref{ch:mt}>>
+  //<<Declare options, Ch.~\ref{ch:mt}>>
+  //<<Parse options, Ch.~\ref{ch:mt}>>
+  //<<Parse input files, Ch.~\ref{ch:mt}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{mtf}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:mt}>>=
+  u := "mtf [-h] [option]... [foo.fasta]..."
+  p := "Perform move to front encoding and decoding."
+  e := "mtf -d encoded.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  As options we declare the version (\ty{-v}), decoding (\ty{-d}) as
+  opposed to encoding, printing characters as opposed to DNA (\ty{-p}),
+  and printing of the alphabet (\ty{-a}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:mt}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optD = flag.Bool("d", false, "decode rather than encode")
+  var optP = flag.Bool("p", false, "printing characters rather than DNA")
+  var optA = flag.Bool("a", false, "print alphabet")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v} as this stops the program.
+  Then we print the alphabet if desired. As we need a fresh alphabet
+  every time we start work on a new sequence, we delegate alphabet
+  construction to a function call.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:mt}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("mtf")
+  }
+  if *optA {
+	  alphabet := makeAlphabet(*optP)
+	  //<<Print alphabet, Ch.~\ref{ch:mt}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The alphabet is either DNA or the printing characters of the ASCII
+  set.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mt}>>=
+  func makeAlphabet(printing bool) []byte {
+	  al := make([]byte, 0)
+	  if printing {
+		  //<<Make printing alphabet, Ch.~\ref{ch:mt}>>
+	  } else {
+		  //<<Make DNA alphabet, Ch.~\ref{ch:mt}>>
+	  }
+	  return al
+  }
+#+end_src
+#+begin_src latex
+  We iterate over all characters of the ASCII alphabet and store those
+  classified as printing.
+#+end_src
+#+begin_src go <<Make printing alphabet, Ch.~\ref{ch:mt}>>=
+  for i := 0; i < 128; i++ {
+	  if unicode.IsPrint(rune(i)) {
+		  al = append(al, byte(i))
+	  }
+  }
+#+end_src
+#+begin_src latex
+  For the DNA alphabet we just specify the four nucleotides.
+#+end_src
+#+begin_src go <<Make DNA alphabet, Ch.~\ref{ch:mt}>>=
+  al = append(al, byte('A'))
+  al = append(al, byte('C'))
+  al = append(al, byte('G'))
+  al = append(al, byte('T'))
+#+end_src
+#+begin_src latex
+  We import \ty{unicode}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
+  "unicode"
+#+end_src
+#+begin_src latex
+  We print the alphabet using a tab writer.
+#+end_src
+#+begin_src go <<Print alphabet, Ch.~\ref{ch:mt}>>=
+  w := tabwriter.NewWriter(os.Stdout, 1, 0, 2, ' ', 0)
+  for i, a := range alphabet {
+	  fmt.Fprintf(w, "%c\t%d\n", a, i)
+  }
+  w.Flush()
+#+end_src
+#+begin_src latex
+  We import \ty{tabwriter}, \ty{os}, and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
+  "text/tabwriter"
+  "os"
+  "fmt"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. Each file is scanned with the function \ty{scan}, which
+  takes as argument the decoding switch, \ty{-d}, and the type of alphabet.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:mt}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optD, *optP)
+#+end_src
+#+begin_src latex
+  Inside scan, we retrieve the decoding option and the alphabet
+  type. Then we declare an alphabet and go on to either decode or
+  encode the FASTA formatted input.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mt}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  dec := args[0].(bool)
+	  printing := args[1].(bool)
+	  var alphabet []byte
+	  if dec {
+		  //<<Decode, Ch.~\ref{ch:mt}>>
+	  } else {
+		  //<<Encode, Ch.~\ref{ch:mt}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  When decoding, we expect rows of blank-separated integers as input,
+  separated by FASTA headers.
+#+end_src
+#+begin_src go <<Decode, Ch.~\ref{ch:mt}>>=
+  var seq []byte
+  first := true
+  header := ""
+  sc := bufio.NewScanner(r)
+  for sc.Scan() {
+	  if sc.Text()[0] == '>' {
+		  //<<Deal with header in decoding, Ch.~\ref{ch:mt}>>
+	  } else {
+		  //<<Deal with data in decoding, Ch.~\ref{ch:mt}>>
+	  }
+  }
+  //<<Deal with last sequence in decoding, Ch.~\ref{ch:mt}>>
+#+end_src
+#+begin_src latex
+  We import \ty{bufio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
+  "bufio"
+#+end_src
+#+begin_src latex
+  The first header is just noted. Subsequent headers close a previous
+  sequence, so we print the sequence decoded thus far, print it, and
+  reset it.
+#+end_src
+#+begin_src go <<Deal with header in decoding, Ch.~\ref{ch:mt}>>=
+  alphabet = makeAlphabet(printing)
+  if first {
+	  first = false
+  } else {
+	  s := fasta.NewSequence(header, seq)
+	  fmt.Println(s)
+	  seq = seq[:0]
+  }
+  header = sc.Text()[1:] + " - decoded"
+#+end_src
+#+begin_src latex
+  We import \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  A row of data consists of comma- or blank-separated strings representing
+  integers. We convert them to actual integers and iterate over them.
+#+end_src
+#+begin_src go <<Deal with data in decoding, Ch.~\ref{ch:mt}>>=
+  str := strings.ReplaceAll(sc.Text(), ",", " ")
+  fields := strings.Fields(str)
+  for _, field := range fields {
+	  i, err := strconv.Atoi(field)
+	  if err != nil { log.Fatalf("can't convert %q", field) }
+	  r, err := decode(i, alphabet)
+	  if err == nil {
+		  seq = append(seq, r)
+	  } else { log.Fatalf(err.Error()) }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}, \ty{strconv}, and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
+  "strings"
+  "strconv"
+  "log"
+#+end_src
+#+begin_src latex
+  In the function \ty{decode}, we decode the string representing an
+  integer and rearrange the alphabet.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mt}>>=
+  func decode(k int, a []byte) (byte, error) {
+	  for i, c := range a {
+		  if i == k {
+			  copy(a[1:], a[:i])
+			  a[0] = c
+			  return c, nil
+		  }
+	  }
+	  return 0, fmt.Errorf("can't decode %d", k)
+  }
+#+end_src
+#+begin_src latex
+  We print the last sequence in the file.
+#+end_src
+#+begin_src go <<Deal with last sequence in decoding, Ch.~\ref{ch:mt}>>=
+  s := fasta.NewSequence(header, seq)
+  fmt.Println(s)
+  seq = seq[:0]
+#+end_src
+#+begin_src latex
+  We encode sequences in FASTA format and then print them.
+#+end_src
+#+begin_src go <<Encode, Ch.~\ref{ch:mt}>>=
+  sc := fasta.NewScanner(r)
+  var ns []int
+  for sc.ScanSequence() {
+	  seq := sc.Sequence()
+	  alphabet = makeAlphabet(printing)
+	  //<<Encode sequence, Ch.~\ref{ch:mt}>>
+	  //<<Print encoded sequence, Ch.~\ref{ch:mt}>>
+	  ns = ns[:0]
+  }
+#+end_src
+#+begin_src latex
+  We iterate over the residues (or characters) and encode each one as an integer.
+#+end_src
+#+begin_src go <<Encode sequence, Ch.~\ref{ch:mt}>>=
+  data := seq.Data()
+  for _, c := range data {
+	  i, err := encode(c, alphabet)
+	  if err == nil {
+		  ns = append(ns, i)
+	  } else { log.Fatalf(err.Error()) }
+  }
+#+end_src
+#+begin_src latex
+  We encode a byte into an integer. If we can't find the character
+  submitted, we throw an error.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mt}>>=
+  func encode(c byte, a []byte) (int, error) {
+	  for i, x := range a {
+		  if x == c {
+			  copy(a[1:], a[:i])
+			  a[0] = c
+			  return i, nil
+		  }
+	  }
+	  return -1, fmt.Errorf("can't encode %q", c)
+  }
+#+end_src
+#+begin_src latex
+  We print an encoded sequence as a FASTA header followed by rows of at
+  most 30 integers separated by blanks.
+#+end_src
+#+begin_src go <<Print encoded sequence, Ch.~\ref{ch:mt}>>=
+  fmt.Printf(">%s - mtf\n", seq.Header())
+  ll := 30
+  n := len(ns)
+  for i := 0; i < n; i += ll {
+	  for j := 0; j < n && j < ll; j++ {
+		  if j > 0 { fmt.Printf(" ") }
+		  fmt.Printf("%d", ns[i+j])
+	  }
+	  fmt.Printf("\n")
+  }
+#+end_src
+#+begin_src latex
+  We've finished writing \ty{mtf}, let's test it.
+  \section*{Testing}
+  The outline of our testing code contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<mtf_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:mt}>>
+  )
+  func TestMtf(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:mt}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct the tests and run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:mt}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:mt}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:mt}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:mt}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We run two tests, one for encoding, the second for decoding. The input
+  for these tests in in files \ty{t1.fasta} and \ty{t2.fasta}.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:mt}>>=
+  test := exec.Command("./mtf", "t1.fasta")
+  tests = append(tests, test)
+  test = exec.Command("./mtf", "-d", "t2.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  When running a test, we compare the result we get with the result we
+  want, which is stored in \ty{r1.fasta} and \ty{r2.fasta}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:mt}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("can't run %q", test) }
+  f := "r" + strconv.Itoa(i+1) + ".fasta"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("can't open %q", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:mt}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src
