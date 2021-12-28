@@ -7,5 +7,7 @@ github.com/evolbioinf/fasta v0.0.0-20211125081250-489cff0f4d5d h1:EOkzTqfTeNlU3o
 github.com/evolbioinf/fasta v0.0.0-20211125081250-489cff0f4d5d/go.mod h1:1bD5OMlu85gdxSDr74kxUElPjLc/EVTzkRw2UT+FMhg=
 github.com/evolbioinf/kt v0.0.0-20211009095210-0570fa6c6413 h1:Pxu0AcHQGLYZxts9Bp6dcY3DDiLdpc5XICwWJ4EWzNY=
 github.com/evolbioinf/kt v0.0.0-20211009095210-0570fa6c6413/go.mod h1:qY30rgg2ERi/z3kkooYu9Cbb+7sLNfoFQfyaS12PbBs=
-github.com/evolbioinf/pal v0.0.0-20211222080637-265ee98e30cb h1:L4fZzcePbqAAHSc0/flc0LlPPhlZ14mY10ccGSGMVNo=
-github.com/evolbioinf/pal v0.0.0-20211222080637-265ee98e30cb/go.mod h1:VzU3V2L2+XH52cL0nInruh0OKP6TsK8nUqXp3J0YUHI=
+github.com/evolbioinf/pal v0.0.0-20211222112944-125eaca8b33f h1:6JpKz4WHNnMAqukRig9a9xD3V4vr9MNA62Pjtd7HeQU=
+github.com/evolbioinf/pal v0.0.0-20211222112944-125eaca8b33f/go.mod h1:VzU3V2L2+XH52cL0nInruh0OKP6TsK8nUqXp3J0YUHI=
+github.com/evolbioinf/pal v0.0.0-20211223180741-9b553df2be69 h1:WT2ay7W1ZeSHJsARrpkhXAcsBcqt+rcRAX+SQiI/4eo=
+github.com/evolbioinf/pal v0.0.0-20211223180741-9b553df2be69/go.mod h1:VzU3V2L2+XH52cL0nInruh0OKP6TsK8nUqXp3J0YUHI=
