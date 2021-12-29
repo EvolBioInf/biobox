@@ -39,6 +39,7 @@ doc/pam.tex
 doc/plotLine.tex
 doc/plotSeg.tex
 doc/plotTree.tex
+doc/pps.tex
 doc/randomizeSeq.tex
 doc/ranDot.tex
 doc/ranseq.tex
@@ -87,6 +88,7 @@ pam/pam
 plotLine/plotLine
 plotSeg/plotSeg
 plotTree/plotTree
+pps/pps
 randomizeSeq/randomizeSeq
 ranDot/ranDot
 ranseq/ranseq

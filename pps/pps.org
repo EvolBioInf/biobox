@@ -1,0 +1,366 @@
+#+begin_src latex
+  \section*{Introduction}
+  The program \ty{pps} prints polymorphic sites. It reads one or more
+  sets of aligned sequences and for each set prints the polymorphic
+  positions and residues in the alignment. For example,
+  Figure~\ref{fig:pm}A shows the alignment of two DNA sequences, the
+  first is four bp long, the second five. \ty{pps} turns this into the
+  three FASTA entries shown in Figure~\ref{fig:pm}B. The first entry
+  lists the two polymorphic positions, the next two the polymorphic
+  residues in the two sequences.
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{c|c}
+	\textbf{A} & \textbf{B}\\
+	\begin{minipage}{1cm}
+  \begin{verbatim}
+  >S1
+  AC-GT
+  >S2
+  AGGGT
+  \end{verbatim}                
+	\end{minipage}
+	&
+	\begin{minipage}{2.5cm}
+  \begin{verbatim}
+  >Positions (2)
+  2 3
+  >S1 - polymorphic
+  C-
+  >S2 - polymorphic
+  GG
+  \end{verbatim}
+	\end{minipage}
+      \end{tabular}
+    \end{center}
+    \caption{An alignment of two sequences (\textbf{A}) is transformed
+      by \ty{pps} to its polymorphic sites (\textbf{B}).}\label{fig:pm}
+  \end{figure}
+
+  There are two types of polymorphisms, gaps and mutations. By default,
+  \ty{pps} extracts them all, but the user can exclude gaps.
+
+  \section*{Implementation}
+  The outline of our implementation of \ty{pps} contains hooks for
+  imports, functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<pps.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:pp}>>
+  )
+  //<<Functions, Ch.~\ref{ch:pp}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:pp}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:pp}>>=
+  //<<Set usage, Ch.~\ref{ch:pp}>>
+  //<<Declare options, Ch.~\ref{ch:pp}>>
+  //<<Parse options, Ch.~\ref{ch:pp}>>
+  //<<Parse input files, Ch.~\ref{ch:pp}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{pps}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:pp}>>=
+  u := "pps [-h] [option]... [foo.fasta]..."
+  p := "Extract polymorphic sites from alignment."
+  e := "pps foo.fasta | getSeq -c Pos"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pp}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  There are three options, the version, \ty{-v}, the line length,
+  \ty{-l}, and whether we exclude gaps (\ty{-g}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:pp}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optL = flag.Int ("l", fasta.DefaultLineLength,
+	  "line length")
+  var optG = flag.Bool("g", false, "exclude gaps")
+#+end_src
+#+begin_src latex
+  We import \ty{flag} and \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pp}>>=
+  "flag"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v} as this ends \ty{pps}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:pp}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("pps")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pp}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. Each of these is parsed with the function \ty{scan},
+  which takes as argument the line length and whether we exclude gaps.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:pp}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optL, *optG)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the line length by type assertion,
+  collect all sequences in the stream, find the polymorphic sites, and
+  print them.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:pp}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  ll := args[0].(int)
+	  exclGaps := args[1].(bool)
+	  //<<Collect sequences, Ch.~\ref{ch:pp}>>
+	  //<<Find polymorphic sites, Ch.~\ref{ch:pp}>>
+	  //<<Print polymorphic sites, Ch.~\ref{ch:pp}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pp}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  We iterate over the sequences using a scanner and collect them into a
+  slice of sequences, the alignment. Once collected, we check the alignment.
+#+end_src
+#+begin_src go <<Collect sequences, Ch.~\ref{ch:pp}>>=
+  al := make([]*fasta.Sequence, 0)
+  sc := fasta.NewScanner(r)
+  for sc.ScanSequence() {
+	  al = append(al, sc.Sequence())
+  }
+  //<<Check alignment, Ch.~\ref{ch:pp}>>
+#+end_src
+#+begin_src latex
+  If the sequences in the alignment don't all have the same length,
+  they cannot be aligned and we bail.
+#+end_src
+#+begin_src go <<Check alignment, Ch.~\ref{ch:pp}>>=
+  for i, _ := range al {
+	  if i > 0 {
+		  l1 := len(al[i].Data())
+		  l2 := len(al[i-1].Data())
+		  if l1 != l2 {
+			  log.Fatal("sequences not aligned")
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pp}>>=
+  "log"
+#+end_src
+#+begin_src latex
+  An alignment is an $m\times n$ matrix of residues. We store its
+  dimensions and allocate space for the polymorphic sites. Then we
+  identify all polymorphisms and remove the gaps, if desired.
+#+end_src
+#+begin_src go <<Find polymorphic sites, Ch.~\ref{ch:pp}>>=
+  m := len(al)
+  n := len(al[0].Data())
+  ps := make([]int, 0)
+  //<<Find all polymorphisms, Ch.~\ref{ch:pp}>>
+  if exclGaps {
+	  //<<Remove gaps, Ch.~\ref{ch:pp}>>
+  }
+#+end_src
+#+begin_src latex
+  We go through the $n$ columns of the alignment and compare its
+  residues to the residue in the top row. If they differ, we've found a
+  polymorphic site and move on to the next column.
+#+end_src
+#+begin_src go <<Find all polymorphisms, Ch.~\ref{ch:pp}>>=
+  for i := 0; i < n; i++ {
+	  c1 := al[0].Data()[i]
+	  for j := 1; j < m; j++ {
+		  c2 := al[j].Data()[i]
+		  if c1 != c2 {
+			  ps = append(ps, i)
+			  break
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We iterate over the polymorphic sites and remove those that contain a gap.
+#+end_src
+#+begin_src go <<Remove gaps, Ch.~\ref{ch:pp}>>=
+  var k, j int
+  for _, p := range ps {
+	  for k = 0; k < m; k++ {
+		  if al[k].Data()[p] == '-' { break }
+	  }
+	  if k == m {
+		  ps[j] = p
+		  j++
+	  }
+  }
+  ps = ps[:j]
+#+end_src
+#+begin_src latex
+  We print the positions followed by the residues. In both cases we
+  print a header followed by the remainder.
+#+end_src
+#+begin_src go <<Print polymorphic sites, Ch.~\ref{ch:pp}>>=
+  //<<Print header of positions, Ch.~\ref{ch:pp}>>
+  //<<Print positions, Ch.~\ref{ch:pp}>>
+  for _, s := range al {
+	  //<<Print header of residues, Ch.~\ref{ch:pp}>>
+	  //<<Print residues, Ch.~\ref{ch:pp}>>
+  }
+#+end_src
+#+begin_src latex
+  The header of the positions contains the number of polymorphic
+  sites. We distinguish singular and plural.
+#+end_src
+#+begin_src go <<Print header of positions, Ch.~\ref{ch:pp}>>=
+  fmt.Printf(">Position")
+  n = len(ps)
+  if n != 1 { fmt.Printf("s") }
+  fmt.Printf(" (%d)\n", n)
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pp}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We print the positions one line at a time. The positions are
+  one-based and we align them in columns using a tabwriter.
+#+end_src
+#+begin_src go <<Print positions, Ch.~\ref{ch:pp}>>=
+  w := tabwriter.NewWriter(os.Stdout, 1, 0, 1, ' ', 0)
+  for i := 0; i < n; i += ll {
+	  for j := 0; i+j < n && j < ll; j++ {
+		  if j > 0 { fmt.Fprintf(w, "\t") }
+		  fmt.Fprintf(w, "%d", ps[i+j] + 1)
+	  }
+	  fmt.Fprintf(w, "\n")
+  }
+  w.Flush()
+#+end_src
+#+begin_src latex
+  We import \ty{tabwriter} and \ty{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pp}>>=
+  "text/tabwriter"
+  "os"
+#+end_src
+#+begin_src latex
+  We print the header of the residues with a reminder that these are
+  just the polymorphic sites.
+#+end_src
+#+begin_src go <<Print header of residues, Ch.~\ref{ch:pp}>>=
+  fmt.Printf(">%s - polymorphic\n", s.Header())
+#+end_src
+#+begin_src latex
+  Like the positions, we print the residues one line at a time. 
+#+end_src
+#+begin_src go <<Print residues, Ch.~\ref{ch:pp}>>=
+  d := s.Data()
+  for i := 0; i < n; i += ll {
+	  for j := 0; i+j < n && j < ll; j++ {
+		  p := ps[i+j]
+		  fmt.Printf("%c", d[p])
+	  }
+	  fmt.Printf("\n")
+  }
+#+end_src
+
+#+begin_src latex
+  We've finished \ty{pps}, let's test it.
+  \section*{Testing}
+  The outline of our testing code contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<pps_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:pp}>>
+  )
+  func TestPps(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:pp}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests and then iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:pp}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:pp}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:pp}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pp}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct three tests, with gaps, without, and with custom line
+  length. The input is always the file \ty{hom.fasta}, which contains an
+  aligned region of \emph{Hominidae} mitochondrial genomes.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:pp}>>=
+  f := "hom.fasta"
+  test := exec.Command("./pps", f)
+  tests = append(tests, test)
+  test = exec.Command("./pps", "-g", f)
+  tests = append(tests, test)
+  test = exec.Command("./pps", "-l", "20", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  When we run a test, we compare the output we get with the output we
+  want, which is contained in files \ty{r1.fasta}, \ty{r2.fasta}, and
+  \ty{r3.fasta}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:pp}>>=
+  get, err := test.Output()
+  if err != nil {	t.Errorf("can't run %s", test) }
+  f = "r" + strconv.Itoa(i+1) + ".fasta"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("can't open %q", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pp}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src
