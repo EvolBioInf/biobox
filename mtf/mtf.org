@@ -363,15 +363,15 @@
   }
 #+end_src
 #+begin_src latex
-  We print an encoded sequence as a FASTA header followed by rows of at
-  most 30 integers separated by blanks.
+  We print an encoded sequence as a FASTA header followed by rows of
+  integers separated by blanks.
 #+end_src
 #+begin_src go <<Print encoded sequence, Ch.~\ref{ch:mt}>>=
   fmt.Printf(">%s - mtf\n", seq.Header())
-  ll := 30
+  ll := fasta.DefaultLineLength
   n := len(ns)
   for i := 0; i < n; i += ll {
-	  for j := 0; j < n && j < ll; j++ {
+	  for j := 0; i+j < n && j < ll; j++ {
 		  if j > 0 { fmt.Printf(" ") }
 		  fmt.Printf("%d", ns[i+j])
 	  }
