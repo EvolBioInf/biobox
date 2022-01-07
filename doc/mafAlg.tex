@@ -1,0 +1,16 @@
+\begin{algorithmic}[1]
+\REQUIRE $S$ \COMMENT{input sequence}
+\REQUIRE $\mathrm{lcp}$ \COMMENT{longest common prefix array of $S$}
+\REQUIRE $\mathrm{isa}$ \COMMENT{inverse suffix array of $S$}
+\REQUIRE $n$ \COMMENT{length of $S$}
+\ENSURE Match decomposition
+\STATE{$i\leftarrow 1$} \COMMENT{set index to first position in $S$}
+\STATE{$\mathrm{lcp}[n+1]\leftarrow 0$} \COMMENT{prevent out of bounds error}
+\WHILE{$i\le n$}
+   \STATE{$l_1\leftarrow \mathrm{lcp}[\mathrm{isa}[i]]$}
+   \STATE{$l_2\leftarrow \mathrm{lcp}[\mathrm{isa}[i]+1]$}
+   \STATE{$j\leftarrow i+\max(l_1,l_2,1)-1$}
+   \STATE{$\ty{reportMatchFactor}(S[i...j])$}
+   \STATE{$i\leftarrow j+1$}
+   \ENDWHILE
+\end{algorithmic}

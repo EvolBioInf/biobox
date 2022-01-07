@@ -1,0 +1,305 @@
+#+begin_src latex
+  \section*{Introduction}
+  When compressing a string, it is often split into longest repeated
+  substrings. For example, the sequence \ty{TACTA} splits into
+  \ty{TA.C.TA}. Notice that the unique character, \ty{C}, is treated as
+  if it was a repeated substring. We call these repeated substrings
+  \emph{match factors}.
+
+  To find the match factors, we traverse the $\mbox{lcp}$ array of the
+  input sequence. The trick is to do this in the order in which the
+  suffixes appear in the input. This is achieved using the inverse
+  suffix array
+  \[
+  \mbox{isa}[\mbox{sa}[i]]=i
+  \]
+  For each position in the sequence we look up the longest match
+  starting there, skip the match, and repeat. This procedure is
+  summarized in Algorithm~\ref{alg:maf}.
+  \begin{algorithm}
+    \caption{Computing the match factor decomposition.}\label{alg:maf}
+  \input{mafAlg}
+  \end{algorithm}
+
+  The program \ty{maf} reads a FASTA-formatted sequence and writes its
+  match factors. Alternatively, it just writes the number of match
+  factors.
+  \section*{Implementation}
+  The outline of \ty{maf} has hooks for imports, functions, and the
+  logic of the main function.
+#+end_src
+#+begin_src go <<maf.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:ma}>>
+  )
+  //<<Functions, Ch.~\ref{ch:ma}>>
+  func main() {
+	  //<<Main function, ch.~\ref{ch:ma}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, ch.~\ref{ch:ma}>>=
+  //<<Set usage, Ch.~\ref{ch:ma}>>
+  //<<Declare options, Ch.~\ref{ch:ma}>>
+  //<<Parse options, Ch.~\ref{ch:ma}>>
+  //<<Parse input files, Ch.~\ref{ch:ma}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{maf}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:ma}>>=
+  u := "maf [-h] [option]... [foo.fasta]..."
+  p := "Compute the match factors of a sequence."
+  e := "maf foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ma}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version, the user can request the number of factors,
+  rather than the actual factors.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:ma}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optN = flag.Bool("n", false, "print number of factors " +
+	  "instead of factors")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ma}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and first respond to \ty{-v}, as this stops the
+  program. Then we respond to \ty{-d}, the request for the number of
+  factors. The number of factors is printed in a table consisting of
+  four columns, accession, number of factors, number of residues, and
+  the number of factors per residue.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:ma}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("maf")
+  }
+  var w *tabwriter.Writer
+  if *optN {
+	  w = tabwriter.NewWriter(os.Stdout, 1, 0, 2, ' ' , 0)
+	  fmt.Fprintf(w, "#acc\tfactors\tresidues\t" +
+		  "factors/residues\n")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}, \ty{tabwriter}, \ty{os}, and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ma}>>=
+  "github.com/evolbioinf/biobox/util"
+  "text/tabwriter"
+  "os"
+  "fmt"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. They are parsed with the function \ty{scan}, which takes
+  as argument whether or not to print the number of factors and the tab
+  writer.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:ma}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, *optN, w)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan} we retrieve the \ty{-d} option and parse the
+  sequences. For each sequence, we prepare its factorization, factorize
+  it, and print the factorization.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:ma}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  printNum := args[0].(bool)
+	  w := args[1].(*tabwriter.Writer)
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  seq := sc.Sequence()
+		  //<<Prepare factorization, Ch.~\ref{ch:ma}>>
+		  //<<Factorize sequence, Ch.~\ref{ch:ma}>>
+		  //<<Print factorization, Ch.~\ref{ch:ma}>>
+	  }
+	  if printNum { w.Flush() }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ma}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  As shown in Algorithm~\ref{alg:maf}, the factorization relies on the
+  longest common prefix array, $\mbox{lcp}$, and the inverse suffix
+  array, $\mbox{isa}$, which we calculate from the suffix array,
+  $\mbox{sa}$.
+#+end_src
+#+begin_src go <<Prepare factorization, Ch.~\ref{ch:ma}>>=
+  t := seq.Data()
+  sa := esa.Sa(t)
+  isa := make([]int, len(sa))
+  lcp := esa.Lcp(t, sa)
+  lcp = append(lcp, 0)
+  for i, s := range sa {
+    isa[s] = i
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{esa}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ma}>>=
+  "github.com/evolbioinf/esa"
+#+end_src
+#+begin_src latex
+  We factorize the sequence into byte slices.
+#+end_src
+#+begin_src go <<Factorize sequence, Ch.~\ref{ch:ma}>>=
+  factors := make([][]byte, 0)
+  i := 0
+  for i < len(sa) {
+	  l1 := lcp[isa[i]]
+	  l2 := lcp[isa[i] + 1]
+	  j := i + max(max(l1, l2), 1)
+	  factors = append(factors, t[i:j])
+	  i = j
+  }
+#+end_src
+#+begin_src latex
+  We implement \ty{max}.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:ma}>>=
+  func max(i, j int) int {
+	  if i > j {
+		  return i
+	  }
+	  return j
+  }
+#+end_src
+#+begin_src latex
+  If we're asked to print the number of factors, we fill in one line of
+  the factors table consisting of accession, number of factors, number
+  of residues, and factors per residue. Otherwise, we construct the
+  factorized sequence and print it.
+#+end_src
+#+begin_src go <<Print factorization, Ch.~\ref{ch:ma}>>=
+  if printNum {
+	  n := len(factors)
+	  m := len(t)
+	  a := strings.Fields(seq.Header())[0]
+	  fmt.Fprintf(w, "%s\t%d\t%d\t%.3g\n", a, n,
+		  m, float64(n)/float64(m))
+  } else {
+	  var fs *fasta.Sequence
+	  //<<Construct factorized sequence, Ch.~\ref{ch:ma}>>
+	  fmt.Println(fs)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strings} and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ma}>>=
+  "strings"
+  "fmt"
+#+end_src
+#+begin_src latex
+  We construct the factorized sequence by concatenating the factors
+  separated by dots. We also append ``match factors'' to the header.
+#+end_src
+#+begin_src go <<Construct factorized sequence, Ch.~\ref{ch:ma}>>=
+  fd := make([]byte, 0)
+  n := len(factors)
+  for i := 0; i < n-1; i++ {
+	  fd = append(fd, factors[i]...)
+	  fd = append(fd, '.')
+  }
+  fd = append(fd, factors[n-1]...)
+  h := seq.Header() + " - match factors"
+  fs = fasta.NewSequence(h, fd)
+#+end_src
+#+begin_src latex
+  We've finished \ty{maf}, time to test it.
+
+  \section*{Testing}
+  Our code for testing \ty{maf} has hooks for imports and the testing
+  logic.
+#+end_src
+#+begin_src go <<maf_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:ma}>>
+  )
+
+  func TestMaf(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:ma}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests and iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:ma}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:ma}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:ma}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:ma}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct two tests, one for the factorization, the other for the
+  factor counting. Both run on the same input, 630 bp of the
+  \emph{Mycoplasma genitalium} genome contained in \ty{t.fasta}.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:ma}>>=
+  f := "t.fasta"
+  test := exec.Command("./maf", f)
+  tests = append(tests, test)
+  test = exec.Command("./maf", "-n", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  When running a test, we compare the results we get with the results we
+  want contained in files \ty{r1.txt} and \ty{r2.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:ma}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("can't run %q", test) }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  want = append(want, '\n')
+  if err != nil {	t.Errorf("can't open %q", f) }
+  if bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:ma}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

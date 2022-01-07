@@ -1,0 +1,2 @@
+#acc                      factors  residues  factors/residues
+gi|84626123|gb|L43967.2|  108      630       0.171

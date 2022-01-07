@@ -29,6 +29,7 @@ doc/histogram.tex
 doc/kerror.tex
 doc/keyMat.tex
 doc/midRoot.tex
+doc/maf.tex
 doc/mtf.tex
 doc/mum2plot.tex
 doc/mutator.tex
@@ -78,6 +79,7 @@ histogram/histogram
 kerror/kerror
 keyMat/keyMat
 midRoot/midRoot
+maf/maf
 mtf/mtf
 mum2plot/mum2plot
 mutator/mutator
