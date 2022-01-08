@@ -35,9 +35,9 @@
   A simple way to draw such data is to convert it to x/y
   coordinates with genes on the forward strand represented by rectangles
   above the zero line and genes on the reverse strand below, as shown
-  in Figure~\ref{fig:bw}B and plotted in Figure~\ref{fig:bw}C. The
-  program \ty{drawGenes} takes data like that in Figure~\ref{fig:bw}A
-  and converts it the x/y coordinates in Figure~\ref{fig:bw}B, ready
+  in Figure~\ref{fig:dg}B and plotted in Figure~\ref{fig:dg}C. The
+  program \ty{drawGenes} takes data like that in Figure~\ref{fig:dg}A
+  and converts it the x/y coordinates in Figure~\ref{fig:dg}B, ready
   for plotting.
 
   \section*{Implementation}

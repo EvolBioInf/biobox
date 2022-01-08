@@ -317,7 +317,7 @@
 #+end_src
 #+begin_src latex
   We construct two tests, which run on the test word used in
-  Figure~\ref{fig:bw} as input contained in \ty{t1.fasta} and as
+  Tabls~\ref{tab:bw} as input contained in \ty{t1.fasta} and as
   transformed input in \ty{t2.fasta}.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:bw}>>=
