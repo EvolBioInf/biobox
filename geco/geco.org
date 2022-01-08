@@ -1,0 +1,575 @@
+#+begin_src latex
+  \section*{Introduction}
+  Similar codons often specify similar amino acids. The extent to which
+  the genetic code is evolved to minimize chemical change can be
+  investigated by testing the hypothesis that amino acids are randomly
+  assigned to codons. In the program \ty{geco} we implement one version
+  of this idea, where the amino acids are shuffled between codon
+  groups~\cite{hai91:qua2}. So the natural code shown in
+  Figure~\ref{fig:gc}A might be shuffled into
+  Figure~\ref{fig:gc}B. Notice that the degeneracy classes remain
+  unchanged. For example, the three sixfold degenerate amino acids
+  leucine, serine, and arginine of the natural code in
+  Figure~\ref{fig:gc}A are relabeled lysine, asparagine, and tryptophane
+  in the shuffled code in Figure~\ref{fig:gc}B. The stop codon is the
+  only ``amino acid'' that always retains its position.
+
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{cc}
+	\textbf{A} & \textbf{B}\\
+	\input{gcTab1}
+	&
+	\input{gcTab2}
+      \end{tabular}
+    \end{center}
+    \caption{Natural genetic code (\textbf{A}) and a shuffled version
+      (\textbf{B}).}\label{fig:gc}
+  \end{figure}
+
+  The program \ty{geco} reads a file of amino acid properites, for
+  example the polarity values listed in Table~\ref{tab:geco}. It then
+  calculates the mean squared difference in polarity between the amino
+  acids in the given genetic code and the amino acids of all one-step
+  mutations. We call this mean squared difference $d$. \ty{geco} then
+  prints the natural genetic code and its $d$-value. It can also shuffle
+  the amino acids repeatedly and print the shuffled codes and their
+  $d$-values.
+
+  \begin{table}
+    \caption{Polarity values taken from Table 1 in~\cite{hai91:qua2}.}\label{tab:geco}
+    \begin{center}
+      \begin{tabular}{cc}
+	\begin{tabular}{c|c}
+	  amino acid & polarity\\\hline
+	  Ala &   7.0\\
+	  Arg &   9.1\\
+	  Asp &   13.0\\
+	  Asn &   10.0\\
+	  Cys &   4.8\\
+	  Glu &   12.5\\
+	  Gln &   8.6\\
+	  Gly &   7.9\\
+	  His &   8.4\\
+	  Ile &   4.9
+	\end{tabular}
+	&
+	\begin{tabular}{c|c}
+	  amino acid & polarity\\\hline
+	  Leu &   4.9\\
+	  Lys &   10.1\\
+	  Met &   5.3\\
+	  Phe &   5.0\\
+	  Pro &   6.6\\
+	  Ser &   7.5\\
+	  Thr &   6.6\\
+	  Trp &   5.2\\
+	  Tyr &   5.4\\
+	  Val &   5.6
+	\end{tabular}
+      \end{tabular}
+    \end{center}
+  \end{table}
+
+  \section*{Implementation}
+  The outline of \ty{geco} contains hooks for imports, types, methods,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<geco.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:gc}>>
+  )
+  //<<Types, Ch.~\ref{ch:gc}>>
+  //<<Methods, Ch.~\ref{ch:gc}>>
+  //<<Functions, Ch.~\ref{ch:gc}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:gc}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:gc}>>=
+  //<<Set usage, Ch.~\ref{ch:gc}>>
+  //<<Declare options, Ch.~\ref{ch:gc}>>
+  //<<Parse options, Ch.~\ref{ch:gc}>>
+  //<<Parse input files, Ch.~\ref{ch:gc}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{geco}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:gc}>>=
+  u := "geco [-h] [option]... property.dat"
+  p := "Explore the genetic code."
+  e := "geco -n 10000 polarity.dat | grep '^d'"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:gc}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version (\ty{-v}), we declare an option for the number
+  of iterations (\ty{-n}), and the seed of the random number generator,
+  (\ty{-s}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:gc}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optN = flag.Int("n", 0, "number of iterations")
+  var optS = flag.Int("s", 0, "seed of random number generator")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:gc}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and first respond to \ty{-v}, as this stops the
+  program. If the program carries out shuffling, we also seed the random
+  number generator.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:gc}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("geco")
+  }
+  if *optN > 0 {
+	  //<<Seed random number generator, Ch.~\ref{ch:gc}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go  <<Imports, Ch.~\ref{ch:gc}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The random number generator is either initialized with the seed the
+  user supplied, or with the current time.
+#+end_src
+#+begin_src go <<Seed random number generator, Ch.~\ref{ch:gc}>>=
+  seed := int64(*optS)
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  rand.Seed(seed)
+#+end_src
+#+begin_src latex
+  We import \ty{time} and \ty{rand}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:gc}>>=
+  "time"
+  "math/rand"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as the names of
+  input files. They are parsed with the function \ty{scan}, which takes
+  as parameters the number of iterations and the genetic code. We
+  construct the genetic code as a variable of type \ty{geneticCode}.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:gc}>>=
+  files := flag.Args()
+  gc := newGeneticCode()
+  clio.ParseFiles(files, scan, *optN, gc)
+#+end_src
+#+begin_src latex
+  The genetic code consists of five components:
+  \begin{enumerate}
+  \item a slice of codons
+  \item the genetic code, a map between strings representing codons and
+    integers representing amino acids
+  \item a map between codons and their one-step mutants; precomputing
+    them is the same work as computing them once for every shuffling
+  \item an integer slice to map from one amino acid integer to another;
+    by shuffling this array, we can later shuffle the amino acids
+    between codon classes.
+  \item a string slice to look up amino acid names
+  \end{enumerate}
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:gc}>>=
+  type geneticCode struct {
+	  codons []string
+	  mutants map[string][]string
+	  codon2int map[string]int
+	  int2int   []int
+	  int2aa    []string
+  }
+#+end_src
+#+begin_src latex
+  In \ty{newGeneticCode} we allocate the components of the genetic code
+  and construct it.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:gc}>>=
+  func newGeneticCode() *geneticCode {
+	  gc := new(geneticCode)
+	  gc.codons = make([]string, 0)
+	  gc.mutants = make(map[string][]string)
+	  gc.codon2int = make(map[string]int)
+	  gc.int2int = make([]int, 0)
+	  gc.int2aa = make([]string, 21)
+	  //<<Construct genetic code, Ch.~\ref{ch:gc}>>
+	  return gc
+  }
+#+end_src
+#+begin_src latex
+  We construct the five components of the genetic code, the slice of
+  codons, the mutants, the codon map, the integer array, and the amino
+  acid array.
+#+end_src
+#+begin_src go <<Construct genetic code, Ch.~\ref{ch:gc}>>=
+  //<<Construct codons, Ch.~\ref{ch:gc}>>
+  //<<Construct mutants, Ch.~\ref{ch:gc}>>
+  //<<Construct codon map, Ch.~\ref{ch:gc}>>
+  //<<Construct integer array, Ch.~\ref{ch:gc}>>
+  //<<Construct amino acid names, Ch.~\ref{ch:gc}>>
+#+end_src
+#+begin_src latex
+  We construct the codons in the order in which they appear in the
+  standard genetic code (Figure~\ref{fig:gc}A).
+#+end_src
+#+begin_src go <<Construct codons, Ch.~\ref{ch:gc}>>=
+  dna := "TCAG"
+  for i := 0; i < 4; i++ {
+	  for j := 0; j < 4; j++ {
+		  for k := 0; k < 4; k++ {
+			  codon := dna[i:i+1]
+			  codon += dna[j:j+1]
+			  codon += dna[k:k+1]
+			  gc.codons = append(gc.codons, codon)
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We iterate over the codons and construct the mutants for each. Since
+  strings are immutable character slices, we construct the mutant codons
+  using a byte slice.
+#+end_src
+#+begin_src go <<Construct mutants, Ch.~\ref{ch:gc}>>=
+  b := make([]byte, 3)
+  for _, codon := range gc.codons {
+	  mutants := make([]string, 0)
+	  //<<Mutate codon, Ch.~\ref{ch:gc}>>
+	  gc.mutants[codon] = mutants
+  }
+#+end_src
+#+begin_src latex
+  We construct the mutants for the given codon in a triple-nested loop.
+#+end_src
+#+begin_src go <<Mutate codon, Ch.~\ref{ch:gc}>>=
+  for i := 0; i < 3; i++ {
+	  for j := 0; j < 3; j++ { b[j] = codon[j] }
+	  for j := 0; j < 4; j++ {
+		  b[i] = dna[j]
+		  if b[i] != codon[i] {
+			  mutants = append(mutants, string(b))
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  To construct the codon map, we assign an integer to each amino
+  acid. The amino acids appear in the order in which they occur in the
+  standard genetic code, except for the stop codon, which encodes no
+  amino acid and is thus exempt from the analysis. Then we iterate
+  across the 64 codons we've just constructed and assign the
+  corresponding integer.
+#+end_src
+#+begin_src go <<Construct codon map, Ch.~\ref{ch:gc}>>=
+  aa := "FLSYCWPHQRIMTNKVADEG*"
+  ai := make(map[byte]int)
+  for i, a := range aa {
+	  ai[byte(a)] = i
+  }
+  aaTab := "FFLLSSSSYY**CC*W" +
+	  "LLLLPPPPHHQQRRRR" +
+	  "IIIMTTTTNNKKSSRR" +
+	  "VVVVAAAADDEEGGGG"
+  //<<Iterate over codons, Ch.~\ref{ch:gc}>>
+#+end_src
+#+begin_src latex
+  We iterate over the codons and map them to integers.
+#+end_src
+#+begin_src go <<Iterate over codons, Ch.~\ref{ch:gc}>>=
+  for i, codon := range gc.codons {
+	  gc.codon2int[codon] = ai[aaTab[i]]
+  }
+#+end_src
+#+begin_src latex
+  We map the 21 codons to their integers.
+#+end_src
+#+begin_src go <<Construct integer array, Ch.~\ref{ch:gc}>>=
+  for _, a := range aa {
+	  gc.int2int = append(gc.int2int, ai[byte(a)])
+  }
+#+end_src
+#+begin_src latex
+  We construct the array of three-letter amino acid names; notice the
+  stop codon is last, as above.
+#+end_src
+#+begin_src go <<Construct amino acid names, Ch.~\ref{ch:gc}>>=
+  names := []string{
+	  "Phe", "Leu", "Ser", "Tyr", "Cys",
+	  "Trp", "Pro", "His", "Gln", "Arg",
+	  "Ile", "Met", "Thr", "Asn", "Lys",
+	  "Val", "Ala", "Asp", "Glu", "Gly",
+	  "Ter"}
+  for i := 0; i < 21; i++ {
+	  gc.int2aa[i] = names[i]
+  }
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the arguments passed and read the input,
+  a map of amino acids and their properties. Then we carry out the
+  analysis.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:gc}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:gc}>>
+	  aap := make(map[string]float64)
+	  sc := bufio.NewScanner(r)
+	  for sc.Scan() {
+		  //<<Fill amino acid property map, Ch.~\ref{ch:gc}>>
+	  }
+	  //<<Carry out analysis, Ch.~\ref{ch:gc}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{bufio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:gc}>>=
+  "io"
+  "bufio"
+#+end_src
+#+begin_src latex
+  The line we just scanned is either a header starting with a hash or a
+  data line. We skip the header; a data line consists of two fields, the
+  amino acid, and its property value. We convert the property value from
+  string to number.
+#+end_src
+#+begin_src go <<Fill amino acid property map, Ch.~\ref{ch:gc}>>=
+  fields := strings.Fields(sc.Text())
+  if fields[0][0] == '#' { continue }
+  aa := fields[0]
+  x, err := strconv.ParseFloat(fields[1], 64)
+  if err != nil {
+	  log.Fatalf("can't convert %q", fields[1])
+  }
+  aap[aa] = x
+#+end_src
+#+begin_src latex
+  We import \ty{strings}, \ty{strconv}, and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:gc}>>=
+  "strings"
+  "strconv"
+  "log"
+#+end_src
+#+begin_src latex
+  We retrieve the two arguments, number of iterations and genetic code.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:gc}>>=
+  n := args[0].(int)
+  gc := args[1].(*geneticCode)
+#+end_src
+#+begin_src latex
+  In the analysis, we calculate $d$ and print it together with the
+  genetic code. This is either done once or repeatedly after shuffling.
+#+end_src
+#+begin_src go <<Carry out analysis, Ch.~\ref{ch:gc}>>=
+  if n == 0 {
+	  d := meanDiff(gc, aap)
+	  fmt.Printf("%sd: %.4g\n", gc, d)
+  } else {
+	  for i := 0; i < n; i++ {
+		  //<<Shuffle genetic code, Ch.~\ref{ch:gc}>>
+		  d := meanDiff(gc, aap)
+		  fmt.Printf("%sd: %.4g\n", gc, d)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:gc}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  To calculate the mean squared difference, $d$, we iterate over all
+  codons and check whether it's a stop codon, in which case we skip the
+  rest of the analysis. For all other codons, we retrieve the
+  corresponding amino acid and store its property. Then we iterate over
+  the mutants of the codon.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:gc}>>=
+  func meanDiff(gc *geneticCode, aap map[string]float64) float64 {
+	  var d, c float64
+	  for _, codon := range gc.codons {
+		  if gc.codon2int[codon] == 20 { continue }
+		  aa := gc.aa(codon)
+		  x := aap[aa]
+		  mutants := gc.mutants[codon]
+		  //<<Iterate over codon mutants, Ch.~\ref{ch:gc}>>
+	  }
+	  return d / c
+  }
+#+end_src
+#+begin_src latex
+  We implement the method \ty{aa} to look up the amino acid that
+  corresponds to a codon in three steps: look up its integer, map the
+  integer, and retrieve the amino acid corresponding to that integer.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:gc}>>=
+  func (g *geneticCode) aa(codon string) string {
+	  ai1 := g.codon2int[codon]
+	  ai2 := g.int2int[ai1]
+	  return g.int2aa[ai2]
+  }
+#+end_src
+#+begin_src latex
+  We iterate over the codon mutants and again skip the stop codon.
+#+end_src
+#+begin_src go <<Iterate over codon mutants, Ch.~\ref{ch:gc}>>=
+  for _, mutant := range mutants {
+	  if gc.codon2int[mutant] == 20 { continue }
+	  aa := gc.aa(mutant)
+	  y := aap[aa]
+	  d += (x-y) * (x-y)
+	  c++
+  }
+#+end_src
+#+begin_src latex
+  We implement the \ty{String} method to print the table holding the
+  genetic code. We format this table using a tab writer.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:gc}>>=
+  func (g *geneticCode) String() string {
+	  buf := new(bytes.Buffer)
+	  w := tabwriter.NewWriter(buf, 1, 0, 2, ' ', 0)
+	  //<<Print table header, Ch.~\ref{ch:gc}>>
+	  //<<Print table body, Ch.~\ref{ch:gc}>>
+	  w.Flush()
+	  return buf.String()
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{bytes} and \ty{tabwriter}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:gc}>>=
+  "bytes"
+  "text/tabwriter"
+#+end_src
+#+begin_src latex
+  The table header consists of the four nucleotides offset by one tab.
+#+end_src
+#+begin_src go <<Print table header, Ch.~\ref{ch:gc}>>=
+  dna := "TCAG"
+  for i := 0; i < 4; i++ {
+	  fmt.Fprintf(w, "\t %c", dna[i])
+  }
+  fmt.Fprint(w, "\n")
+#+end_src
+#+begin_src latex
+  We use another triple nested loop to generate the table body.
+#+end_src
+#+begin_src go <<Print table body, Ch.~\ref{ch:gc}>>=
+  for i := 0; i < 4; i++ {
+	  fmt.Fprintf(w, "%c", dna[i])
+	  for j := 0; j < 4; j++ {
+		  for k := 0; k < 4; k++ {
+			  c := dna[i:i+1] + dna[k:k+1] +
+				  dna[j:j+1]
+			  fmt.Fprintf(w, "\t%s", g.aa(c))
+		  }
+		  fmt.Fprintf(w, "\t%c\n", dna[j])
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The genetic code is shuffled by shuffling the first twenty entries in
+  the integer map---the twenty-first entry is the stop codon. That
+  leaves the position of the stop codon unchanged, as desired.
+#+end_src
+#+begin_src go <<Shuffle genetic code, Ch.~\ref{ch:gc}>>=
+  rand.Shuffle(20, func(i, j int) {
+	  gc.int2int[i], gc.int2int[j] =
+		  gc.int2int[j], gc.int2int[i]
+  })
+#+end_src
+#+begin_src latex
+  We're finished writing \ty{geco}, let's test it.
+
+  \section*{Testing}
+  The outline of our testing program has hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<geco_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:gc}>>
+  )
+  func TestGeco(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:gc}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests and then iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:gc}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:gc}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:gc}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:gc}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct two tests, the first without shuffling, the second with
+  two shuffling steps. When shuffling, we also seed the random number
+  generator to ensure predictable results. Both tests run on the
+  polarity data contained in \ty{polarity.dat}.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:gc}>>=
+  f := "polarity.dat"
+  test := exec.Command("./geco", f)
+  tests = append(tests, test)
+  test = exec.Command("./geco", "-n", "2", "-s", "13", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  When we run a test, we compare the results we get with the results we
+  want, which are contained in files \ty{r1.txt} and \ty{r2.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:gc}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("can't run %q", test) }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("can't open %q", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:gc}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

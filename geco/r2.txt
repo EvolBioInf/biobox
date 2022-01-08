@@ -1,0 +1,36 @@
+    T    C    A    G
+T  Pro  Ala  Phe  Gly  T
+   Pro  Ala  Phe  Gly  C
+   Gln  Ala  Ter  Ter  A
+   Gln  Ala  Ter  Met  G
+C  Gln  Ser  Glu  Ile  T
+   Gln  Ser  Glu  Ile  C
+   Gln  Ser  Asn  Ile  A
+   Gln  Ser  Asn  Ile  G
+A  Arg  Tyr  Asp  Ala  T
+   Arg  Tyr  Asp  Ala  C
+   Arg  Tyr  His  Ile  A
+   Trp  Tyr  His  Ile  G
+G  Lys  Val  Leu  Cys  T
+   Lys  Val  Leu  Cys  C
+   Lys  Val  Thr  Cys  A
+   Lys  Val  Thr  Cys  G
+d: 7.563
+    T    C    A    G
+T  Arg  Cys  Asp  His  T
+   Arg  Cys  Asp  His  C
+   Ser  Cys  Ter  Ter  A
+   Ser  Cys  Ter  Gly  G
+C  Ser  Tyr  Val  Trp  T
+   Ser  Tyr  Val  Trp  C
+   Ser  Tyr  Ile  Trp  A
+   Ser  Tyr  Ile  Trp  G
+A  Lys  Glu  Phe  Cys  T
+   Lys  Glu  Phe  Cys  C
+   Lys  Glu  Thr  Trp  A
+   Ala  Glu  Thr  Trp  G
+G  Leu  Gln  Met  Pro  T
+   Leu  Gln  Met  Pro  C
+   Leu  Gln  Asn  Pro  A
+   Leu  Gln  Asn  Pro  G
+d: 9.932

@@ -23,6 +23,7 @@ doc/drawGenes.tex
 doc/drawKt.tex
 doc/drawSt.tex
 doc/fasta2tab.tex
+doc/geco.tex
 doc/genTree.tex
 doc/getSeq.tex
 doc/histogram.tex
@@ -73,6 +74,7 @@ drawGenes/drawGenes
 drawKt/drawKt
 drawSt/drawSt
 fasta2tab/fasta2tab
+geco/geco
 genTree/genTree
 getSeq/getSeq
 histogram/histogram

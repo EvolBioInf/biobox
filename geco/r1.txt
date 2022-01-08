@@ -1,0 +1,18 @@
+    T    C    A    G
+T  Phe  Ser  Tyr  Cys  T
+   Phe  Ser  Tyr  Cys  C
+   Leu  Ser  Ter  Ter  A
+   Leu  Ser  Ter  Trp  G
+C  Leu  Pro  His  Arg  T
+   Leu  Pro  His  Arg  C
+   Leu  Pro  Gln  Arg  A
+   Leu  Pro  Gln  Arg  G
+A  Ile  Thr  Asn  Ser  T
+   Ile  Thr  Asn  Ser  C
+   Ile  Thr  Lys  Arg  A
+   Met  Thr  Lys  Arg  G
+G  Val  Ala  Asp  Gly  T
+   Val  Ala  Asp  Gly  C
+   Val  Ala  Glu  Gly  A
+   Val  Ala  Glu  Gly  G
+d: 5.194

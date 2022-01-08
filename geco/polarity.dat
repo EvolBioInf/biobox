@@ -1,0 +1,24 @@
+# Polar requirement taken from Table 1 in
+# Haig, D. and Hurst, L. D. (1991). A quantitative
+# measure of error minimization in the genetic code.
+# Journal of Molecular Evolution, 33:412-417.
+Ala	  7.0
+Arg	  9.1
+Asp	  13.0
+Asn	  10.0
+Cys	  4.8
+Glu	  12.5
+Gln	  8.6
+Gly	  7.9
+His	  8.4
+Ile	  4.9
+Leu	  4.9
+Lys	  10.1
+Met	  5.3
+Phe	  5.0
+Pro	  6.6
+Ser	  7.5
+Thr	  6.6
+Trp	  5.2
+Tyr	  5.4
+Val	  5.6
