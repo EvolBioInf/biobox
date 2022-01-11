@@ -60,7 +60,7 @@
 #+begin_src go <<Set usage, Ch.~\ref{ch:dw}>>=
   u := "drawf [-h] [option]..."
   p := "Draw Wright-Fisher population."
-  e := "drawf | neato"
+  e := "drawf | neato -T x11"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
