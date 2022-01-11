@@ -1,0 +1,429 @@
+#+begin_src latex
+  \section*{Introduction}
+  The Wright-Fisher model is a simple but widely used model of evolution
+  within populations. It consists of $n$ genes, which are passed between
+  generations by sampling with replacement. The program \ty{drawf} draws
+  the resulting lines of descent either tangled or untangled
+  (Figure~\ref{fig:dw}). To untangle the lines of descent, we reorder
+  the descendants according to their ancestors' position in the previous
+  generation. A special gene is the most recent common ancestor of the
+  population, which \ty{drawf} can mark in red, as shown in generation
+  $g_2$ in Figure~\ref{fig:dw}.
+
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{cc}
+	\textbf{A} & \textbf{B}\\
+	\scalebox{0.45}{\includegraphics{wfTangled}} &
+	\scalebox{0.45}{\includegraphics{wfUntangled}}
+      \end{tabular}
+    \end{center}
+    \caption{Tangled (\textbf{A}) and untangled (\textbf{B})
+      Wright-Fisher population; the red gene in generation $g_2$ is the
+      most recent common ancestor of the population.}\label{fig:dw}
+  \end{figure}
+
+  The Wright-Fisher population is written in the dot notation of the
+  graphviz package and visualized using the program \ty{neato}, also
+  part of graphviz.
+
+  \section*{Implementation}
+  The outline of \ty{drawf} has hooks for imports, types, and the logic
+  of the main function.
+#+end_src
+#+begin_src go <<drawf.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:dw}>>
+  )
+  //<<Types, Ch.~\ref{ch:dw}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:dw}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, run the simulation, and print the result.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:dw}>>=
+  //<<Set usage, Ch.~\ref{ch:dw}>>
+  //<<Declare options, Ch.~\ref{ch:dw}>>
+  //<<Parse options, Ch.~\ref{ch:dw}>>
+  //<<Run simulation, Ch.~\ref{ch:dw}>>
+  //<<Print simulation, Ch.~\ref{ch:dw}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{drawf}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:dw}>>=
+  u := "drawf [-h] [option]..."
+  p := "Draw Wright-Fisher population."
+  e := "drawf | neato"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dw}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare seven options, the number of genes, (\ty{-n}), the number
+  of generations (\ty{-g}), untangled lines of descent (\ty{-u}), the
+  seed for the random number generator (\ty{-s}), a scaling factor for
+  the plot (\ty{-f}), marked most recent common ancestor (\ty{-m}), and
+  the version (\ty{-v}). I found the default scaling factor of 0.4 by
+  trial and error.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:dw}>>=
+  var optN = flag.Int("n", 10, "number of genes")
+  var optG = flag.Int("g", 10, "number of generations")
+  var optU = flag.Bool("u", false, "untangled lines of descent")
+  var optS = flag.Int64("s", 0, "seed for random number generator")
+  var optF = flag.Float64("f", 0.4, "scaling factor for plot")
+  var optM = flag.Bool("m", false, "mark most recent common " +
+	  "ancestor")
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dw}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and first respond to the version, as this stops
+  the program. Then we construct the Wright-Fisher population, and seed
+  the random number generator.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:dw}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("drawf")
+  }
+  //<<Construct Wright-Fisher population, Ch.~\ref{ch:dw}>>
+  //<<Seed random number generator, Ch.~\ref{ch:dw}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dw}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  A Wright-Fisher population consists of genes. A gene has an ancestor,
+  a list of descendants, an ID, and a label. A gene can also be the most
+  recent common ancestor of the whole population. To find the most
+  recent common ancestor, we note the number of descendants in the
+  present.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:dw}>>=
+  type gene struct {
+	  a *gene
+	  d []*gene
+	  i int
+	  l string
+	  isMrca bool
+	  p int
+  }
+#+end_src
+#+begin_src latex
+  We construct the population as an $m\times n$ matrix of genes. At the
+  end we set the descendants in the present.
+#+end_src
+#+begin_src go <<Construct Wright-Fisher population, Ch.~\ref{ch:dw}>>=
+  m := *optG
+  n := *optN
+  wfp := make([][]*gene, m)
+  for i := 0; i < m; i++ {
+	  wfp[i] = make([]*gene, n)
+	  for j := 0; j < n; j++ {
+		  //<<Construct gene, Ch.~\ref{ch:dw}>>
+	  }
+  }
+  //<<Set descendants in the present, Ch.~\ref{ch:dw}>>
+#+end_src
+#+begin_src latex
+  A gene's ID is its column index, its label a string representation of
+  the row and column index separated by an underscore. The separator is
+  important because pairs of numbers with more than two digits are
+  indistinguishable without it. For example, $(11,1)$ differs from
+  $(1,11)$, but without a separator we'd write $111$ both times.
+#+end_src
+#+begin_src go <<Construct gene, Ch.~\ref{ch:dw}>>=
+  wfp[i][j] = new(gene)
+  wfp[i][j].d = make([]*gene, 0)
+  wfp[i][j].i = j
+  wfp[i][j].l = fmt.Sprintf("i%d_%d", i, j)
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dw}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  Initially, the only genes that have descendants in the present are the
+  genes in the present.
+#+end_src
+#+begin_src go <<Set descendants in the present, Ch.~\ref{ch:dw}>>=
+  genes := wfp[m-1]
+  for _, gene := range genes {
+	  gene.p = 1
+  }
+#+end_src
+#+begin_src latex
+  If the user provided a seed for the random number generator, we use
+  that, otherwise we use the current time.
+#+end_src
+#+begin_src go <<Seed random number generator, Ch.~\ref{ch:dw}>>=
+  seed := *optS
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  source := rand.NewSource(seed)
+  r := rand.New(source)
+#+end_src
+#+begin_src latex
+  We import \ty{time} and \ty{rand}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dw}>>=
+  "time"
+  "math/rand"
+#+end_src
+#+begin_src latex
+  In the simulation, each gene picks a random ancestor from the previous
+  generation. This ancestor has the current gene as one of its
+  descendants. If requested, we also determine the most recent common
+  ancestor.
+#+end_src
+#+begin_src go <<Run simulation, Ch.~\ref{ch:dw}>>=
+  for i := 1; i < m; i++ {
+	  for j := 0; j < n; j++ {
+		  p := r.Intn(n)
+		  a := wfp[i-1][p]
+		  a.d = append(a.d, wfp[i][j])
+		  wfp[i][j].a = a
+	  }
+  }
+  if *optM {
+	  //<<Find most recent common ancestor, Ch.~\ref{ch:dw}>>
+  }
+#+end_src
+#+begin_src latex
+  The most recent common ancestor is the first gene with all present
+  genes in its tree of descendants. To find it, we walk from the present
+  generation into the past and add the number of descendants of the
+  current gene to its ancestor. The most recent common ancestor is the
+  gene with as many descendants as the population size. We abandon the
+  search as soon as we've found it.
+#+end_src
+#+begin_src go <<Find most recent common ancestor, Ch.~\ref{ch:dw}>>=
+  found := false
+  for i := m-1; i > 0; i-- {
+	  for _, gene := range wfp[i] {
+		  gene.a.p += gene.p
+		  if gene.a.p == n {
+			  gene.a.isMrca = true
+			  found = true
+			  break
+		  }
+	  }
+	  if found { break }
+  }
+#+end_src
+#+begin_src latex
+  If the user requested untangled lines of descent, we untangle them.
+  Then we print the graph header. A Wright-Fisher population consists of
+  nodes and edges. We first print the nodes, then the edges. If so
+  desired, we mark the most recent common ancestor. This is done
+  \emph{after} the edges have been drawn to cover them with a nice red
+  dot, rather than one that intersects the ends of the edges. We end
+  with the graph footer.
+#+end_src
+#+begin_src go <<Print simulation, Ch.~\ref{ch:dw}>>=
+  if *optU {
+	  //<<Untangle lines of descent, Ch.~\ref{ch:dw}>>
+  }
+  //<<Print header, Ch.~\ref{ch:dw}>>
+  //<<Print nodes, Ch.~\ref{ch:dw}>>
+  //<<Print edges, Ch.~\ref{ch:dw}>>
+  if *optM {
+	  //<<Mark most recent common ancestor, Ch.~\ref{ch:dw}>>
+  }
+  //<<Print footer, Ch.~\ref{ch:dw}>>
+#+end_src
+#+begin_src latex
+  To untangle lines of descent, we walk from the past to the present and
+  always reorder the next generation according to its ancestors'
+  positions.
+#+end_src
+#+begin_src go <<Untangle lines of descent, Ch.~\ref{ch:dw}>>=
+  for i := 0; i < m-1; i++ {
+	  k := 0
+	  for j := 0; j < n; j++ {
+		  for _, d := range wfp[i][j].d {
+			  wfp[i+1][k] = d
+			  k++
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  In the header we first explain in a commend the graph's origin and how
+  to visualize it using \ty{neato}. Then we declare a directional graph.
+#+end_src
+#+begin_src go <<Print header, Ch.~\ref{ch:dw}>>=
+  fmt.Println("# Wright-Fisher population generated with drawf.")
+  fmt.Println("# Render with neato, e.g.")
+  fmt.Println("# $ neato -T x11 foo.dot")
+  fmt.Println("digraph g {")
+#+end_src
+#+begin_src latex
+  We declare the nodes as points and give them fixed positions using the
+  ``pos'' attribute with exclamation mark. Each row of genes starts with
+  a generation label. The last row of nodes are the gene IDs.
+#+end_src
+#+begin_src go <<Print nodes, Ch.~\ref{ch:dw}>>=
+  fmt.Println("\tnode [shape=point, penwidth=4.0];")
+  f := *optF
+  for i, genes := range wfp {
+	  fmt.Printf("\tg_%d[shape=plaintext,pos=\"%.4g,%.4g!\"];",
+		  i+1, 0.0, float64(m-i) * f)
+	  //<<Print row of nodes, Ch.~\ref{ch:bw}>>
+	  fmt.Printf("\n")
+  }
+  //<<Print gene IDs, Ch.~\ref{ch:dw}>>
+#+end_src
+#+begin_src latex
+  If a gene is the most recent common ancestor, we print it in red.
+#+end_src
+#+begin_src go <<Print row of nodes, Ch.~\ref{ch:bw}>>=
+  for j, gene := range genes {
+	  fmt.Printf("%s[pos=\"%.4g,%.4g!\"", gene.l,
+		  float64(j+1) * f, float64(m-i) * f)
+	  // if gene.isMrca {
+	  // 	fmt.Printf(",color=\"red\"")
+	  // }
+	  fmt.Printf("];")
+  }
+#+end_src
+#+begin_src latex
+  We render the gene IDs as $i\_1$, $i\_2$, and so on.
+#+end_src
+#+begin_src go <<Print gene IDs, Ch.~\ref{ch:dw}>>=
+  genes = wfp[m-1]
+  fmt.Println("\tnode [shape=plaintext]")
+  fmt.Printf("\t")
+  for i, gene := range genes {
+	  x := float64(i+1) * f
+	  fmt.Printf("%d[pos=\"%.4g,%.4g!\"];",
+		  gene.i+1, x, 0.0)
+  }
+  fmt.Printf("\n")
+#+end_src
+#+begin_src latex
+  For each gene we draw a line to its ancestor in the previous
+  generation. Edges are lines without arrowheads.
+#+end_src
+#+begin_src go <<Print edges, Ch.~\ref{ch:dw}>>=
+  fmt.Println("\tedge [arrowhead=none,penwidth=2.0];")
+  for i := 1; i < m; i++ {
+	  genes := wfp[i]
+	  fmt.Printf("\t")
+	  for _, g := range genes {
+		  fmt.Printf("%s->%s;",	g.l, g.a.l)
+	  }
+	  fmt.Printf("\n")
+  }
+#+end_src
+#+begin_src latex
+  We mark the most recent common ancestor in red.
+#+end_src
+#+begin_src go <<Mark most recent common ancestor, Ch.~\ref{ch:dw}>>=
+  for i, genes := range wfp {
+	  for j, gene := range genes {
+		  if gene.isMrca {
+			  fmt.Printf("mrca[pos=\"%.4g,%.4g!\"",
+				  float64(j+1) * f, float64(m-i) * f)
+			  fmt.Printf("shape=point,color=\"red\"];")
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The graph is closed by a curly bracket.
+#+end_src
+#+begin_src go <<Print footer, Ch.~\ref{ch:dw}>>=
+  fmt.Println("}")
+#+end_src
+#+begin_src latex
+  We're done with \ty{drawf}, let's test it.
+
+  \section*{Testing}
+  Our testing code has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<drawf_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:dw}>>
+  )
+  func TestDrawf(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:dw}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct the tests and then iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:dw}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:dw}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:dw}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dw}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We test untangling and marking.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:dw}>>=
+  test := exec.Command("./drawf", "-s", "4")
+  tests = append(tests, test)
+  test = exec.Command("./drawf", "-s", "4", "-u")
+  tests = append(tests, test)
+  test = exec.Command("./drawf", "-s", "4", "-m")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  For each tests we compare the result we get with the result we
+  want. The results we want are stored in files \ty{r1.txt},
+  \ty{r2.txt}, and \ty{r3.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:dw}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("can't run %q", test) }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("can't open %q", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dw}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

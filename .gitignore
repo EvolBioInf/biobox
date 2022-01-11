@@ -19,6 +19,7 @@ doc/bwt.tex
 doc/cchar.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
+doc/drawf.tex
 doc/drawGenes.tex
 doc/drawKt.tex
 doc/drawSt.tex
@@ -70,6 +71,7 @@ bwt/bwt
 cchar/cchar
 cutSeq/cutSeq
 dnaDist/dnaDist
+drawf/drawf
 drawGenes/drawGenes
 drawKt/drawKt
 drawSt/drawSt
