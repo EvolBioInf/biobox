@@ -1,0 +1,692 @@
+#+begin_src latex
+  \section*{Introduction}
+  Everybody has two parents, who have two parents each, our four
+  grandparents, who have two parents each, our eight great-grandparents,
+  and so on. In other words, the number of ancestors doubles in every
+  generation, which means we quickly share our ancestors with very many
+  people, in case you were ever tempted to brag about them. In fact, in
+  a population of $n$ individuals it only takes approximately
+  $\log_2(n)$ generations into the past until the first universal
+  ancestor appears, individuals everyone living today has in their
+  pedigree~\cite{roh04:mod}. Universal non-ancestors, that is,
+  individuals without any descendants in the present, often appear even
+  earlier.
+
+  For example, in Figure~\ref{fig:dgn}A we have males---the boxes, if
+  you like---and females---the ellipses---in each generation. Males and
+  females mate and leave descendants. The dots inside each individual
+  are their diploid genome. The edges connecting the dots show the lines
+  of descent of the maternal and paternal genomes. Notice that even
+  though we have two sexes in our model, there is no recombination.
+
+  The first non-ancestor marked in blue appears one generation in the
+  past, in $g_9$ or $b_1$. Its genes are not touched by any of the
+  criss-crossing lines of descent between the genes. One generation
+  further back we have the first universal ancestor in red. By
+  generation $b_7$, the green partial ancestors have disappeared. On
+  average this happens after $\approx 1.77\log_2(n)$
+  generations~\cite{roh04:mod}. Partial ancestors cannot be recreated,
+  so from this point back in time there are only universal ancestors and
+  no-ancestors, with the universal ancestors outnumbering the
+  no-ancestors~\cite{roh04:mod}.
+
+  Rather than tracing the ancestors of all genes, we can restrict our
+  attention to the genes of only one or a few individuals. For example,
+  in Figure~\ref{fig:dgn}B only the ancestors of the genes of individual
+  5 are traced, everything else is the same as in
+  Figure~\ref{fig:dgn}A. Notice that as soon as the partial ancestors
+  have disappeared, it makes no difference any more whether we are
+  tracing the descent of all genes or only of those of a single
+  individual.
+
+  The program \ty{drag} draws genealogies like those in
+  Figure~\ref{fig:dgn}. \ty{drag} writes genealogies in the dot notation
+  of the graphviz package. A genealogy can be rendered with \ty{neato},
+  which is also part of graphviz.
+
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{cc}
+	\textbf{A} & \textbf{B}\\
+	\input{dragFrag}\resizebox{0.475\textwidth}{!}{\includegraphics{dragAll}} &
+	\input{dragFrag}\resizebox{0.475\textwidth}{!}{\includegraphics{dragOne}}
+      \end{tabular}
+    \end{center}
+    \caption{Genealogy with genetic ancestry traced for all
+      individuals (\textbf{A}) or just one (\textbf{B}).}\label{fig:dgn}
+  \end{figure}
+
+  \section*{Implementation}
+  The outline of \ty{drag} has hooks for imports, types, and the logic
+  of the main function.
+#+end_src
+#+begin_src go <<drag.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:dgn}>>
+  )
+  //<<Types, Ch.~\ref{ch:dgn}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:dgn}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, construct the genealogy, and print it.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:dgn}>>=
+  //<<Set usage, Ch.~\ref{ch:dgn}>>
+  //<<Declare options, Ch.~\ref{ch:dgn}>>
+  //<<Parse options, Ch.~\ref{ch:dgn}>>
+  //<<Construct genealogy, Ch.~\ref{ch:dgn}>>
+  //<<Print genealogy, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{drag}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:dgn}>>=
+  u := "drag [-h] [option]..."
+  p := "Draw genealogy of diploid individuals."
+  e := "drag -t 4,6 | neato -T x11"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dgn}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version, we declare six options: number of generations
+  (\ty{-g}), number of individuals (\ty{-n}), trace the ancestry of a
+  set of individuals (\ty{-t}), a scaling factor for the plot (\ty{-f}),
+  just ancestor statistics instead of the graph (\ty{-a}), and the seed
+  for the random number generator (\ty{-s}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:dgn}>>=
+  var optV = flag.Bool("v", false, "print program option " +
+	  "other information")
+  var optG = flag.Int("g", 10, "number of generations")
+  var optN = flag.Int("n", 10, "number of individuals")
+  var optT = flag.String("t", "", "trace genealogy of " +
+	  "individuals, e.g. 3,4,5; -1 for all")
+  var optF = flag.Float64("f", 1.0, "scale factor for plot")
+  var optA = flag.Bool("a", false, "ancestor statistics")
+  var optS = flag.Int64("s", 0, "seed for random number generator")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dgn}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and first respond to \ty{-v} as this stops the
+  program. Then we extract the individuals to be traced and seed the
+  random number generator.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:dgn}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("drag")
+  }
+  var tr []int
+  if *optT != "" {
+	  //<<Extract individuals to be traced, Ch.~\ref{ch:dgn}>>
+  }
+  //<<Seed random number generator, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dgn}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  We either trace all individuals or a list of individuals we still need
+  to extract.
+#+end_src
+#+begin_src go <<Extract individuals to be traced, Ch.~\ref{ch:dgn}>>=
+  s := *optT
+  if s[0] == '-' {
+	  //<<Add all individuals, Ch.~\ref{ch:dgn}>>
+  } else {
+	  //<<Extract individuals, Ch.~\ref{ch:dgn}>>
+  }
+#+end_src
+#+begin_src latex
+  To add all individuals we store their names, $0,1...,n-1$. These names
+  double as the individuals' indexes in the present generation.
+#+end_src
+#+begin_src go <<Add all individuals, Ch.~\ref{ch:dgn}>>=
+  for i := 0; i < *optN; i++ {
+	  tr = append(tr, i)
+  }
+#+end_src
+#+begin_src latex
+  The list of individuals is comma-separated. The user enters
+  individuals as one-based numbers, but internally we use 0-based
+  indexes. So we subtract 1 from the numbers provided by the user.
+#+end_src
+#+begin_src go <<Extract individuals, Ch.~\ref{ch:dgn}>>=
+  fields := strings.Split(*optT, ",")
+  for _, field := range fields {
+	  i, err := strconv.Atoi(field)
+	  if err != nil {
+		  log.Fatalf("can't convert %q", field)
+	  }
+	  tr = append(tr, i-1)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}, \ty{strconv}, and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dgn}>>=
+  "strings"
+  "strconv"
+  "log"
+#+end_src
+#+begin_src latex
+  We seed the random number generator either from the user input or from
+  the current time.
+#+end_src
+#+begin_src go <<Seed random number generator, Ch.~\ref{ch:dgn}>>=
+  seed := *optS
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  rand.Seed(seed)
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dgn}>>=
+  "time"
+  "math/rand"
+#+end_src
+#+begin_src latex
+  A genealogy consists of individuals. An individual has two ancestors,
+  a number of descendants in the present, is either male or female,
+  holds its own name and the names of the ancestors of its two genes,
+  and may lie on a path to be drawn. It may also be a universal ancestor
+  or a non-ancestor.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:dgn}>>=
+  type indiv struct {
+	  a1, a2 *indiv
+	  p int
+	  isMale bool
+	  n, ag1, ag2 string
+	  isOnPath bool
+	  isUa, isNonUa bool
+  }
+#+end_src
+#+begin_src latex
+  The genealogy is an $m\times n$ population of individuals, where $m$
+  is the number of generations and $n$ the population size. We construct
+  it, pick ancestors, and trace individuals.
+#+end_src
+#+begin_src go <<Construct genealogy, Ch.~\ref{ch:dgn}>>=
+  m := *optG
+  n := *optN
+  pop := make([][]*indiv, m)
+  //<<Construct matrix, Ch.~\ref{ch:dgn}>>
+  //<<Pick ancestors, Ch.~\ref{ch:dgn}>>
+  //<<Count the descendants, Ch.~\ref{ch:dgn}>>
+  //<<Trace individuals, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  We iterate over the generations and allocate all individuals. We pick
+  the sex of an individual randomly and count the number of females per
+  generation to ensure both sexes are present. Initially all individuals
+  are female.
+#+end_src
+#+begin_src go <<Construct matrix, Ch.~\ref{ch:dgn}>>=
+  for i := 0; i < m; i++ {
+	  pop[i] = make([]*indiv, n)
+	  nf := n
+	  for j := 0; j < n; j++ {
+		  //<<Construct individual, Ch.~\ref{ch:dgn}>>
+	  }
+	  //<<Ensure both sexes present, Ch.~\ref{ch:dgn}>>
+  }
+#+end_src
+#+begin_src latex
+  An individual has a name, which we construct from its row and column
+  indexes. It also has a sex, which we pick randomly and then count the
+  females.
+#+end_src
+#+begin_src go <<Construct individual, Ch.~\ref{ch:dgn}>>=
+  pop[i][j] = new(indiv)
+  pop[i][j].n = fmt.Sprintf("i_%d_%d", i, j)
+  if rand.Float64() < 0.5 {
+	  pop[i][j].isMale = true
+	  nf--
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dgn}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  If the number of females is equal to zero, we switch a random
+  individual to female, if it is equal to $n$, we switch a random
+  individual to male.
+#+end_src
+#+begin_src go <<Ensure both sexes present, Ch.~\ref{ch:dgn}>>=
+  if nf == 0 {
+	  r := rand.Intn(n)
+	  pop[i][r].isMale = false
+  } else if nf == n {
+	  r := rand.Intn(n)
+	  pop[i][r].isMale = true
+  }
+#+end_src
+#+begin_src latex
+  We pick the two ancestors of each individual, except for the
+  individuals in the generation furthest back in time, generation 0. The
+  ancestors must be male and female.  From the ancestors we pick the
+  ancestral genes.
+#+end_src
+#+begin_src go <<Pick ancestors, Ch.~\ref{ch:dgn}>>=
+  for i := m -1; i > 0; i-- {
+	  for j := 0; j < n; j++ {
+		  pop[i][j].a1 = pop[i-1][rand.Intn(n)]
+		  pop[i][j].a2 = pop[i-1][rand.Intn(n)]
+		  for pop[i][j].a1.isMale == pop[i][j].a2.isMale {
+			  pop[i][j].a2 = pop[i-1][rand.Intn(n)]
+		  }
+		  //<<Pick ancestral genes, Ch.~\ref{ch:dgn}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The name of an ancestral gene is the name of the individual followed
+  by \ty{\_0} or \ty{\_1}, depending on which gene we picked.
+#+end_src
+#+begin_src go <<Pick ancestral genes, Ch.~\ref{ch:dgn}>>=
+  r := rand.Intn(2)
+  name := fmt.Sprintf("%s_%d", pop[i][j].a1.n, r)
+  pop[i][j].ag1 = name
+  r = rand.Intn(2)
+  name = fmt.Sprintf("%s_%d", pop[i][j].a2.n, r)
+  pop[i][j].ag2 = name
+#+end_src
+#+begin_src latex
+  We count the descendants. To begin with, we initialize the number of
+  descendants in the present, i. e. in generation $m-1$, to one. Then we
+  iterate over the individuals. For each one we add the number of its
+  descendants to that of its ancestor. Then we determine ancestor status
+  of all individuals.
+#+end_src
+#+begin_src go <<Count the descendants, Ch.~\ref{ch:dgn}>>=
+  for i := 0; i < n; i++ {
+	  pop[m-1][i].p = 1
+  }
+  for i := m-1; i > 0; i-- {
+	  for j := 0; j < n; j++ {
+		  pop[i][j].a1.p += pop[i][j].p
+		  pop[i][j].a2.p += pop[i][j].p
+	  }
+  }
+  //<<Determine ancestor status, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  Depending on its number of descendants in the present, an individual
+  can be universal ancestor or a non-ancestor, or neither.
+#+end_src
+#+begin_src go <<Determine ancestor status, Ch.~\ref{ch:dgn}>>=
+  for i := 0; i < m; i++ {
+	  for j := 0; j < n; j++ {
+		  if pop[i][j].p >= n {
+			  pop[i][j].isUa = true
+		  } else if pop[i][j].p == 0 {
+			  pop[i][j].isNonUa = true
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  To trace individuals, we initialize the paths formed by their lines of
+  descent and then complete them.
+#+end_src
+#+begin_src go <<Trace individuals, Ch.~\ref{ch:dgn}>>=
+  //<<Initialize paths, Ch.~\ref{ch:dgn}>>
+  //<<Complete paths, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  We initialize the paths in the present.
+#+end_src
+#+begin_src go <<Initialize paths, Ch.~\ref{ch:dgn}>>=
+  for _, t := range tr {
+	  pop[m-1][t].isOnPath = true
+	  pop[m-1][t].a1.isOnPath = true
+	  pop[m-1][t].a2.isOnPath = true
+  }
+#+end_src
+#+begin_src latex
+  We complete the paths from the second generation onward.
+#+end_src
+#+begin_src go <<Complete paths, Ch.~\ref{ch:dgn}>>=
+  for i := m-2; i > 0; i-- {
+	  for j := 0; j < n; j++ {
+		  if pop[i][j].isOnPath {
+			  pop[i][j].a1.isOnPath = true
+			  pop[i][j].a2.isOnPath = true
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We either print the ancestor statistics or the genealogy. For the
+  ancestor statistics, we determine them and then print them. For the
+  genealogy, we print the individuals, the genes, and the lines of
+  descent. These three graph elements are sandwiched by a graph header
+  and footer.
+#+end_src
+#+begin_src go <<Print genealogy, Ch.~\ref{ch:dgn}>>=
+  if *optA {
+	  //<<Determine ancestor statistics, Ch.~\ref{ch:dgn}>>
+	  //<<Print ancestor statistics, Ch.~\ref{ch:dgn}>>
+  } else {
+	  //<<Print graph header, Ch.~\ref{ch:dgn}>>
+	  //<<Print individuals, Ch.~\ref{ch:dgn}>>
+	  //<<Print genes, Ch.~\ref{ch:dgn}>>
+	  //<<Print lines of descent, Ch.~\ref{ch:dgn}>>
+	  //<<Print graph footer, Ch.~\ref{ch:dgn}>>
+  }
+#+end_src
+#+begin_src latex
+  There are two ancestor statistics we determine, time to the first
+  universal ancestor and time to the disappearance of partial ancestors.
+#+end_src
+#+begin_src go <<Determine ancestor statistics, Ch.~\ref{ch:dgn}>>=
+  //<<Determine time to first universal ancestor, Ch.~\ref{ch:dgn}>>
+  //<<Determine time to disappearance of partial ancestors, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  We walk from the first generation after the present into the past
+  until we find the first universal ancestor.
+#+end_src
+#+begin_src go <<Determine time to first universal ancestor, Ch.~\ref{ch:dgn}>>=
+  tua := 0
+  foundUa := false
+  for i := m-1; i > -1; i-- {
+	  tua++
+	  for j := 0; j < n; j++ {
+		  if pop[i][j].isUa {
+			  foundUa = true
+			  break
+		  }
+	  }
+	  if foundUa { break }
+  }
+#+end_src
+#+begin_src latex
+  Again, we walk from the first generation after the present into the
+  past. This time we count the partial ancestors in each
+  generation. Once this number drops to zero, we've found the extinction
+  point of the partial ancestors and we break.
+#+end_src
+#+begin_src go <<Determine time to disappearance of partial ancestors, Ch.~\ref{ch:dgn}>>=
+  tpa := 0
+  foundPa := false
+  for i := m-1; i > -1; i-- {
+	  npa := 0
+	  tpa++
+	  //<<Count partial ancestors, Ch.~\ref{ch:dgn}>>
+	  if npa == 0 {
+		  foundPa = true
+		  break
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We iterate over one generation and count the partial ancestors.
+#+end_src
+#+begin_src go <<Count partial ancestors, Ch.~\ref{ch:dgn}>>=
+  for j := 0; j < n; j++ {
+	  if !pop[i][j].isUa && !pop[i][j].isNonUa {
+		  npa++
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We print our two ancestor statistics, unless we didn't find them,
+  which we indicate by a 0.
+#+end_src
+#+begin_src go <<Print ancestor statistics, Ch.~\ref{ch:dgn}>>=
+  if !foundUa { tua = 0 }
+  if !foundPa { tpa = 0 }
+  m1 := "Generations to universal ancestor:  %d\n"
+  m2 := "Generations to no partial ancestor: %d\n"
+  fmt.Printf(m1, tua)
+  fmt.Printf(m2, tpa)
+#+end_src
+#+begin_src latex
+  The graph header consists of a comment and a graph declaration. In the
+  comment we explain the graph's origin and how to render it. Then we
+  declare a undirected graph.
+#+end_src
+#+begin_src go <<Print graph header, Ch.~\ref{ch:dgn}>>=
+  fmt.Println("# Genealogy generated with drag.")
+  fmt.Println("# Render with neato.")
+  fmt.Println("graph g {")
+#+end_src
+#+begin_src latex
+  We draw the individuals of a generation in one row. The row is flanked
+  by a forward counter of generations, $g_i$, and a backward counter,
+  $b_j$. We also label the individuals in the present.
+#+end_src
+#+begin_src go <<Print individuals, Ch.~\ref{ch:dgn}>>=
+  f := *optF
+  t := "%c_%d[shape=plaintext,pos=\"%.4g,%.4g!\"];"
+  for i := 0; i < m; i++ {
+	  y := float64(m-i) * f
+	  fmt.Printf("\t" + t, 'g', i+1, 0.0, y)
+	  for j := 0; j < n; j++ {
+		  in := pop[i][j]
+		  //<<Draw individual, Ch.~\ref{ch:dgn}>>
+	  }
+	  fmt.Printf(t + "\n", 'b', m-1-i, float64(n+1)*f, y)
+  }
+  //<<Label individuals, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  An individual has color, shape, and position.
+#+end_src
+#+begin_src go <<Draw individual, Ch.~\ref{ch:dgn}>>=
+  var c, s string
+  var x float64
+  //<<Determine color, Ch.~\ref{ch:dgn}>>
+  //<<Determine shape, Ch.~\ref{ch:dgn}>>
+  //<<Determine position, Ch.~\ref{ch:dgn}>>
+  tmpl := "%s[label=\"\",color=%s,shape=%s," +
+	  "style=filled,pos=\"%.4g,%.4g!\"];"
+  fmt.Printf(tmpl, in.n, c, s, x, y)
+#+end_src
+#+begin_src latex
+  Universal ancestors are salmon, universal non-ancestors light
+  blue, and partial ancestors light green.
+#+end_src
+#+begin_src go <<Determine color, Ch.~\ref{ch:dgn}>>=
+  c = "lightgreen"
+  if in.isUa {
+	  c = "salmon"
+  } else if in.isNonUa {
+	  c = "lightblue"
+  }
+#+end_src
+#+begin_src latex
+  Males are boxes, females ellipses.
+#+end_src
+#+begin_src go <<Determine shape, Ch.~\ref{ch:dgn}>>=
+  s = "ellipse"
+  if in.isMale {
+	  s = "box"
+  }
+#+end_src
+#+begin_src latex
+  We already know the $y$ coordinate, the $x$ coordinate is just the
+  scaled column index.
+#+end_src
+#+begin_src go <<Determine position, Ch.~\ref{ch:dgn}>>=
+  x = float64(j+1) * f
+#+end_src
+#+begin_src latex 
+  Individuals are labeled $i_1, i_2,...$.
+#+end_src
+#+begin_src go <<Label individuals, Ch.~\ref{ch:dgn}>>=
+  y := -0.0 * f
+  for i := 0; i < n; i++ {
+	  x := float64(i+1) * f
+	  fmt.Printf(t, 'i', i+1, x, y)
+  }
+#+end_src
+#+begin_src latex
+  Genes are points. For each individual, we calculate its position we
+  draw two genes nearby.
+#+end_src
+#+begin_src go <<Print genes, Ch.~\ref{ch:dgn}>>=
+  fmt.Printf("\tnode[shape=point,penwidth=4];\n")
+  for i := 0; i < m; i++ {
+	  fmt.Printf("\t")
+	  for j := 0; j < n; j++ {
+		  in := pop[i][j]
+		  //<<Calculate position of individual, Ch.~\ref{ch:dgn}>>
+		  //<<Draw first gene, Ch.~\ref{ch:dgn}>>
+		  //<<Draw second gene, Ch.~\ref{ch:dgn}>>
+	  }
+	  fmt.Printf("\n")
+  }
+#+end_src
+#+begin_src latex
+  As before, an individual's position is a function of its row and
+  column indexes.
+#+end_src
+#+begin_src go <<Calculate position of individual, Ch.~\ref{ch:dgn}>>=
+  x := float64(j+1) * f
+  y := float64(m-i) * f
+#+end_src
+#+begin_src latex
+  The first gene is 0.15 to the left of the hosting individual. Its name
+  is that of the hosting individual appended by \ty{\_0}.
+
+#+end_src
+#+begin_src go <<Draw first gene, Ch.~\ref{ch:dgn}>>=
+  name := in.n + "_0"
+  tmpl := "%s[pos=\"%.4g,%.4g!\"];"
+  fmt.Printf(tmpl, name, x-0.15, y)
+#+end_src
+#+begin_src latex
+  The second gene is 0.15 to the right of the host and its name ends in
+  \ty{\_1}.
+#+end_src
+#+begin_src go <<Draw second gene, Ch.~\ref{ch:dgn}>>=
+  name = in.n + "_1"
+  fmt.Printf(tmpl, name, x+0.15, y)
+#+end_src
+#+begin_src latex
+  For every individual on the path we draw the edges.
+#+end_src
+#+begin_src go <<Print lines of descent, Ch.~\ref{ch:dgn}>>=
+  fmt.Printf("edge[color=black]")
+  for i := 1; i < m; i++ {
+	  for j := 0; j < n; j++ {
+		  in := pop[i][j]
+		  if in.isOnPath {
+			  //<<Draw edges, Ch.~\ref{ch:dgn}>>
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  There are two edges per individual, one for each gene.
+#+end_src
+#+begin_src go <<Draw edges, Ch.~\ref{ch:dgn}>>=
+  fmt.Printf("\t%s_0--%s;", in.n, in.ag1)
+  fmt.Printf("%s_1--%s;\n", in.n, in.ag2)
+#+end_src
+#+begin_src latex
+  The graph is closed by a curly bracket.
+#+end_src
+#+begin_src go <<Print graph footer, Ch.~\ref{ch:dgn}>>=
+  fmt.Printf("}\n")
+#+end_src
+#+begin_src latex
+  We've finished \ty{drag}, let's test it.
+
+  \section*{Testing}
+  The outline of our test of \ty{drag} has hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<drag_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:dgn}>>
+  )
+
+  func TestDrag(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:dgn}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests and run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:dgn}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:dgn}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:dgn}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dgn}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct six tests. The first is without any options apart from
+  the seed for the random number generator. The second sets the number
+  of generations, the third the number of individuals, the fours traces
+  individuals 3 and 4, the fifth traces all individuals, and the sixth
+  prints the ancestor stats.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:dgn}>>=
+  test := exec.Command("./drag", "-s", "1")
+  tests = append(tests, test)
+  test = exec.Command("./drag", "-s", "1", "-g", "5")
+  tests = append(tests, test)
+  test = exec.Command("./drag", "-s", "1", "-n", "5")
+  tests = append(tests, test)
+  test = exec.Command("./drag", "-s", "1", "-t", "3,4")
+  tests = append(tests, test)
+  test = exec.Command("./drag", "-s", "1", "-t", "-1")
+  tests = append(tests, test)
+  test = exec.Command("./drag", "-s", "1", "-a")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  When running a test, we compare the result we get with the result we
+  want. The result we want is stored in one of the files \ty{r1.txt},
+  \ty{r2.txt}, and so on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:dgn}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("can't run %q", test) }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("can't open %q", f) }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:dgn}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

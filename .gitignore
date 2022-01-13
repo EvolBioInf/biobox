@@ -19,6 +19,7 @@ doc/bwt.tex
 doc/cchar.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
+doc/drag.tex
 doc/drawf.tex
 doc/drawGenes.tex
 doc/drawKt.tex
@@ -71,6 +72,7 @@ bwt/bwt
 cchar/cchar
 cutSeq/cutSeq
 dnaDist/dnaDist
+drag/drag
 drawf/drawf
 drawGenes/drawGenes
 drawKt/drawKt
@@ -116,6 +118,8 @@ watterson/watterson
 wrapSeq/wrapSeq
 
 # Miscellaneous
+drag/*.sh
+drag/*.awk
 drawKt/ktWrapper*
 drawKt/kt.tex
 ranDot/*.sh
