@@ -2,12 +2,10 @@ module github.com/evolbioinf/biobox/travTree
 
 go 1.17
 
-replace github.com/evolbioinf/biobox/newick => ../newick
-
 require (
-	github.com/evolbioinf/biobox/newick v0.0.0-00010101000000-000000000000
-	github.com/evolbioinf/biobox/util v0.0.0-20211119143205-2f134b51820d
+	github.com/evolbioinf/biobox/util v0.0.0-20220114073645-91e3eb1f5c74
 	github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c
+	github.com/evolbioinf/nwk v0.0.0-20211207083629-c5df2cc39f5d
 )
 
 require github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e // indirect

@@ -177,7 +177,7 @@
 #+begin_src go <<Functions, Ch.~\ref{ch:tt}>>=
   func scan(r io.Reader, args ...interface{}) {
 	  //<<Retrieve arguments, Ch.~\ref{ch:tt}>>
-	  sc := newick.NewScanner(r)
+	  sc := nwk.NewScanner(r)
 	  for sc.Scan() {
 		  //<<Dealing with first tree? Ch.~\ref{ch:tt}>>
 		  fmt.Fprint(out, "#Label\tParent\tDist.\tType\n")
@@ -188,11 +188,11 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{io}, \ty{newick}, and \ty{fmt}.
+  We import \ty{io}, \ty{nwk}, and \ty{fmt}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:tt}>>=
   "io"
-  "github.com/evolbioinf/biobox/newick"
+  "github.com/evolbioinf/nwk"
   "fmt"
 #+end_src
 #+begin_src latex
@@ -233,7 +233,7 @@
   row in the node table.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:tt}>>=
-  func inorder(v *newick.Node, w *tabwriter.Writer) {
+  func inorder(v *nwk.Node, w *tabwriter.Writer) {
 	  if v == nil { return }
 	  inorder(v.Child, w)
 	  //<<Determine node type, Ch.~\ref{ch:tt}>>
@@ -268,7 +268,7 @@
   We implement postorder traversal.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:tt}>>=
-  func postorder(v *newick.Node, w *tabwriter.Writer) {
+  func postorder(v *nwk.Node, w *tabwriter.Writer) {
 	  if v == nil { return }
 	  postorder(v.Child, w)
 	  postorder(v.Sib, w)
@@ -280,7 +280,7 @@
   The last traversal type we implement is preorder.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:tt}>>=
-  func preorder(v *newick.Node, w *tabwriter.Writer) {
+  func preorder(v *nwk.Node, w *tabwriter.Writer) {
 	  if v == nil { return }
 	  //<<Determine node type, Ch.~\ref{ch:tt}>>
 	  //<<Print row in node table, Ch.~\ref{ch:tt}>>

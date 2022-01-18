@@ -1,6 +1,8 @@
-github.com/evolbioinf/biobox/util v0.0.0-20211119143205-2f134b51820d h1:AqTeBUZUKpjdQZd9FxDhwpTcj/s8pANediikiI/beR0=
-github.com/evolbioinf/biobox/util v0.0.0-20211119143205-2f134b51820d/go.mod h1:17MTo94/LbSztH2mRy4o43PEquKPvfDVEm0N/hIjmsA=
+github.com/evolbioinf/biobox/util v0.0.0-20220114073645-91e3eb1f5c74 h1:v46aNQTmkunJTKdX822/PA9TYWEraej/fU/AlMeXNgQ=
+github.com/evolbioinf/biobox/util v0.0.0-20220114073645-91e3eb1f5c74/go.mod h1:17MTo94/LbSztH2mRy4o43PEquKPvfDVEm0N/hIjmsA=
 github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c h1:TkHWkaNNpQC+/HCKjAi85vXC8HC7py2YPMSBUOkGmkU=
 github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c/go.mod h1:Jh4QPiChVHZHe7fwj+xcSs6kUcQbQVzsd/ht3PIoaaU=
 github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e h1:P7BV6YKTRXTG3nAebzKBLVjNMdm5Rok/6IQYFY+QG1Q=
 github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e/go.mod h1:kPJhClPhTozhqGfmcFJVxhz0J1xX/yBvDa8FBTlxbm4=
+github.com/evolbioinf/nwk v0.0.0-20211207083629-c5df2cc39f5d h1:LctBuhajUZW2NoLVq8nfchJvcqozx5B69ED8Vy7MA2U=
+github.com/evolbioinf/nwk v0.0.0-20211207083629-c5df2cc39f5d/go.mod h1:AduknVpv3xviFarKiTVjKI73aA5fje7tY3k8ILXwB8I=
