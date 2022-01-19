@@ -784,13 +784,15 @@ st2 := a.start2
   }
 #+end_src
 #+begin_src latex
-  We add the GSL to cgo,
+  We add the GSL to cgo and make sure the build also works on macOS with
+  homebrew.
 #+end_src
 #+begin_src go <<Cgo, Ch.~\ref{ch:uti}>>=
-  #cgo LDFLAGS: -lgsl
+  #cgo CFLAGS: -I/opt/homebrew/include
+  #cgo LDFLAGS: -lgsl -lgslcblas -L/opt/homebrew/lib
 #+end_src
 #+begin_src latex
-  and include the header for the cumulative density functions.
+  We also include the header for the cumulative density functions.
 #+end_src
 #+begin_src go <<Includes, Ch.~\ref{ch:uti}>>=
   #include <gsl/gsl_cdf.h>

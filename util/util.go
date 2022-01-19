@@ -2,7 +2,8 @@
 package util
 
 /*
-#cgo LDFLAGS: -lgsl
+#cgo CFLAGS: -I/opt/homebrew/include
+#cgo LDFLAGS: -lgsl -lgslcblas -L/opt/homebrew/lib
 #include <gsl/gsl_cdf.h>
 */
 import "C"
