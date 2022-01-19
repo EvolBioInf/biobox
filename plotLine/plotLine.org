@@ -100,11 +100,12 @@
 #+end_src
 #+begin_src latex
   The user can opt for dots only or lines with dots instead just lines,
-  the default.
+  the default. She can also opt to write the R script to file.
 #+end_src
 #+begin_src go <<Declare plot type options, Ch.~\ref{ch:pl}>>=
   var optD = flag.Bool("d", false, "dots only")
   var optDD = flag.Bool("D", false, "dots with lines")
+  var optS = flag.String("s", "", "write R script to file")
 #+end_src
 #+begin_src latex
   The user can set the graphical device and the width and height of the
@@ -156,9 +157,10 @@
 #+end_src
 #+begin_src latex
   We collect the option values that require no, or only little, further
-  analysis, \ty{-x}, \ty{-y}, \ty{-H}, \ty{-w}, \ty{-d}, \ty{-D}, and
-  \ty{-p}. R takes plot height and width in inches, but \ty{plotLine}
-  works in cm. So we convert from cm to inch by dividing by 2.54.
+  analysis, \ty{-x}, \ty{-y}, \ty{-H}, \ty{-w}, \ty{-d}, \ty{-D},
+  \ty{-s}, and \ty{-p}. R takes plot height and width in inches, but
+  \ty{plotLine} works in cm. So we convert from cm to inch by dividing
+  by 2.54.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:pl}>>=
   args.Xlab = *optX
@@ -167,6 +169,7 @@
   args.Width = *optW / 2.54
   args.Dots = *optD
   args.DotsLines = *optDD
+  args.Script = *optS
   args.Ps = *optP
 #+end_src
 #+begin_src latex
@@ -175,8 +178,9 @@
 #+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
   Xlab, Ylab string
   Height, Width float64
-  Ps string
   Dots, DotsLines bool
+  Script string
+  Ps string
 #+end_src
 #+begin_src latex
   The \ty{-X} option contains the x-range as a string where start and
@@ -276,9 +280,10 @@
 #+end_src
 #+begin_src latex
   Inside \ty{scan}, we retrieve the variable \ty{args} by type
-  assertion, read the data, construct the R script, construct the R
-  command that runs the script, pipe the data into it, and run it. Then
-  we delete the R script again.
+  assertion, read the data, and construct the R script. If we're asked
+  to write the R script, we exit afterwards. Otherwise, we construct the
+  R command that runs the script, pipe the data into it, and run
+  it. Then we delete the R script again.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pl}>>=
   func scan(r io.Reader, a ...interface{}) {
@@ -347,10 +352,17 @@
   //<<Write script to file, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
-The script is written either to a unique file. 
+  The script is written either to a unique file or to the file requested
+  by the user.
 #+end_src
 #+begin_src go <<Open script file, Ch.~\ref{ch:pl}>>=
-  script, err := ioutil.TempFile("", "tmp_*.r")
+  var script *os.File
+  var err error
+  if args.Script == "" {
+	  script, err = ioutil.TempFile("", "tmp_*.r")
+  } else {
+	  script, err = os.Create(args.Script)
+  }
   if err != nil {
 	  log.Fatalf("can't create script file")
   }
@@ -363,7 +375,8 @@ The script is written either to a unique file.
   "io/ioutil"
 #+end_src
 #+begin_src latex
-  We write the script using a template.
+  We write the script using a template. If the user just requested the
+  script, we quit.
 #+end_src
 #+begin_src go <<Write script to file, Ch.~\ref{ch:pl}>>=
   tmpl := template.New("R-template")
@@ -371,6 +384,9 @@ The script is written either to a unique file.
   err = tmpl.Execute(script, args)
   if err != nil {
 	  log.Fatalf("can't run %q", tmpl.Name())
+  }
+  if args.Script != "" {
+	  os.Exit(0)
   }
 #+end_src
 #+begin_src latex
@@ -642,21 +658,20 @@ The script is written either to a unique file.
 #+end_src
 #+begin_src latex
   We prepare a set of tests and then run them. In each test we write the
-  output to a temporary postscript file, so that we can compare what we
-  get to what we want. When we're done testing, we remove the postscript
-  file again.
+  output to a temporary R script, so that we can compare what we get to
+  what we want. When we're done testing, we remove the R script again.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:pl}>>=
   var tests []*exec.Cmd
-  psf, err := ioutil.TempFile(".", "tmp_*.ps")
+  rf, err := ioutil.TempFile(".", "tmp_*.r")
   if err != nil { log.Fatal("can't open script file") }
-  ps := psf.Name()
+  r := rf.Name()
   //<<Prepare tests, Ch.~\ref{ch:pl}>>
   for i, test := range tests {
 	  //<<Run test, Ch.~\ref{ch:pl}>>
   }
-  err = os.Remove(ps)
-  if err != nil { log.Fatalf("can't delete %q", ps) }
+  err = os.Remove(r)
+  if err != nil { log.Fatalf("can't delete %q", r) }
 #+end_src
 #+begin_src latex
   We import \ty{os} and \ty{ioutil}.
@@ -683,17 +698,17 @@ The script is written either to a unique file.
   the first two columns of group g1.
 
   We begin testing by drawing a plot of each, then we concentrate on
-  \ty{test3.dat}. Every time the output we get is a postscript file,
-  which we can later compare with the output we want.
+  \ty{test3.dat}. Every time the output we get is an R file, which we
+  can later compare with the output we want.
 #+end_src
 #+begin_src go <<Test lines and dots, Ch.~\ref{ch:pl}>>=
-  test := exec.Command("./plotLine", "-p", ps, "test2.dat")
+  test := exec.Command("./plotLine", "-s", r, "test2.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps, "test3.dat")
+  test = exec.Command("./plotLine", "-s", r, "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps, "-d", "test3.dat")
+  test = exec.Command("./plotLine", "-s", r, "-d", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps, "-D", "test3.dat")
+  test = exec.Command("./plotLine", "-s", r, "-D", "test3.dat")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
@@ -706,13 +721,13 @@ The script is written either to a unique file.
   We label the axes individually and then both of them.
 #+end_src
 #+begin_src go <<Test axis labels, Ch.~\ref{ch:pl}>>=
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-x", "x", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-y", "y", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-x", "x", "-y", "y", "test3.dat")
   tests = append(tests, test)
 #+end_src
@@ -720,13 +735,13 @@ The script is written either to a unique file.
   We set the plot width, height, and both.
 #+end_src
 #+begin_src go <<Test plot size, Ch.~\ref{ch:pl}>>=
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-w", "6", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-H", "5", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-w", "6", "-H", "5", "test3.dat")
   tests = append(tests, test)
 #+end_src
@@ -734,13 +749,13 @@ The script is written either to a unique file.
   We set the x-axis to log-scale, the y-axis, and both of them.
 #+end_src
 #+begin_src go <<Test log-scaling, Ch.~\ref{ch:pl}>>=
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-l", "x", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-l", "y", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-l", "xy", "test3.dat")
   tests = append(tests, test)
 #+end_src
@@ -748,13 +763,13 @@ The script is written either to a unique file.
   We set a range for the x-axis, for the y-axis, and for both axes.
 #+end_src
 #+begin_src go <<Test ranges, Ch.~\ref{ch:pl}>>=
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-X", "0.1:10", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-Y", "0.2:100", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps, "-X", "0.1:10",
+  test = exec.Command("./plotLine", "-s", r, "-X", "0.1:10",
 	  "-Y", "0.2:100", "test3.dat")
   tests = append(tests, test)
 #+end_src
@@ -762,28 +777,28 @@ The script is written either to a unique file.
   We combine log-scaling and limits.
 #+end_src
 #+begin_src go <<Test combinations of log-scaling and ranges, Ch.~\ref{ch:pl}>>=
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-X", "0.1:10", "-l", "x", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-Y", "0.2:100", "-l", "x", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-X", "0.1:10", "-l", "xy", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-p", ps,
+  test = exec.Command("./plotLine", "-s", r,
 	  "-X", "0.1:10", "-Y", "0.2:100", "-l", "xy", "test3.dat")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
-  For each test we compare what we get in \ty{ps} with what we want
-  in \ty{results/r1.ps}, \ty{results/r2.ps}, and so on.
+  For each test we compare what we get in \ty{r} with what we want
+  in \ty{results/r1.r}, \ty{results/r2.r}, and so on.
 #+end_src
 #+begin_src go <<Run test, Ch.~\ref{ch:pl}>>=
   err := test.Run()
   if err != nil { log.Fatalf("can't run %q", test) }
-  get, err := ioutil.ReadFile(ps)
-  f := "results/r" + strconv.Itoa(i+1) + ".ps"
+  get, err := ioutil.ReadFile(r)
+  f := "results/r" + strconv.Itoa(i+1) + ".r"
   want, err := ioutil.ReadFile(f)
   if err != nil { log.Fatalf("can't open %q", f) }
   if !bytes.Equal(get, want) {
