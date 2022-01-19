@@ -83,10 +83,28 @@
   unrooted tree drawn like Figure~\ref{fig:phy}C. However, the user can
   enforce a rooted (\ty{-r}) or an unrooted (\ty{-u}) layout
   irrespective of the degree of the root.
-
-  The nodes in a Newick string may or may not be labeled. By default,
-  \ty{plotTree} draws the labels, but the user can opt to omit them
-  (\ty{-n}). The user can also choose to draw the tree to a postscript
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
+  var optV = flag.Bool("v", false, "print program version " +
+	  "and other information")
+  var optR = flag.Bool("r", false, "rooted tree (default input)")
+  var optU = flag.Bool("u", false, "unrooted tree (default input)")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  The nodes of a Newick string may or may not be labeled. By default,
+  \ty{plotTree} draws the labels, but the user can omit them (\ty{-n}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
+  var optN = flag.Bool("n", false, "no node labels (default input)")
+#+end_src
+#+begin_src latex
+The user can also choose to draw the tree to a postscript
   file instead of an x11 window (\ty{-p}), give the postscript plot a
   width (\ty{-w}) and a height (\ty{-H}), and set the margins as a
   function of the plot dimensions to accommodate leaf labels, which
@@ -95,24 +113,20 @@
   height (\ty{-r}). The scale itself can also be set (\ty{-s}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
-  var optR = flag.Bool("r", false, "rooted tree (default input)")
-  var optU = flag.Bool("u", false, "unrooted tree (default input)")
-  var optN = flag.Bool("n", false, "no node labels (default input)")
   var optP = flag.String("p", "",
 	  "postscript output file (default x11)")
-  var optW = flag.Float64("w", 0.0, "width of postscript plot in cm")
-  var optHH = flag.Float64("H", 0.0, "height of postscript plot in cm")
-  var optM = flag.Float64("m", 0.1, "margin as fraction of plot width and height")
-  var optRR = flag.Float64("R", 0.01, "raise scale label as fraction of plot height")
+  var optW = flag.Float64("w", 0.0, "width of postscript plot (cm)")
+  var optHH = flag.Float64("H", 0.0, "height of postscript plot (cm)")
+  var optM = flag.Float64("m", 0.1, "margin as fraction of plot size")
+  var optRR = flag.Float64("R", 0.01, "raise scale label as fraction" +
+	  "of plot height")
   var optS = flag.Float64("s", 0.0, "scale")
 #+end_src
 #+begin_src latex
-  We import \ty{flag}.
+  Finally, the user may opt to just print the R script and quit.
 #+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "flag"
+#+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
+  var optSS = flag.String("S", "", "write R script to file")
 #+end_src
 #+begin_src latex
   We parse the options and collect them in the variable \ty{opts}. We
@@ -131,6 +145,7 @@
   opts.Margin = *optM
   opts.RaiseScale = *optRR
   opts.Scale = *optS
+  opts.Script = *optSS
 #+end_src
 #+begin_src latex
   We define the \ty{opts} structure and add a hook for additional
@@ -144,6 +159,7 @@
 	  Ps string
 	  Width, Height, Margin float64
 	  RaiseScale, Scale float64
+	  Script string
 	  //<<Opts fields, Ch.~\ref{ch:pt}>>
   }
 #+end_src
@@ -858,19 +874,23 @@
   "path"
 #+end_src
 #+begin_src latex
-  To construct the R script, we open a temporary file and write the
-  script to it.
+  To construct the R script, we open a file and write the script to it.
 #+end_src
 #+begin_src go <<Construct R script, Ch.~\ref{ch:pt}>>=
-  //<<Open temporary script file, Ch.~\ref{ch:pt}>>
-  //<<Write script to temporary file, Ch.~\ref{ch:pt}>>
+  //<<Open script file, Ch.~\ref{ch:pt}>>
+  //<<Write script to file, Ch.~\ref{ch:pt}>>
 #+end_src
 #+begin_src latex
-  The temporary file has a unique name in the default directory for
-  temporary files.
+  The file either has a unique name or the name supplied by the user.
 #+end_src
-#+begin_src go <<Open temporary script file, Ch.~\ref{ch:pt}>>=
-  script, err := ioutil.TempFile("", "tmp_*.r")
+#+begin_src go <<Open script file, Ch.~\ref{ch:pt}>>=
+  var script *os.File
+  var err error
+  if options.Script == "" {
+	  script, err = ioutil.TempFile("", "tmp_*.r")
+  } else {
+	  script, err = os.Create(options.Script)
+  }
   if err != nil {
 	  log.Fatal("can't open temprary script file")
   }
@@ -885,12 +905,16 @@
 #+end_src
 #+begin_src latex
   We write the script by executing the template we passed into \ty{scan}
-  with the options as data source.
+  with the options as data source. If the user just required the script,
+  we exit at this point.
 #+end_src
-#+begin_src go <<Write script to temporary file, Ch.~\ref{ch:pt}>>=
+#+begin_src go <<Write script to file, Ch.~\ref{ch:pt}>>=
   err = tmpl.Execute(script, options)
   if err != nil {
 	  log.Fatal("can't write R-script")
+  }
+  if options.Script != "" {
+	  os.Exit(0)
   }
 #+end_src
 #+begin_src latex
@@ -991,22 +1015,22 @@
   }
 #+end_src
 #+begin_src latex
-  We construct a set of tests. In each test we compare the postscript
-  output we get with the precomputed postscript output we want. The
-  postscript output of the test runs is written to a unique temporary
-  file that we delete after we have iterated over the tests.
+  We construct a set of tests. In each test we compare the R output we
+  get with the precomputed R output we want. The R output of the test
+  runs is written to a unique temporary file that we delete after we
+  have iterated over the tests.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:pt}>>=
   var tests []*exec.Cmd
-  psf, err := ioutil.TempFile(".", "tmp_*.ps")
+  rf, err := ioutil.TempFile(".", "tmp_*.r")
   if err != nil { t.Error("can't open temp file") }
-  ps := psf.Name()
+  r := rf.Name()
   //<<Construct tests, Ch.~\ref{ch:pt}>>
   for i, test := range tests {
 	  //<<Run test, Ch.~\ref{ch:pt}>>
   }
-  err = os.Remove(ps)
-  if err != nil { t.Errorf("can't remove %q", ps) }
+  err = os.Remove(r)
+  if err != nil { t.Errorf("can't remove %q", r) }
 #+end_src
 #+begin_src latex
   We import \ty{exec}, \ty{ioutil}, and \ty{os}.
@@ -1023,26 +1047,26 @@
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:pt}>>=
   f := "newick.nwk"
-  test := exec.Command("./plotTree", "-r", "-p", ps, f)
+  test := exec.Command("./plotTree", "-r", "-S", r, f)
   tests = append(tests, test)
-  test = exec.Command("./plotTree", "-u", "-p", ps, f)
+  test = exec.Command("./plotTree", "-u", "-S", r, f)
   tests = append(tests, test)
-  test = exec.Command("./plotTree", "-r", "-p", ps, "-n", f)
+  test = exec.Command("./plotTree", "-r", "-S", r, "-n", f)
   tests = append(tests, test)
-  test = exec.Command("./plotTree", "-u", "-p", ps, "-n", f)
+  test = exec.Command("./plotTree", "-u", "-S", r, "-n", f)
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
   When we run a test, we compare the result we get to the result we
-  want. The results we want are stored in the files \ty{r1.ps},
-  \ty{r2.ps}, and so on.
+  want. The results we want are stored in the files \ty{r1.r},
+  \ty{r2.r}, and so on.
 #+end_src
 #+begin_src go <<Run test, Ch.~\ref{ch:pt}>>=
   err := test.Run()
   if err != nil { t.Errorf("couldn't run %q", test) }
-  get, err := ioutil.ReadFile(ps)
-  if err != nil { t.Errorf("couldn't open %q", ps) }
-  f := "r" + strconv.Itoa(i+1) + ".ps"
+  get, err := ioutil.ReadFile(r)
+  if err != nil { t.Errorf("couldn't open %q", r) }
+  f := "r" + strconv.Itoa(i+1) + ".r"
   want , err := ioutil.ReadFile(f)
   if err != nil { t.Errorf("couldn't open %q", f) }
   if !bytes.Equal(get, want) {
