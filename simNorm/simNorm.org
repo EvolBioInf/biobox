@@ -223,13 +223,13 @@
   to make it reproducible.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:sn}>>=
-  test := exec.Command("simNorm", "-s", "3")
+  test := exec.Command("./simNorm", "-s", "3")
   tests = append(tests, test)
-  test = exec.Command("simNorm", "-s", "3", "-i", "3")
+  test = exec.Command("./simNorm", "-s", "3", "-i", "3")
   tests = append(tests, test)
-  test = exec.Command("simNorm", "-s", "3", "-m", "10.1")
+  test = exec.Command("./simNorm", "-s", "3", "-m", "10.1")
   tests = append(tests, test)
-  test = exec.Command("simNorm", "-s", "3", "-d", "2.5")
+  test = exec.Command("./simNorm", "-s", "3", "-d", "2.5")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex

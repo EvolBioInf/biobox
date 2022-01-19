@@ -184,7 +184,7 @@
   with the result we want stored in \texttt{res1.fasta}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:ran}>>=
-  cmd := exec.Command("ranseq", "-s", "13")
+  cmd := exec.Command("./ranseq", "-s", "13")
   g, err := cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -207,7 +207,7 @@
   should \emph{differ} from that in \texttt{res1.fasta}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:ran}>>=
-  cmd = exec.Command("ranseq")
+  cmd = exec.Command("./ranseq")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -222,7 +222,7 @@
   time.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:ran}>>=
-  cmd = exec.Command("ranseq", "-s", "13", "-n", "2")
+  cmd = exec.Command("./ranseq", "-s", "13", "-n", "2")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -236,7 +236,7 @@
   As a final test, we change the GC-content.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:ran}>>=
-  cmd = exec.Command("ranseq", "-s", "13", "-g", "0.3")
+  cmd = exec.Command("./ranseq", "-s", "13", "-g", "0.3")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)

@@ -293,7 +293,7 @@
   comparison between what we get and what we want.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:num}>>=
-  cmd := exec.Command("numAl", "10", "10")
+  cmd := exec.Command("./numAl", "10", "10")
   g, err := cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -315,7 +315,7 @@
   We repeat the test top-down.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:num}>>=
-  cmd = exec.Command("numAl", "-t", "10", "10")
+  cmd = exec.Command("./numAl", "-t", "10", "10")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)

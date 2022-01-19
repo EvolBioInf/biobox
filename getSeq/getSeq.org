@@ -184,7 +184,7 @@
   sequences, Seq1, Seq2,..., Seq10. We begin by matching ``Seq1''.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:get}>>=
-  cmd := exec.Command("getSeq", "Seq1", "test.fasta")
+  cmd := exec.Command("./getSeq", "Seq1", "test.fasta")
   o, err := cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -217,7 +217,7 @@
   Now we retrieve ``Seq1'' alone. It is contained in \texttt{res2.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:get}>>=
-  cmd = exec.Command("getSeq", "1$", "test.fasta")
+  cmd = exec.Command("./getSeq", "1$", "test.fasta")
   o, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -232,7 +232,7 @@
   result is in \texttt{res3.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:get}>>=
-  cmd = exec.Command("getSeq", "[123]$", "test.fasta")
+  cmd = exec.Command("./getSeq", "[123]$", "test.fasta")
   o, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -246,7 +246,7 @@
   Finally, we test the complement option.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:get}>>=
-  cmd = exec.Command("getSeq", "-c", "[123]$",
+  cmd = exec.Command("./getSeq", "-c", "[123]$",
 	  "test.fasta")
   o, err = cmd.Output()
   if err != nil {

@@ -552,13 +552,13 @@
   different bit-value.
 #+end_src
 #+begin_src go <<Construct commands, Ch.~\ref{ch:pam}>>=
-  c := exec.Command("pam", "-n", "170", "pam1.txt")
+  c := exec.Command("./pam", "-n", "170", "pam1.txt")
   commands = append(commands, c)
-  c = exec.Command("pam", "-a", "aa.txt", "p170.txt")
+  c = exec.Command("./pam", "-a", "aa.txt", "p170.txt")
   commands = append(commands, c)
-  c = exec.Command("pam", "p170n.txt")
+  c = exec.Command("./pam", "p170n.txt")
   commands = append(commands, c)
-  c = exec.Command("pam", "-b", "0.3333", "p170n.txt")
+  c = exec.Command("./pam", "-b", "0.3333", "p170n.txt")
   commands = append(commands, c)
 #+end_src
 #+begin_src latex

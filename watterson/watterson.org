@@ -179,7 +179,7 @@
   what we want, which is stored in \texttt{res1.txt}
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:wat}>>=
-  cmd := exec.Command("watterson", "-n", "10", "-t", "20")
+  cmd := exec.Command("./watterson", "-n", "10", "-t", "20")
   g, err := cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -205,7 +205,7 @@
   we want in \texttt{res2.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:wat}>>=
-  cmd = exec.Command("watterson", "-n", "10", "-t", "20", "-a")
+  cmd = exec.Command("./watterson", "-n", "10", "-t", "20", "-a")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)

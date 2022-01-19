@@ -533,7 +533,7 @@
   the five options, so we construct six commands in total.
 #+end_src
 #+begin_src go <<Construct commands, Ch.~\ref{ch:shu}>>=
-  p := "shustring"
+  p := "./shustring"
   f := "test.fasta"
   c := exec.Command(p, f)
   commands = append(commands, c)

@@ -328,7 +328,7 @@
   we get with what we want, contained in \texttt{res1.fasta}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
-  cmd := exec.Command("cutSeq", "-r", "10-20", "test.fasta")
+  cmd := exec.Command("./cutSeq", "-r", "10-20", "test.fasta")
   g, err := cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -354,7 +354,7 @@
   Next, we cut two regions, 10--20 and 25--50.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
-  cmd = exec.Command("cutSeq", "-r", "10-20,25-50", "test.fasta")
+  cmd = exec.Command("./cutSeq", "-r", "10-20,25-50", "test.fasta")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -371,7 +371,7 @@
   And join them.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
-  cmd = exec.Command("cutSeq", "-j", "-r", "10-20,25-50", "test.fasta")
+  cmd = exec.Command("./cutSeq", "-j", "-r", "10-20,25-50", "test.fasta")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -389,7 +389,7 @@
   file. First, a single pair of coordinates.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
-  cmd = exec.Command("cutSeq", "-f", "coord1.txt", "test.fasta")
+  cmd = exec.Command("./cutSeq", "-f", "coord1.txt", "test.fasta")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -406,7 +406,7 @@
   Followed by two regions printed separately.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
-  cmd = exec.Command("cutSeq", "-f", "coord2.txt", "test.fasta")
+  cmd = exec.Command("./cutSeq", "-f", "coord2.txt", "test.fasta")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -423,7 +423,7 @@
   And finally, the two regions joined.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:cut}>>=
-  cmd = exec.Command("cutSeq", "-j", "-f", "coord2.txt", "test.fasta")
+  cmd = exec.Command("./cutSeq", "-j", "-f", "coord2.txt", "test.fasta")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)

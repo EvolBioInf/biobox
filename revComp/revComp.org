@@ -136,7 +136,7 @@
   get to what we want, which is stored in \texttt{res11.fasta}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:rev}>>=
-  cmd := exec.Command("revComp", "test.fasta")
+  cmd := exec.Command("./revComp", "test.fasta")
   g, err := cmd.Output()
   if err != nil {
 	  t.Errorf("coutdn't run %q\n", cmd)
@@ -161,7 +161,7 @@
   We repeat the test, only this time just compute the reverse.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:rev}>>=
-  cmd = exec.Command("revComp", "-r", "test.fasta")
+  cmd = exec.Command("./revComp", "-r", "test.fasta")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)

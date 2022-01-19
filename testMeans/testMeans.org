@@ -454,11 +454,11 @@
   \texttt{testMeans}, Student's, Welch's, and Monte-Carlo.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:tm}>>=
-  test := exec.Command("testMeans", "d1.txt", "d2.txt")
+  test := exec.Command("./testMeans", "d1.txt", "d2.txt")
   tests = append(tests, test)
-  test = exec.Command("testMeans", "-u", "d1.txt", "d2.txt")
+  test = exec.Command("./testMeans", "-u", "d1.txt", "d2.txt")
   tests = append(tests, test)
-  test = exec.Command("testMeans", "-s", "3", "-m", "1000",
+  test = exec.Command("./testMeans", "-s", "3", "-m", "1000",
 	  "d1.txt", "d2.txt")
   tests = append(tests, test)
 #+end_src

@@ -146,7 +146,7 @@
   \texttt{test.fasta} with what we want.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:rs}>>=
-  cmd := exec.Command("randomizeSeq", "-s", "13", "test.fasta")
+  cmd := exec.Command("./randomizeSeq", "-s", "13", "test.fasta")
   g, err := cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)

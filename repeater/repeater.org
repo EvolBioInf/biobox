@@ -883,15 +883,15 @@ func (n nodes) Swap(i, j int) { n[i], n[j] = n[j], n[i] }
   each of the four options.
 #+end_src
 #+begin_src go <<Construct test commands, Ch.~\ref{ch:rep}>>=
-  c := exec.Command("repeater", "test.fasta")
+  c := exec.Command("./repeater", "test.fasta")
   commands = append(commands, c)
-  c = exec.Command("repeater", "-m", "13", "test.fasta")
+  c = exec.Command("./repeater", "-m", "13", "test.fasta")
   commands = append(commands, c)
-  c = exec.Command("repeater", "-r", "test.fasta")
+  c = exec.Command("./repeater", "-r", "test.fasta")
   commands = append(commands, c)
-  c = exec.Command("repeater", "-p", "test.fasta")
+  c = exec.Command("./repeater", "-p", "test.fasta")
   commands = append(commands, c)
-  c = exec.Command("repeater", "-s", "test.fasta")
+  c = exec.Command("./repeater", "-s", "test.fasta")
   commands = append(commands, c)
 #+end_src
 #+begin_src latex

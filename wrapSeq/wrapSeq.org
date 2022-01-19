@@ -137,7 +137,7 @@
   identical to the input.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:wra}>>=
-  cmd := exec.Command("wrapSeq", "test.fasta")
+  cmd := exec.Command("./wrapSeq", "test.fasta")
   g, err := cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -159,7 +159,7 @@
   Now we wrap into lines of 100 nucleotides.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:wra}>>=
-  cmd = exec.Command("wrapSeq", "-l", "100", "test.fasta")
+  cmd = exec.Command("./wrapSeq", "-l", "100", "test.fasta")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -173,7 +173,7 @@
   We effectively repeat this by asking for unbroken lines.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:wra}>>=
-  cmd = exec.Command("wrapSeq", "-l", "0", "test.fasta")
+  cmd = exec.Command("./wrapSeq", "-l", "0", "test.fasta")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -187,7 +187,7 @@
   Finally, we wrap into 50 bp lines.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:wra}>>=
-  cmd = exec.Command("wrapSeq", "-l", "50", "test.fasta")
+  cmd = exec.Command("./wrapSeq", "-l", "50", "test.fasta")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)

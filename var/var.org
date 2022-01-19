@@ -176,7 +176,7 @@
   get is compared to the output we want in \texttt{res1.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:var}>>=
-  cmd := exec.Command("var", "data1.txt")
+  cmd := exec.Command("./var", "data1.txt")
   g, err := cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)
@@ -199,7 +199,7 @@
   \texttt{data[12].txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:var}>>=
-  cmd = exec.Command("var", "data1.txt", "data2.txt")
+  cmd = exec.Command("./var", "data1.txt", "data2.txt")
   g, err = cmd.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q\n", cmd)

@@ -225,7 +225,7 @@
   \texttt{r1.txt}, which we compare to what we get.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:nm}>>=
-  cmd := exec.Command("naiveMatcher", "ATTA",
+  cmd := exec.Command("./naiveMatcher", "ATTA",
 	  "dmAdhAdhdup.fasta", "dgAdhAdhdup.fasta")
   get, err := cmd.Output()
   if err != nil { t.Errorf("couldn't run %q\n", cmd) }
@@ -249,7 +249,7 @@
   in \texttt{r2.txt}
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:nm}>>=
-  cmd = exec.Command("naiveMatcher", "-p", "p.fasta",
+  cmd = exec.Command("./naiveMatcher", "-p", "p.fasta",
 	  "dmAdhAdhdup.fasta", "dgAdhAdhdup.fasta")
   get, err = cmd.Output()
   if err != nil { t.Errorf("couldn't run %q\n", cmd) }

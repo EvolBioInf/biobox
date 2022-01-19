@@ -278,7 +278,7 @@
   to be run, the list of patterns, the pattern file, and the input file.
 #+end_src
 #+begin_src go <<Construct commands, Ch.~\ref{ch:km}>>=
-  r := "keyMat"
+  r := "./keyMat"
   p := "ATTT,ATTC,AT,TG,TT"
   f := "patterns.fasta"
   i := "test.fasta"

@@ -596,15 +596,15 @@ if *optB < 0 {
   a small sample of primate mitochondrial DNA, \texttt{pr.fa}.
 #+end_src
 #+begin_src go <<Construct test commands, Ch.~\ref{ch:dna}>>=
-  c := exec.Command("dnaDist", "test.fa")
+  c := exec.Command("./dnaDist", "test.fa")
   tests = append(tests, c)
-  c = exec.Command("dnaDist", "-k", "test.fa")
+  c = exec.Command("./dnaDist", "-k", "test.fa")
   tests = append(tests, c)
-  c = exec.Command("dnaDist", "pr.fa")
+  c = exec.Command("./dnaDist", "pr.fa")
   tests = append(tests, c)
-  c = exec.Command("dnaDist", "-k", "pr.fa")
+  c = exec.Command("./dnaDist", "-k", "pr.fa")
   tests = append(tests, c)
-  c = exec.Command("dnaDist", "-b", "5", "-s", "3", "pr.fa")
+  c = exec.Command("./dnaDist", "-b", "5", "-s", "3", "pr.fa")
   tests = append(tests, c)
 #+end_src
 #+begin_src latex

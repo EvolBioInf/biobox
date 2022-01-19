@@ -596,11 +596,11 @@
   labeled nodes.
 #+end_src
 #+begin_src go <<Declare commands, Ch.~\ref{ch:dkt}>>=
-  c := exec.Command("drawKt", "ATTT", "ATTC", "AT", "TG", "TT")
+  c := exec.Command("./drawKt", "ATTT", "ATTC", "AT", "TG", "TT")
   commands = append(commands, c)
-  c = exec.Command("drawKt", "-t", "ATTT", "ATTC", "AT", "TG", "TT")
+  c = exec.Command("./drawKt", "-t", "ATTT", "ATTC", "AT", "TG", "TT")
   commands = append(commands, c)
-  c = exec.Command("drawKt", "-l", "ATTT", "ATTC", "AT", "TG", "TT")
+  c = exec.Command("./drawKt", "-l", "ATTT", "ATTC", "AT", "TG", "TT")
   commands = append(commands, c)
 
 #+end_src

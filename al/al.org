@@ -819,7 +819,7 @@ type coordinatesSlice []coordinate
   want in \texttt{res1.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
-  cmd := exec.Command("al", "-g", "-m", "BLOSUM62", "s1.fasta",
+  cmd := exec.Command("./al", "-g", "-m", "BLOSUM62", "s1.fasta",
 	  "s2.fasta")
   get, err := cmd.Output()
   if err != nil { t.Errorf("couldn't run %q\n", cmd) }
@@ -846,7 +846,7 @@ type coordinatesSlice []coordinate
   \texttt{res2.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
-  cmd = exec.Command("al", "-g", "dmAdhAdhdup.fasta",
+  cmd = exec.Command("./al", "-g", "dmAdhAdhdup.fasta",
 	  "dgAdhAdhdup.fasta")
   get, err = cmd.Output()
   if err != nil { t.Errorf("couldn't run %q\n", cmd) }
@@ -862,7 +862,7 @@ type coordinatesSlice []coordinate
   is stored in \texttt{res3.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
-  cmd = exec.Command("al", "-o", "o1.fasta", "o2.fasta")
+  cmd = exec.Command("./al", "-o", "o1.fasta", "o2.fasta")
   get, err = cmd.Output()
   if err != nil { t.Errorf("couldn't run %q\n", cmd) }
   want, err = ioutil.ReadFile("res3.txt")
@@ -876,7 +876,7 @@ type coordinatesSlice []coordinate
   default mode; this time we want \texttt{res4.txt}.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
-  cmd = exec.Command("al", "dmAdhAdhdup.fasta", "dgAdhAdhdup.fasta")
+  cmd = exec.Command("./al", "dmAdhAdhdup.fasta", "dgAdhAdhdup.fasta")
   get, err = cmd.Output()
   if err != nil { t.Errorf("couldn't run %q\n", cmd) }
   want, err = ioutil.ReadFile("res4.txt")
