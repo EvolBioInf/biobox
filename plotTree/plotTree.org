@@ -909,20 +909,30 @@
 #+end_src
 #+begin_src latex
   We pipe the segments into the R command via its standard input stream
-  using a goroutine. Labels are printed in double quotes.
+  using a goroutine. The Go routine signals via a channel it has
+  finished.
 #+end_src
 #+begin_src go <<Pipe segments into R command, Ch.~\ref{ch:pt}>>=
   stdin, err := cmd.StdinPipe()
   if err != nil { log.Fatalf("cannot run %q", cmd) }
+  done := make(chan struct{})
   go func() {
-	  for _, s := range segments {
-		  f := "%.3g %.3g %.3g %.3g %q %.3g %.3g %.3g\n"
-		  str := fmt.Sprintf(f,
-			  s.x1, s.y1, s.x2, s.y2, s.l, s.a, s.h, s.v)
-		  stdin.Write([]byte(str))
-	  }
-	  stdin.Close()
+	  //<<Write segments to stdin, Ch.~\ref{ch:pt}>>
+	  done <- struct{}{}
   }()
+#+end_src
+#+begin_src latex
+  We iterate over the segments and write them to the standard input
+  stream. Labels are printed in double quotes.
+#+end_src
+#+begin_src go <<Write segments to stdin, Ch.~\ref{ch:pt}>>=
+  for _, s := range segments {
+	  f := "%.3g %.3g %.3g %.3g %q %.3g %.3g %.3g\n"
+	  str := fmt.Sprintf(f,
+		  s.x1, s.y1, s.x2, s.y2, s.l, s.a, s.h, s.v)
+	  stdin.Write([]byte(str))
+  }
+  stdin.Close()
 #+end_src
 #+begin_src latex
   We import \ty{fmt}.
@@ -931,13 +941,15 @@
   "fmt"
 #+end_src
 #+begin_src latex
-  We run the R command and check for errors.
+  We run the R command and check for errors. Then we wait for the
+  command to finish before we go on to delete the R script
 #+end_src
 #+begin_src go <<Run R command, Ch.~\ref{ch:pt}>>=
   err = cmd.Run()
   if err != nil {
 	  log.Fatalf("can't run %q", cmd)
   }
+  <-done
 #+end_src
 #+begin_src latex
   All the trees have been printed, so we delete the R script.

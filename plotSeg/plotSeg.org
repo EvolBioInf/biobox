@@ -446,21 +446,25 @@
   "bufio"
 #+end_src
 #+begin_src latex
-  Piping the data into the R command is wrapped in a goroutine.
+  Piping the data into the R command is wrapped in a goroutine. The
+  routine signals it is finished via a channel.
 #+end_src
 #+begin_src go <<Pipe data into R command, Ch.~\ref{ch:ps}>>=
   stdin, err := rcmd.StdinPipe()
   if err != nil { log.Fatal("can't open stdin") }
+  done := make(chan struct{})
   go func() {
 	  for _, d := range data {
 		  stdin.Write([]byte(d))
 		  stdin.Write([]byte("\n"))
 	  }
 	  stdin.Close()
+	  done <- struct{}{}
   }()
 #+end_src
 #+begin_src latex
-  We run the command.
+  We run the command and signal we're done before moving on to delete
+  the R script.
 #+end_src
 #+begin_src go <<Run R command, Ch.~\ref{ch:ps}>>=
   if len(data) > 0 {
@@ -469,6 +473,7 @@
 		  log.Fatalf("can't run %q", rcmd)
 	  }
   }
+  <-done
 #+end_src
 #+begin_src latex
   The program \ty{plotSeg} is finished, let's test it.

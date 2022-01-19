@@ -597,17 +597,20 @@ The script is written either to a unique file.
   "os/exec"
 #+end_src
 #+begin_src latex
-  We wrap the data piping in a goroutine.
+  We wrap the data piping in a goroutine that signals it has finished
+  via a channel.
 #+end_src
 #+begin_src go <<Pipe data into R command, Ch.~\ref{ch:pl}>>=
   stdin, err := cmd.StdinPipe()
   if err != nil { log.Fatal("can't open stdin") }
+  done := make(chan struct{})
   go func() {
 	  for _, d := range data {
 		  stdin.Write([]byte(d))
 		  stdin.Write([]byte("\n"))
 	  }
 	  stdin.Close()
+	  done <- struct{}{}
   }()
 #+end_src
 #+begin_src latex
@@ -618,6 +621,7 @@ The script is written either to a unique file.
   if err != nil {
 	  log.Fatalf("can't run %q", cmd)
   }
+  <-done
 #+end_src
 #+begin_src latex
   We are done writing \ty{plotLine}, let's test it.
