@@ -65,7 +65,6 @@
       \hline
       $i$ & $\sa[i]$ & $\lcp[i]$ & $\suf[i]$\\\hline
       \input{sa}
-      \hline
     \end{tabular}
     \end{center}
   \end{table}

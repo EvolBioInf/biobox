@@ -53,7 +53,6 @@
 	\hline
 	$i$ & $\sa[i]$ & $\lcp[i]$ & $\isa[i]$ & $\suf[i]$\\\hline
 	\input{esa}
-	\hline
       \end{tabular}
     \end{center}
   \end{table}
