@@ -983,9 +983,9 @@ if err != nil {
   d1 := []float64{11.961,12.401,11.661,11.96,10.454,11.584,11.175}
   d2 := []float64{8.479,8.523,8.793,8.726,9.677,8.728,8.383,11.086}
   m1, m2, st, p := TTest(d1, d2, true)
-  fmt.Fprintln(outf, m1, m2, st, p)
+  fmt.Fprintf(outf, "%.8g %.8g %.8g %.8g\n", m1, m2, st, p)
   m1, m2, st, p = TTest(d1, d2, false)
-  fmt.Fprintln(outf, m1, m2, st, p)
+  fmt.Fprintf(outf, "%.8g %.8g %.8g %.8g\n", m1, m2, st, p)
   outf.Close()
 #+end_src
 #+begin_src latex
