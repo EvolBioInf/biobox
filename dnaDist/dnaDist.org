@@ -557,8 +557,8 @@ if *optB < 0 {
 #+begin_src latex
   Our program is finished, let's test.
   \section*{Testing}
-  The outline of the testing program contains hooks for imports,
-  functions, and the code for driving the tests.
+  The outline of the testing program contains hooks for imports and the
+  code for driving the tests.
 #+end_src
 #+begin_src go <<dnaDist_test.go>>=
   package main
@@ -567,7 +567,6 @@ if *optB < 0 {
 	  "testing"
 	  //<<Testing imports, Ch.~\ref{ch:dna}>>
   )
-  //<<Testing functions, Ch.~\ref{ch:dna}>>
   func TestDnaDist(t *testing.T) {
 	  //<<Testing, Ch.~\ref{ch:dna}>>
   }
