@@ -7,7 +7,7 @@ Tools for Bioinformatics
 - Install Go  
   - Download Go compiler  
   `$ wget https://go.dev/dl/go1.17.6.linux-amd64.tar.gz`
-  - Remove existing Go installation
+  - Remove existing Go installation  
   `$ sudo rm -rf /usr/local/go`
   - Install new go package  
   `$ sudo tar -C /usr/local -xzf go1.17.6.linux-amd64.tar.gz`
@@ -16,21 +16,21 @@ Tools for Bioinformatics
   `$ source ~/.bashrc`
   - Test new Go installation  
   `$ go version`
-- Install additional packages
+- Install additional packages  
   `$ sudo apt update`
   `$ sudo apt install r-base-core r-cran-ggplot2 libgsl-dev noweb libdivsufsort-dev`
 - Make package  
-  `$ make`
+  `$ make`  
   The directory `bin` now contains the programs.
 - Optional: Documentation  
-  `$ sudo apt install graphviz texlive-latex-extra texlive-science texlive-pstricks texlive-fonts-extra`
-  `$ make doc`
+  `$ sudo apt install graphviz texlive-latex-extra texlive-science texlive-pstricks texlive-fonts-extra`  
+  `$ make doc`  
   The documentation is now in `doc/bioboxDoc.pdf`.
 ## macOS
 - X-Code  
   `$ xcode-select --install`
 - [Homebrew](https://brew.sh)
-- Brew packages
+- Brew packages  
   `$ brew install xquartz r tcl-tk brewsci/bio`
 - Install the R-package `ggplot2` inside R  
   `> install.packages("ggplot2")` 
