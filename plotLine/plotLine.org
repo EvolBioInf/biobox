@@ -571,7 +571,7 @@
   ,
   {{- end -}}
   {{- else -}}
-  x11(
+  {{.Win}}(
   {{- end}}    
   //<<Set width and height, Ch.~\ref{ch:pl}>>
   plot(plot)
