@@ -8,5 +8,3 @@ require (
 )
 
 require github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e
-
-require github.com/evolbioinf/nwk v0.0.0-20211206105227-7d0e890b4e0a // indirect

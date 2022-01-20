@@ -8,4 +8,4 @@ require (
 	github.com/evolbioinf/esa v0.0.0-20211009095431-d73b5a4a0c11
 )
 
-require github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e // indirect
+require github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e

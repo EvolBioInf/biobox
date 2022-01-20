@@ -24,4 +24,17 @@ test:
 	for prog in $(progs) $(packs); do \
 		make test -C $$prog; \
 	done
-
+init:
+	for pack in $(packs); do \
+		cd $$pack; go mod init; cd ..; \
+	done
+	for prog in $(progs); do \
+		cd $$prog; go mod init; cd ..; \
+	done
+tidy:
+	for pack in $(packs); do \
+		cd $$pack; go mod tidy; cd ..; \
+	done
+	for prog in $(progs); do \
+		cd $$prog; go mod tidy; cd ..; \
+	done
