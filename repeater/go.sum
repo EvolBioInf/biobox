@@ -1,8 +1,12 @@
 github.com/evolbioinf/biobox/util v0.0.0-20211009085205-f9f1e2b3991d h1:bsvf2oWGVhv2GbZEx4bsqgCruXI/0wZfPaB8dlrpJkg=
 github.com/evolbioinf/biobox/util v0.0.0-20211009085205-f9f1e2b3991d/go.mod h1:ZmGWKklOZsTll4xxcB9SzjqwgJb72Z8jvgYrHS/1mwg=
+github.com/evolbioinf/biobox/util v0.0.0-20220120112357-6dc11fa9655f h1:GyGd3B7VmODn+jqGLs+Y23560fJwk1HfvjuO9eoM1vU=
+github.com/evolbioinf/biobox/util v0.0.0-20220120112357-6dc11fa9655f/go.mod h1:17MTo94/LbSztH2mRy4o43PEquKPvfDVEm0N/hIjmsA=
 github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c h1:TkHWkaNNpQC+/HCKjAi85vXC8HC7py2YPMSBUOkGmkU=
 github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c/go.mod h1:Jh4QPiChVHZHe7fwj+xcSs6kUcQbQVzsd/ht3PIoaaU=
 github.com/evolbioinf/esa v0.0.0-20211009095431-d73b5a4a0c11 h1:ZAbQWFXBOohq2cUtS+ztVfPy5sboev37EXLQXnntOGE=
 github.com/evolbioinf/esa v0.0.0-20211009095431-d73b5a4a0c11/go.mod h1:3JO3FxGmnJ11JQBeeLoL61XBsZ76s9jod10IyKrxjHs=
+github.com/evolbioinf/esa v0.0.0-20220119170951-53a316f07a9b h1:Dg6P2c7dwVuu2P9jKzRmb0LGTqPvxZLdpgrkQFEXn54=
+github.com/evolbioinf/esa v0.0.0-20220119170951-53a316f07a9b/go.mod h1:3JO3FxGmnJ11JQBeeLoL61XBsZ76s9jod10IyKrxjHs=
 github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e h1:P7BV6YKTRXTG3nAebzKBLVjNMdm5Rok/6IQYFY+QG1Q=
 github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e/go.mod h1:kPJhClPhTozhqGfmcFJVxhz0J1xX/yBvDa8FBTlxbm4=
