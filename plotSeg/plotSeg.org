@@ -1,5 +1,5 @@
 #+begin_src latex
-  \section*{Introduction}
+  x\section*{Introduction}
   Segment plots, also known as dot plots, display a potentially large
   number of exact matches between two sequences. Each exact match is a
   segment, which is denoted by a quartet of numbers $(x_1, y_1, x_2,
@@ -99,9 +99,9 @@
   var optYY = flag.String("Y", "", "y-range, s:e")
 #+end_src
 #+begin_src latex
-  As to device, the user can opt for a postscript file instead of the
-  default x11 window, and set the width and height of the plot in
-  cm. The user can also ask for the R script instead of the plot.
+  Instead of showing the plot in a window, the user can opt for a
+  postscript file and set the width and height of the postscript plot in
+  cm. The user can also ask for the R script instead of any plot.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:ps}>>=
   var optP = flag.String("p", "", "postscript file")
@@ -149,15 +149,25 @@
 #+end_src
 #+begin_src latex
   We collect the axis labels, plot dimensions converted from cm to inch,
-  and the names of the files for postscript and R output.
+  and the graphics window. This is x11 by default, but if we are running
+  on the macOS command line, we switch to quartz. We also collect the
+  names of the files for postscript and R output.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:ps}>>=
   opts.Xlab = *optX
   opts.Ylab = *optY
   opts.Width = *optW / 2.54
   opts.Height = *optHH / 2.54
+  opts.Win = "x11"
+  if runtime.GOOS == "darwin" { opts.Win = "quartz" }
   opts.Ps = *optP
   opts.Script = *optS
+#+end_src
+#+begin_src latex
+  We import \ty{runtime}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "runtime"
 #+end_src
 #+begin_src latex
   We add the fields we just used to \ty{Options}.
@@ -165,6 +175,7 @@
 #+begin_src go <<\ty{Options} fields, Ch.~\ref{ch:ps}>>=
   Xlab, Ylab string
   Width, Height float64
+  Win string
   Size int
   Ps, Script string
 #+end_src
@@ -360,14 +371,14 @@
   {{end}}
 #+end_src
 #+begin_src latex
-  We set postscript or x11 together with the plot height \& width. Then
-  we draw the plot and close the device.
+  We set postscript, or window with the plot height \&
+  width. Then we draw the plot and close the device.
 #+end_src
 #+begin_src r <<Deal with device options, Ch.~\ref{ch:ps}>>=
   {{if .Ps -}}
   //<<Set postscript file, Ch.~\ref{ch:ps}>>
   {{- else}}
-  //<<Set x11, Ch.~\ref{ch:ps}>>
+  //<<Set window, Ch.~\ref{ch:ps}>>
   {{- end}}
   //<<Set height and width, Ch.~\ref{ch:ps}>>
   plot(p)
@@ -381,10 +392,10 @@
   postscript(file="{{.Ps}}", horizontal=FALSE,
 #+end_src
 #+begin_src latex
-  We set the x11 screen.
+  We set the window.
 #+end_src
-#+begin_src r <<Set x11, Ch.~\ref{ch:ps}>>=
-  x11(
+#+begin_src r <<Set window, Ch.~\ref{ch:ps}>>=
+  {{.Win}}(
 #+end_src
 #+begin_src latex
   We set the height and the width, if requested.
@@ -399,7 +410,7 @@
   )
 #+end_src
 #+begin_src latex
-  If we spawned an x11 window, we make sure the script exits once the
+  If we spawned a window, we make sure the script exits once the
   user has closed that window. If, on the other hand, we wrote a
   postscript file, we switch the device off.
 #+end_src

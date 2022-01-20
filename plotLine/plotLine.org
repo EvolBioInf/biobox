@@ -45,13 +45,15 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, and parse the input files.
+  In the main function we set the usage, declare the options, and parse
+  the options. Then we set the type of the output window, depending on
+  the OS we're running on. Finally, we parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:pl}>>=
   //<<Set usage, Ch.~\ref{ch:pl}>>
   //<<Declare options, Ch.~\ref{ch:pl}>>
   //<<Parse options, Ch.~\ref{ch:pl}>>
+  //<<Set type of output window, Ch.~\ref{ch:pl}>>
   //<<Parse input files, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
@@ -110,7 +112,7 @@
 #+begin_src latex
   The user can set the graphical device and the width and height of the
   plot it produces. Among the graphical devices supported by R, we offer
-  only postscript as an alternative to the default x11.
+  only postscript as an alternative to the default window.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
   var optP = flag.String("p", "", "postscript file")
@@ -122,7 +124,7 @@
   terminate the program. Then we collect the values of simple options in
   the variable \ty{args}. What remains are the more complex options x-
   and y-range (\ty{-X} and \ty{-Y}), and log-scale (\ty{-l}). We respond
-  to each one of these in turn.
+  to each one of these in turn. 
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:pl}>>=
   flag.Parse()
@@ -267,6 +269,28 @@
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
   "regexp"
+#+end_src
+#+begin_src latex
+  The output window is by default x11. If we're running on the macOS
+  command line, we switch to quartz.
+#+end_src
+#+begin_src go <<Set type of output window, Ch.~\ref{ch:pl}>>=
+  args.Win = "x11"
+  if runtime.GOOS == "darwin" {
+	  args.Win = "quartz"
+  }
+#+end_src
+#+begin_src latex 
+  We add the \ty{Win} field to \ty{Args}.
+#+end_src
+#+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
+  Win string
+#+end_src
+#+begin_src latex
+  We import \ty{runtime}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
+  "runtime"
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are taken as input

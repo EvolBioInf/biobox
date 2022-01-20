@@ -4,9 +4,9 @@
   format, for example the one shown in Figure~\ref{fig:phy}A. The
   program \ty{plotTree} takes as input such a tree and plots it either
   in rooted (Figure~\ref{fig:phy}B) or unrooted (Figure~\ref{fig:phy}C)
-  layout. The user can also choose between postscript or x11 output and
-  may omit the node labels. The plot is drawn using the \ty{ggplot}
-  graphics engine, which is part of R.
+  layout. The user can also choose between postscript file or screen
+  output and may omit the node labels. The plot is drawn using the
+  \ty{ggplot} graphics engine, which is part of R.
 
 
   \begin{figure}
@@ -104,17 +104,16 @@
   var optN = flag.Bool("n", false, "no node labels (default input)")
 #+end_src
 #+begin_src latex
-The user can also choose to draw the tree to a postscript
-  file instead of an x11 window (\ty{-p}), give the postscript plot a
-  width (\ty{-w}) and a height (\ty{-H}), and set the margins as a
-  function of the plot dimensions to accommodate leaf labels, which
-  might otherwise be truncated (\ty{-m}). Another switch to fine tune
-  the graphic raises the scale label as a fraction of the plot's
-  height (\ty{-r}). The scale itself can also be set (\ty{-s}).
+  The default output is to a window, but the user can also draw the tree
+  to a postscript file instead of a window (\ty{-p}), give the
+  postscript plot a width (\ty{-w}) and a height (\ty{-H}), and set the
+  margins as a function of the plot dimensions to accommodate leaf
+  labels, which might otherwise be truncated (\ty{-m}). Another switch
+  to fine tune the graphic raises the scale label as a fraction of the
+  plot's height (\ty{-r}). The scale itself can also be set (\ty{-s}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optP = flag.String("p", "",
-	  "postscript output file (default x11)")
+  var optP = flag.String("p", "", "postscript output file")
   var optW = flag.Float64("w", 0.0, "width of postscript plot (cm)")
   var optHH = flag.Float64("H", 0.0, "height of postscript plot (cm)")
   var optM = flag.Float64("m", 0.1, "margin as fraction of plot size")
@@ -129,13 +128,38 @@ The user can also choose to draw the tree to a postscript
   var optSS = flag.String("S", "", "write R script to file")
 #+end_src
 #+begin_src latex
-  We parse the options and collect them in the variable \ty{opts}. We
-  measure width and height is measured in centimeters, but R expects
-  inches, so we convert the centimeters to inches.
+  We parse the options and immediately respond to \ty{-v} as this might
+  stop the program. The we store the option values in the variable
+  \ty{opts}.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:pt}>>=
   flag.Parse()
+  if *optV {
+	  util.PrintInfo("plotTree")
+  }
   opts := new(opts)
+  //<<Store options, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  We declare the \ty{opts} type as a struct with a hook for the fields
+  we need.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:pt}>>=
+  type opts struct {
+	  //<<Opts fields, Ch.~\ref{ch:pt}>>
+  }
+#+end_src
+#+begin_src latex
+  We store the options. I like to measure plot dimensions in cm, but R
+  expects inches, so we convert the centimeters to inches.
+#+end_src
+#+begin_src go <<Store options, Ch.~\ref{ch:pt}>>=
   opts.Rooted = *optR
   opts.Unrooted = *optU
   opts.NoLabels = *optN
@@ -148,35 +172,33 @@ The user can also choose to draw the tree to a postscript
   opts.Script = *optSS
 #+end_src
 #+begin_src latex
-  We define the \ty{opts} structure and add a hook for additional
-  fields.
+  We declare the fields we just used.
 #+end_src
-#+begin_src go <<Types, Ch.~\ref{ch:pt}>>=
-  type opts struct {
-	  Rooted bool
-	  Unrooted bool
-	  NoLabels bool
-	  Ps string
-	  Width, Height, Margin float64
-	  RaiseScale, Scale float64
-	  Script string
-	  //<<Opts fields, Ch.~\ref{ch:pt}>>
-  }
+#+begin_src go <<Opts fields, Ch.~\ref{ch:pt}>>=
+  Rooted, Unrooted, NoLabels bool
+  Ps string
+  Width, Height, Margin, RaiseScale, Scale float64
+  Script string
 #+end_src
 #+begin_src latex
-  The first option we respond to is \ty{-v} as this might stop the
-  program.
+  We also set the window, which by default is x11, but on darwin systems
+  (macOS) becomes quartz.
 #+end_src
-#+begin_src go  <<Parse options, Ch.~\ref{ch:pt}>>=
-  if *optV {
-	  util.PrintInfo("plotTree")
-  }
+#+begin_src go <<Parse options, Ch.~\ref{ch:pt}>>=
+  opts.Win = "x11"
+  if runtime.GOOS == "darwin" { opts.Win = "quartz" }
 #+end_src
 #+begin_src latex
-  We import \ty{util}.
+  We add the \ty{opts} field \ty{Win}.
+#+end_src
+#+begin_src go <<Opts fields, Ch.~\ref{ch:pt}>>=
+  Win string
+#+end_src
+#+begin_src latex
+  We import \ty{runtime}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "github.com/evolbioinf/biobox/util"
+  "runtime"
 #+end_src
 #+begin_src latex
   \subsection*{R Script}
@@ -252,13 +274,13 @@ The user can also choose to draw the tree to a postscript
   Xmin, Xmax, Ymin, Ymax float64
 #+end_src
 #+begin_src latex
-  We write to a postscript file or to a x11 window.
+  We write to a postscript file or to a window.
 #+end_src
 #+begin_src R <<Write plot to device, Ch.~\ref{ch:pt}>>=
   {{if .Ps}}
   //<<Write to postscript file, Ch.~\ref{ch:pt}>>
   {{else}}
-  //<<Write to x11 window, Ch.~\ref{ch:pt}>>
+  //<<Write to window, Ch.~\ref{ch:pt}>>
   {{end}}
 #+end_src
 #+begin_src latex
@@ -273,12 +295,12 @@ The user can also choose to draw the tree to a postscript
   dev.off()
 #+end_src
 #+begin_src latex
-  If we write to an x11 window, we keep the script waiting until the
-  user closes the window. The script checks the window every tenth
+  If we write to a window, we keep the script waiting until
+  the user closes the window. The script checks the window every tenth
   second.
 #+end_src
-#+begin_src R <<Write to x11 window, Ch.~\ref{ch:pt}>>=
-  x11()
+#+begin_src R <<Write to window, Ch.~\ref{ch:pt}>>=
+  {{.Win}}()
   plot(p)
   while(names(dev.cur()) != 'null device')
       Sys.sleep(0.1)
