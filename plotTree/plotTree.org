@@ -1080,15 +1080,14 @@
 #+end_src
 #+begin_src latex
   When we run a test, we compare the result we get to the result we
-  want. The results we want are stored in the files \ty{r1.r},
-  \ty{r2.r}, and so on.
+  want, which is stored in files with names we construct next.
 #+end_src
 #+begin_src go <<Run test, Ch.~\ref{ch:pt}>>=
   err := test.Run()
   if err != nil { t.Errorf("couldn't run %q", test) }
   get, err := ioutil.ReadFile(r)
   if err != nil { t.Errorf("couldn't open %q", r) }
-  f := "r" + strconv.Itoa(i+1) + ".r"
+  //<<Construct file name, Ch.~\ref{ch:pt}>>
   want , err := ioutil.ReadFile(f)
   if err != nil { t.Errorf("couldn't open %q", f) }
   if !bytes.Equal(get, want) {
@@ -1096,10 +1095,26 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{strconv} and \ty{bytes}.
+  We import \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:pt}>>=
+  "bytes"
+#+end_src
+#+begin_src latex
+  By default, the results are stored in files called \ty{r1.r},
+  \ty{r2.r}, and so on. On darwin systems, these names are extended by ``d''.
+#+end_src
+#+begin_src go <<Construct file name, Ch.~\ref{ch:pt}>>=
+  f := "r" + strconv.Itoa(i+1)
+  if runtime.GOOS == "darwin" {
+	  f += "d"
+  }
+  f += ".r"
+#+end_src
+#+begin_src latex
+  We import \ty{strconv} and \ty{runtime}.
 #+end_src
 #+begin_src go <<Testing imports, Ch.~\ref{ch:pt}>>=
   "strconv"
-  "bytes"
+  "runtime"
 #+end_src
-

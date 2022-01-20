@@ -816,13 +816,17 @@
 #+end_src
 #+begin_src latex
   For each test we compare what we get in \ty{r} with what we want
-  in \ty{results/r1.r}, \ty{results/r2.r}, and so on.
+  in \ty{results/r1.r}, \ty{results/r2.r}, and so on. On a darwin
+  system, the results files are called \ty{results/r1d.r},
+  \ty{results/r2d.r}, and so on.
 #+end_src
 #+begin_src go <<Run test, Ch.~\ref{ch:pl}>>=
   err := test.Run()
   if err != nil { log.Fatalf("can't run %q", test) }
   get, err := ioutil.ReadFile(r)
-  f := "results/r" + strconv.Itoa(i+1) + ".r"
+  f := "results/r" + strconv.Itoa(i+1) 
+  if runtime.GOOS == "darwin" { f += "d" }
+  f += ".r"
   want, err := ioutil.ReadFile(f)
   if err != nil { log.Fatalf("can't open %q", f) }
   if !bytes.Equal(get, want) {
@@ -831,11 +835,13 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{log}, \ty{ioutil}, \ty{strconv}, and \ty{bytes}.
+  We import \ty{log}, \ty{ioutil}, \ty{strconv}, \ty{runtime}, and
+  \ty{bytes}.
 #+end_src
 #+begin_src go <<Testing imports, Ch.~\ref{ch:pl}>>=
   "log"
   "io/ioutil"
   "strconv"
+  "runtime"
   "bytes"
 #+end_src

@@ -595,14 +595,14 @@
 #+end_src
 #+begin_src latex
   For each test we compare what we get with what we want, which is
-  stored in \ty{results/r1.r}, \ty{results/r2.r}, and so on.
+  stored in a file the name of which we still need to construct.
 #+end_src
 #+begin_src go <<Run test, Ch.~\ref{ch:ps}>>=
   err = test.Run()
   if err != nil { log.Fatalf("can't run %q", test) }
   get, err := ioutil.ReadFile(r)
   if err != nil { log.Fatalf("can't read %q", r) }
-  f = "results/r" + strconv.Itoa(i+1) + ".r"
+  //<<Construct file name, Ch.~\ref{ch:ps}>>
   want, err := ioutil.ReadFile(f)
   if err != nil { log.Fatalf("can't read %q", f) }
   if !bytes.Equal(get, want) {
@@ -611,9 +611,28 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{strconv} and \ty{bytes}.
+  We import \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:ps}>>=
+  "bytes"
+#+end_src
+#+begin_src latex
+  On default systems, the results we want are stored in files
+  \ty{results/r1.r}, \ty{results/r2.r}, and so on. On darwin systems,
+  the names are extended by ``d''.
+#+end_src
+#+begin_src go <<Construct file name, Ch.~\ref{ch:ps}>>=
+  f = "results/r" + strconv.Itoa(i+1)
+  if runtime.GOOS == "darwin" {
+	  f += "d"
+  }
+  f += ".r"
+#+end_src
+#+begin_src latex
+  We import \ty{strconv} and \ty{runtime}.
 #+end_src
 #+begin_src go <<Testing imports, Ch.~\ref{ch:ps}>>=
   "strconv"
-  "bytes"
+  "runtime"
 #+end_src
+
