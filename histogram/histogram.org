@@ -348,9 +348,9 @@
 	  x1 := ranges[i]
 	  x2 := ranges[i+1]
 	  y := c
-	  fmt.Fprintf(w, "%.3g\t0\n", x1)
-	  fmt.Fprintf(w, "%.3g\t%.3g\n", x1, y)
-	  fmt.Fprintf(w, "%.3g\t%.3g\n", x2, y)
+	  fmt.Fprintf(w, "%g\t0\n", x1)
+	  fmt.Fprintf(w, "%g\t%g\n", x1, y)
+	  fmt.Fprintf(w, "%g\t%g\n", x2, y)
   }
   //<<Finish plot, Ch.~\ref{ch:his}>>
   w.Flush()
