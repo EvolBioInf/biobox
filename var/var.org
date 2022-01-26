@@ -133,18 +133,29 @@
 #+end_src
 #+begin_src latex
   We print the results using a \texttt{tabwriter} to align the
-  columns. We also echo the file name, which is the last, and in our
-  case only, entry in \texttt{args}.
+  columns. We also echo the file name. By default, this is \ty{stdin},
+  but it might be set to the name of an input file.
 #+end_src
 #+begin_src go <<Print results, Ch.~\ref{ch:var}>>=
   fn := args[0].([]string)
-  args[0] = fn[1:]
+  file := "stdin"
+  //<<Set file name, Ch.~\ref{ch:var}>>
   w := new(tabwriter.Writer)
   w.Init(os.Stdout, 4, 0, 1, ' ', 0)
   fmt.Fprintf(w, "# File\tAvg\tVar\tSD\tn\n")
   fmt.Fprintf(w, "%s\t%.6g\t%.6g\t%.6g\t%d\n",
-	  fn[0], ave, variance, sdev, len(data))
+	  file, ave, variance, sdev, len(data))
   w.Flush()
+#+end_src
+#+begin_src latex
+  If input files were used, we assign the next one in the list to
+  \ty{file} and lop it off the start of the list.
+#+end_src
+#+begin_src go <<Set file name, Ch.~\ref{ch:var}>>=
+  if len(fn) > 0 {
+	  file = fn[0]
+	  args[0] = fn[1:]
+  }
 #+end_src
 #+begin_src latex
   We import \texttt{tabwriter}, \texttt{os}, and \texttt{fmt}.
