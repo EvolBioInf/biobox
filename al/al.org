@@ -165,8 +165,8 @@
 #+begin_src go <<Variables, Ch.~\ref{ch:al}>>=
   var optV = flag.Bool("v", false, "print version & " +
 	  "program information")
-  var optG = flag.Bool("g", false, "global; default: local")
-  var optO = flag.Bool("o", false, "overlap; default: local")
+  var optG = flag.Bool("g", false, "global (default local)")
+  var optO = flag.Bool("o", false, "overlap (default local)")
   var optI = flag.Float64("i", -3, "mismatch")
   var optA = flag.Float64("a",  1, "match")
   var optM = flag.String("m", "", "file containing score matrix")
