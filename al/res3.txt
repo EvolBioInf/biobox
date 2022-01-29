@@ -1,14 +1,15 @@
-Query   o1       (100 residues) 
-Subject o2.fasta (96 residues)  
-Score   62       
+Query   o1 (100 residues)
+Subject o2 (96 residues)
+Score   64
+Errors  46 (46 gaps, 0 mismatches)
 
 
-Query   1 CATTGGGATGATGCACCTATATTGTGAGGTCTGTTACACTGTCGTTCCGCAGATCGAGCAATCCCGTATC 70 
-                               ||||||||||||||||||||||    |||||||||||||||||||||||    
-Subject 1 ---------------------TTGTGAGGTCTGTTACACTGTC----CGCAGATCGAGCAATCCCGTATC 45 
+Query   1 CATTGGGATGATGCACCTATATTGTGAGGTCTGTTACACTGTCGTTCCGCAGATCGAGCAATCCCGTATC 70
+                               ||||||||||||||||||||||    |||||||||||||||||||||||
+Subject 1 ---------------------TTGTGAGGTCTGTTACACTGTC----CGCAGATCGAGCAATCCCGTATC 45
 
 
-Query   71 CTTTACATATTGCCGTGTGGGGTAAGGTGC--------------------- 100 
-           ||||||||||||||||||||||||||||||                          
-Subject 46 CTTTACATATTGCCGTGTGGGGTAAGGTGCCATTGGGATGATGCACCTATA 96  
+Query   71 CTTTACATATTGCCGTGTGGGGTAAGGTGC--------------------- 100
+           ||||||||||||||||||||||||||||||                     
+Subject 46 CTTTACATATTGCCGTGTGGGGTAAGGTGCCATTGGGATGATGCACCTATA 96
 //

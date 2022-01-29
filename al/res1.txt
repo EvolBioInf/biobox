@@ -1,9 +1,10 @@
-Query   s1 (7 residues) 
-Subject s2 (8 residues) 
-Score   19 
+Query   s1 (7 residues)
+Subject s2 (8 residues)
+Score   21
+Errors  3 (1 gap, 2 mismatches)
 
 
-Query   1 MKFLAL-F 7 
-          ||:| | |   
-Subject 1 MKYLILLF 8 
+Query   1 MKFLAL-F 7
+          ||:| | |
+Subject 1 MKYLILLF 8
 //
