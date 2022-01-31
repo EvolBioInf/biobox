@@ -35,7 +35,7 @@
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:cr}>>=
   u := "cres [-h] [options] [files]"
-  p := "Count characters in input."
+  p := "Count residues in input."
   e := "cres -s *.fasta"
   clio.Usage(u, p, e)
 #+end_src
@@ -197,7 +197,7 @@
   w := new(tabwriter.Writer)
   w.Init(os.Stdout, 4, 0, 1, ' ', 0)
   if s > 0 {
-	  fmt.Fprintf(w, "Character\tCount\tFraction\t\n")
+	  fmt.Fprintf(w, "Residue\tCount\tFraction\t\n")
   }
   for i, v := range counts {
 	  if v > 0 {

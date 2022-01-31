@@ -1,6 +1,6 @@
 Total: 200
-Character Count Fraction 
-A         51    0.255    
-C         68    0.34     
-G         36    0.18     
-T         45    0.225    
+Residue Count Fraction 
+A       51    0.255    
+C       68    0.34     
+G       36    0.18     
+T       45    0.225    
