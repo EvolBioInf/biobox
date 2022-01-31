@@ -170,12 +170,10 @@
 	  frame *= -1
   }
   d := seq.Data()
-  aa := make([]byte, len(d) / 3)
-  j := 0
+  var aa []byte
   for i := frame-1; i < len(seq.Data())-2; i += 3 {
 	  codon := string(d[i:i+3])
-	  aa[j] = gc[codon]
-	  j++
+	  aa = append(aa, gc[codon])
   }
 #+end_src
 #+begin_src latex
