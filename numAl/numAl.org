@@ -372,7 +372,8 @@
   matrix, then its remainder. At the end we flush the writer.
 #+end_src
 #+begin_src go <<Print programming matrix, Ch.~\ref{ch:num}>>=
-  w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
+  w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ',
+	  tabwriter.AlignRight)
   //<<Print first row of programming matrix, Ch.~\ref{ch:num}>>
   //<<Print rest of progamming matrix, Ch.~\ref{ch:num}>>
   w.Flush()
@@ -390,7 +391,7 @@
   for i := 0; i <= n; i++ {
 	  fmt.Fprintf(w, "\t%d", i)
   }
-  fmt.Fprintf(w, "\n")
+  fmt.Fprintf(w, "\t\n")
 #+end_src
 #+begin_src latex
   We print the rest of the matrix.
@@ -401,7 +402,7 @@
 	  for j := 0; j <= n; j++ {
 		  fmt.Fprintf(w, "\t%d", int(mat[i][j]))
 	  }
-	  fmt.Fprintf(w, "\n")
+	  fmt.Fprintf(w, "\t\n")
   }
 #+end_src
 
