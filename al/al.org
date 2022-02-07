@@ -23,8 +23,8 @@
   g(l)=g_{\rm o}+g_{\rm e}(l-1),
   \]
   and $g_{\rm o}$ is the gap opening score, $g_{\rm e}$ the gap
-  extension score. The program is based on the \ty{pal}
-  package\footnote{\ty{github.com/evolbioinf/pal}, where the algorithms
+  extension score. The program is based on the
+  package \ty{github.com/evolbioinf/pal}, where the algorithms
     are described in detail.
   \section*{Implementation}
   The program outline contains hooks for imports, variables, functions,
@@ -68,13 +68,27 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  Apart from the standard \emph{version} option, we declare options for
-  the algorithm used, the scoring of pairs of residues and gaps, the
-  number of local alignments, and the line length in the printout.
+  Apart from the standard \emph{version} option, we declarealgorithm
+  options and output options.
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:al}>>=
   var optV = flag.Bool("v", false, "print version & " +
 	  "program information")
+  //<<Algorithm options, Ch.~\ref{ch:al}>>
+  //<<Output options, Ch.~\ref{ch:al}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  With the algorithm options we pick the alignment type, set the scoring
+  of scoring of pairs of residues and gaps, and choose the number of
+  local alignments returned.
+#+end_src
+#+begin_src go <<Algorithm options, Ch.~\ref{ch:al}>>=
   var optL = flag.Bool("l", false, "local (default global)")
   var optO = flag.Bool("o", false, "overlap (default global)")
   var optI = flag.Float64("i", -3, "mismatch")
@@ -83,24 +97,32 @@
   var optP = flag.Float64("p", -5, "gap opening")
   var optE = flag.Float64("e", -2, "gap extension")
   var optN = flag.Int("n", 1, "number of local alignments")
-  var optLL = flag.Int("L", fasta.DefaultLineLength, "line length")
 #+end_src
 #+begin_src latex
-  We import \texttt{flag} and \texttt{fasta}.
+  With the output options we set the line length in the printout and
+  can also opt to have the dynamic programming matrix printed.
+#+end_src
+#+begin_src go <<Output options, Ch.~\ref{ch:al}>>=
+  var optLL = flag.Int("L", fasta.DefaultLineLength, "line length")
+  var optPP = flag.String("P", "", "print programming matrix (v|e|f|g|t)")
+#+end_src
+#+begin_src latex
+  We import \ty{fasta}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
-  "flag"
   "github.com/evolbioinf/fasta"
 #+end_src
 #+begin_src latex
-  When parsing the options, we check for version printing, then get the
-  files for the query, the subject, and the score matrix.
+  When parsing the options, we check for version printing and matrix
+  printing. Then get the files for the query, the subject, and the score
+  matrix.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:al}>>=
   flag.Parse()
   if *optV {
 	  util.PrintInfo("al")
   }
+  //<<Check matrix printing, Ch.~\ref{ch:al}>>
   //<<Get query and subject files, Ch.~\ref{ch:al}>>
   //<<Get score matrix, Ch.~\ref{ch:al}>>
 #+end_src
@@ -109,6 +131,29 @@
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
   "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The matrix printing option should be one of v, e, f, g for the four
+  elements of a matrix cell, or t for trace back.
+#+end_src
+#+begin_src go <<Check matrix printing, Ch.~\ref{ch:al}>>=
+  m := "-P should be v, e, f, g for the cell element " +
+	  "or t for the traceback"
+  if *optPP != "" {
+	  if *optPP != "v" && *optPP != "e" &&
+		  (*optPP) != "f" && *optPP != "g" &&
+		  (*optPP) != "t" {
+		  fmt.Println(m)
+		  os.Exit(-1)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \texttt{fmt} and \texttt{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "fmt"
+  "os"
 #+end_src
 #+begin_src latex
   When accessing the input files, we make sure that the user has
@@ -123,13 +168,6 @@
   }
   query := files[0]
   subject := files[1:]
-#+end_src
-#+begin_src latex
-  Import \texttt{fmt} and \texttt{os}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
-  "fmt"
-  "os"
 #+end_src
 #+begin_src latex
   The score matrix is either constructed from the match and mismatch
@@ -205,6 +243,10 @@
   gapO := *optP
   gapE := *optE
   numAl := *optN
+  var printMat byte
+  if *optPP != "" {
+	  printMat = []byte(*optPP)[0]
+  }
   ll := *optLL
 #+end_src
 #+begin_src latex
@@ -232,13 +274,18 @@
 #+end_src
 #+begin_src latex 
   We initialize a local alignment and set its line length. Then we align
-  the requested number of times and print the alignment.
+  the requested number of times and print the matrix or the alignment.
 #+end_src
 #+begin_src go <<Calculate local alignment, Ch.~\ref{ch:al}>>=
   al := pal.NewLocalAlignment(q, s, mat, gapO, gapE)
   al.SetLineLength(ll)
   for i := 0; i < numAl && al.Align(); i++ {
-	  fmt.Println(al)
+	  if printMat != 0 {
+		  s := al.PrintMatrix(printMat)
+		  fmt.Printf(s)
+	  } else {
+		  fmt.Println(al)
+	  }
   }
 #+end_src
 #+begin_src latex
@@ -255,7 +302,12 @@
   al := pal.NewOverlapAlignment(q, s, mat, gapO, gapE)
   al.SetLineLength(ll)
   al.Align()
-  fmt.Println(al)
+  if printMat != 0 {
+	  s := al.PrintMatrix(printMat)
+	  fmt.Printf(s)
+  } else {
+	  fmt.Println(al)
+  }
 #+end_src
 #+begin_src latex
   Finally, we initialize the default global alignment, set its line
@@ -265,7 +317,12 @@
   al := pal.NewGlobalAlignment(q, s, mat, gapO, gapE)
   al.SetLineLength(ll)
   al.Align()
-  fmt.Println(al)
+  if printMat != 0 {
+	  s := al.PrintMatrix(printMat)
+	  fmt.Printf(s)
+  } else {
+	  fmt.Println(al)
+  }
 #+end_src
 #+begin_src latex
   The implementation of \texttt{al} is finished, time to test it.
@@ -285,75 +342,97 @@
   }
 #+end_src
 #+begin_src latex
-  We go through the alignment types, beginning with global. First two
-  short peptides are aligned and we compare what we get with what we
-  want in \texttt{res1.txt}.
+  We construct a set of tests and run them.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
-  cmd := exec.Command("./al", "-m", "BLOSUM62", "s1.fasta",
-	  "s2.fasta")
-  get, err := cmd.Output()
-  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
-  want, err := ioutil.ReadFile("res1.txt")
-  if err != nil { t.Errorf("couldn't open res1.txt\n") }
-  if !bytes.Equal(get, want) { 
-	  t.Errorf("want:\n%s\nget:\n%s\n", want, get) 
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:al}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:al}>>
   }
 #+end_src
 #+begin_src latex
-  We import \texttt{exec}, \texttt{ioutil}, and \texttt{bytes}.
+  We import \ty{exec}.
 #+end_src
 #+begin_src go <<Testing imports, Ch.~\ref{ch:al}>>=
   "os/exec"
-  "io/ioutil"
-  "bytes"
+#+end_src
+#+begin_src latex
+  In our tests, We go through the alignment types, beginning with
+  global. First two short peptides are aligned
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:al}>>=
+  test := exec.Command("./al", "-m", "BLOSUM62", "s1.fasta",
+	  "s2.fasta")
+  tests = append(tests, test)
 #+end_src
 #+begin_src latex
   In the next test, the alcohol dehydrogenase loci of two
   \emph{Drosophila} species, \emph{D. melanogaster} and
   \emph{D. guanche}, are aligned. The two sequences are 4.8 kb and 4.4
   kb long, which results in a fairly substantial computation, but
-  \texttt{al} is reasonably quick. The expected result is in
-  \texttt{res2.txt}.
+  \texttt{al} is reasonably quick.
 #+end_src
-#+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
-  cmd = exec.Command("./al", "dmAdhAdhdup.fasta",
+#+begin_src go <<Construct tests, Ch.~\ref{ch:al}>>=
+  test = exec.Command("./al", "dmAdhAdhdup.fasta",
 	  "dgAdhAdhdup.fasta")
-  get, err = cmd.Output()
-  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
-  want, err = ioutil.ReadFile("res2.txt")
-  if err != nil { t.Errorf("couldn't open res2.txt") }
-  if !bytes.Equal(get, want) {
-	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
-  }
+  tests = append(tests, test)
 #+end_src
 #+begin_src latex
   We align a pair of artificial overlapping sequences using overlap
-  alignment, \texttt{o1.fasta} and \texttt{o2.fasta}. The result we want
-  is stored in \texttt{res3.txt}.
+  alignment, \texttt{o1.fasta} and \texttt{o2.fasta}.
 #+end_src
-#+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
-  cmd = exec.Command("./al", "-o", "o1.fasta", "o2.fasta")
-  get, err = cmd.Output()
-  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
-  want, err = ioutil.ReadFile("res3.txt")
-  if err != nil { t.Errorf("couldn't open res3.txt") }
+#+begin_src go <<Construct tests, Ch.~\ref{ch:al}>>=
+  test = exec.Command("./al", "-o", "o1.fasta", "o2.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  Next, we compute local alignments. First, just the best, then the top three.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:al}>>=
+  test = exec.Command("./al", "-l", "dmAdhAdhdup.fasta",
+	  "dgAdhAdhdup.fasta")
+  tests = append(tests, test)
+  test = exec.Command("./al", "-l", "-n", "3", "dmAdhAdhdup.fasta",
+	  "dgAdhAdhdup.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  Our last testing topic is printing the matrix, in all five
+  variants. We use two short DNA sequences for this stored in
+  \ty{s3.fasta} and \ty{s4.fasta}.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:al}>>=
+  test = exec.Command("./al", "-P", "v", "s3.fasta", "s4.fasta")
+  tests = append(tests, test)
+  test = exec.Command("./al", "-P", "e", "s3.fasta", "s4.fasta")
+  tests = append(tests, test)
+  test = exec.Command("./al", "-P", "f", "s3.fasta", "s4.fasta")
+  tests = append(tests, test)
+  test = exec.Command("./al", "-P", "g", "s3.fasta", "s4.fasta")
+  tests = append(tests, test)
+  test = exec.Command("./al", "-P", "t", "s3.fasta", "s4.fasta")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  A test is run by storing the result we get and comparing it to the
+  result we want, stored in files \ty{r1.txt}, \ty{r2.txt}, and so on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:al}>>=
+  get, err := test.Output()
+  if err != nil { t.Errorf("can't run %q", test) }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("can't open %q", f) }
   if !bytes.Equal(get, want) {
-	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
   }
 #+end_src
 #+begin_src latex
-  As a last test, we compute the best local alignment; this time we want
-  \texttt{res4.txt}.
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
 #+end_src
-#+begin_src go <<Testing, Ch.~\ref{ch:al}>>=
-  cmd = exec.Command("./al", "-l", "dmAdhAdhdup.fasta",
-	  "dgAdhAdhdup.fasta")
-  get, err = cmd.Output()
-  if err != nil { t.Errorf("couldn't run %q\n", cmd) }
-  want, err = ioutil.ReadFile("res4.txt")
-  if err != nil { t.Errorf("couldn't open res4.txt") }
-  if !bytes.Equal(get, want) {
-	  t.Errorf("want:\n%s\nget:\n%s\n", want, get)
-  }
+#+begin_src go <<Testing imports, Ch.~\ref{ch:al}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
 #+end_src

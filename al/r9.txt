@@ -1,0 +1,8 @@
+      -    A    C    C    T
+ -    0 -Inf -Inf -Inf -Inf
+ A -Inf    1   -8  -10  -12
+ T -Inf   -8   -2   -7   -5
+ C -Inf  -10   -3   -1  -10
+ G -Inf  -12   -9   -6   -4
+ T -Inf  -14  -11  -11   -5
+ A -Inf  -12  -13  -13  -11
