@@ -228,7 +228,7 @@
   }
   p, err := strconv.Atoi(sa[1])
   if err != nil { log.Fatalf("can't convert %q", sa[1]) }
-  if match[1] == '1' {
+  if match[0] == '1' || match[1] == '1' {
 	  //<<Record position on x-axis, Ch.~\ref{ch:r2p}>>
   } else {
 	  //<<Record position on y-axis, Ch.~\ref{ch:r2p}>>
@@ -388,24 +388,51 @@
   }
 #+end_src
 #+begin_src latex
-  We apply \ty{rep2plot} to test data in \ty{test.txt} and compare what
-  we get with what we want, which is in \ty{r.txt}.
+  We construct a set of tests and then run them.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:r2p}>>=
-  test := exec.Command("./rep2plot", "test.txt")
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{r2p}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:r2p}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:r2p}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We run two tests, one on data obtained just from the forward strands
+  of two sequences (\ty{test1.txt}, the other on data obtained from the
+  forward and reverse strands (\ty{test2.txt}).
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{r2p}>>=
+  test := exec.Command("./rep2plot", "test1.txt")
+  tests = append(tests, test)
+  test = exec.Command("./rep2plot", "test2.txt")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  When running a test, we compare the result we get with the result we
+  want in files \ty{r1.txt} and \ty{r2.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:r2p}>>=
   get, err := test.Output()
-  if err != nil { t.Error(err.Error()) }
-  want, err := ioutil.ReadFile("r.txt")
-  if err != nil { t.Error(err.Error()) }
+  if err != nil { t.Errorf("can't run %q", test) }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil { t.Errorf("cant' open %q", f) }
   if !bytes.Equal(get, want) {
 	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
   }
 #+end_src
 #+begin_src latex
-  We import \ty{exec}, \ty{ioutil}, and \ty{bytes}.
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
 #+end_src
 #+begin_src go <<Testing imports, Ch.~\ref{ch:r2p}>>=
-  "os/exec"
+  "strconv"
   "io/ioutil"
   "bytes"
 #+end_src

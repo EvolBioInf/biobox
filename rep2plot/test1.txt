@@ -1,0 +1,11 @@
+#  Length  Count  Sequence       Positions
+   37      2      AGCAA...GAGTG  1:3292 2:3287
+   27      2      AACAT...CAAAT  1:3949 2:3741
+   26      2      AACTA...ACCAC  2:2370 1:2410
+   26      2      AACTT...GTAAG  2:2529 1:2569
+   23      2      AAGGT...TACCC  1:2251 2:2211
+   23      2      AATGC...CCCGT  1:2518 2:2478
+   23      2      ATGAA...GAGGT  2:3657 1:3865
+   23      2      TTCTG...GGCGG  2:2412 1:2452
+   22      2      TGCAA...TTCAA  2:549 1:679
+   21      2      ACCAG...TGAGT  2:3930 1:4138
