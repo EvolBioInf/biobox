@@ -350,8 +350,8 @@
   func printTopDown(v *node) {
 	  if v.m == 0 || v.n == 0 { return }
 	  c1 := newNode(v.m-1, v.n)
-	  c2 := newNode(v.m-1, v.n-1)
-	  c3 := newNode(v.m, v.n-1)
+	  c2 := newNode(v.m, v.n-1)
+	  c3 := newNode(v.m-1, v.n-1)
 	  fmt.Printf("\tn%d->n%d\n", v.i, c1.i)
 	  fmt.Printf("\tn%d->n%d\n", v.i, c2.i)
 	  fmt.Printf("\tn%d->n%d\n", v.i, c3.i)
