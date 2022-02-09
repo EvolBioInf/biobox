@@ -449,14 +449,15 @@
   "io"
 #+end_src
 #+begin_src latex
-  We read the data and check each line has four columns. If not,
-  something has gone wrong and we bail.
+  We read the data, skip comments, and check each data line has four
+  columns. If not, something has gone wrong and we bail.
 #+end_src
 #+begin_src go <<Read data, Ch.~\ref{ch:ps}>>=
   sc := bufio.NewScanner(r)
   var data []string
   for sc.Scan() {
 	  row := sc.Text()
+	  if row[0] == '#' { continue }
 	  fields := strings.Fields(row)
 	  l := len(fields)
 	  if l != 4 {

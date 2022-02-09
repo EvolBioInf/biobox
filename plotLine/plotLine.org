@@ -327,15 +327,17 @@
   "io"
 #+end_src
 #+begin_src latex
-  While reading the data, we determine the number of columns from the
-  first row. This influences the plotting later, so we save it with the
-  other arguments. We also check the number of columns at this point.
+  While reading the data, we skip comments. From the first data line we
+  determine the number of columns. This influences the plotting later,
+  so we save it with the other arguments. We also check the number of
+  columns at this point.
 #+end_src
 #+begin_src go <<Read data, Ch.~\ref{ch:pl}>>=
   var data []string
   sc := bufio.NewScanner(r)
   first := true
   for sc.Scan() {
+	  if sc.Text()[0] == '#' { continue }
 	  if first {
 		  first = false
 		  args.Ncol = len(strings.Fields(sc.Text()))
