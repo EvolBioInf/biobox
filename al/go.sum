@@ -1,5 +1,5 @@
-github.com/evolbioinf/biobox/util v0.0.0-20220207121551-21c670ef963e h1:2yZXyV55CpwfFnRoP8QEAC4z+3T1Ur8vjhSfyemw2qY=
-github.com/evolbioinf/biobox/util v0.0.0-20220207121551-21c670ef963e/go.mod h1:jXdowL14EoXUUEdmIwcuPXTHf5fN6gN7ZII4fvUpzwc=
+github.com/evolbioinf/biobox/util v0.0.0-20220209161330-349ce8bd80a9 h1:DEuGUrgs9ICXsGA1xzVz4h3FQqRNQkV9P+9ESqrsMSQ=
+github.com/evolbioinf/biobox/util v0.0.0-20220209161330-349ce8bd80a9/go.mod h1:jXdowL14EoXUUEdmIwcuPXTHf5fN6gN7ZII4fvUpzwc=
 github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c h1:TkHWkaNNpQC+/HCKjAi85vXC8HC7py2YPMSBUOkGmkU=
 github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c/go.mod h1:Jh4QPiChVHZHe7fwj+xcSs6kUcQbQVzsd/ht3PIoaaU=
 github.com/evolbioinf/esa v0.0.0-20220119170951-53a316f07a9b/go.mod h1:3JO3FxGmnJ11JQBeeLoL61XBsZ76s9jod10IyKrxjHs=
@@ -8,3 +8,5 @@ github.com/evolbioinf/fasta v0.0.0-20211125081250-489cff0f4d5d h1:EOkzTqfTeNlU3o
 github.com/evolbioinf/fasta v0.0.0-20211125081250-489cff0f4d5d/go.mod h1:1bD5OMlu85gdxSDr74kxUElPjLc/EVTzkRw2UT+FMhg=
 github.com/evolbioinf/pal v0.0.0-20220208150205-002a79f1ba83 h1:8stM9BCMdqSWayUE6W61d1TeSFqDBn3PqPMcsxdCkY0=
 github.com/evolbioinf/pal v0.0.0-20220208150205-002a79f1ba83/go.mod h1:VzU3V2L2+XH52cL0nInruh0OKP6TsK8nUqXp3J0YUHI=
+github.com/evolbioinf/pal v0.0.0-20220211071835-4e5e23a0afd0 h1:eh0fC4DerG6TYPHp9sJHfULHX4mMg0gO9pQcX+fB+gk=
+github.com/evolbioinf/pal v0.0.0-20220211071835-4e5e23a0afd0/go.mod h1:VzU3V2L2+XH52cL0nInruh0OKP6TsK8nUqXp3J0YUHI=
