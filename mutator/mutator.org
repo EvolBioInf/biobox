@@ -4,9 +4,9 @@
   of the software tools of the trade take related sequences as input. So
   it is often useful to transform a sequence into its diverged
   sibling. The program \texttt{mutator} implements this
-  transformation. By default, it mutates positions with a given
-  probability. However, the user can also opt to supply a list of
-  positions to be mutated.
+  transformation. By default, it mutates positions drawn with
+  replacement with a given probability. However, the user can also opt
+  to supply a list of positions to be mutated.
 
   \section*{Implementation}
   The program outline contains hooks for imports, functions, and the
@@ -275,13 +275,16 @@
   }
 #+end_src
 #+begin_src latex
-  Given a mutation rate, we draw a random number for each residue and
-  check whether it is less than the mutation rate.
+  For each residue, we draw a random number and check whether it is less
+  than the mutation rate. If so, we pick a random position in the
+  sequence and mutate it.
 #+end_src
 #+begin_src go <<Mutate with rate, Ch.~\ref{ch:mut}>>=
-  for i, _ := range res {
+  l := len(res)
+  for i := 0; i < l; i++ {
 	  if ran.Float64() < mu {
-		  res[i] = mutate(res[i], ran, alphabet)
+		  r := ran.Intn(l)
+		  res[r] = mutate(res[r], ran, alphabet)
 	  }
   }
 #+end_src
