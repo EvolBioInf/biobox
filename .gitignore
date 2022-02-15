@@ -1,4 +1,5 @@
 fixMod.sh
+*/*.go
 !util/util.go
 !newick/newick.go
 bin/*
