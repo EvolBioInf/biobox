@@ -212,7 +212,7 @@
 #+begin_src go <<Read data, Ch.~\ref{ch:his}>>=
   sc := bufio.NewScanner(r)
   for sc.Scan() {
-	  ns := sc.Text()
+	  ns := strings.Fields(sc.Text())[0]
 	  f, err := strconv.ParseFloat(ns, 64)
 	  if err != nil {
 		  log.Fatal("malformed input")
