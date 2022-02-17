@@ -894,7 +894,7 @@
   if v.child != nil { fmt.Printf("(") }
   printNewick(v.child, sa)
   printNewick(v.sib, sa)
-  if v.child != nil {
+  if v.parent != nil && v.sib == nil {
 	  fmt.Printf(")")
 	  //<<Branch length, Ch.~\ref{ch:dst}>>
   }
