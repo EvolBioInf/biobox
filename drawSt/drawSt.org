@@ -113,11 +113,11 @@
     \begin{center}
       \textbf{A}\\
       \tt
-      (10:1,(((3:5,4:4,5:4):1,(8:1,6:3):1):1,(9:1,(2:7,7:2,1:9):1):1):1);
+      (10:1,(((3:5,4:4):4,5:4):4,(8:1,6:3):3):1,(9:1,(2:7,7:2):2,1:9):9):1;
     \end{center}
     \begin{center}
       \textbf{B}\\
-      \input{stNwk}
+      \scalebox{0.7}{\includegraphics{stNwk}}
     \end{center}
   \caption{Suffix tree drawn like a phylogeny. (\textbf{A}) Newick
     notation; (\textbf{B}) drawn as tree; the scale corresponds to one character.}\label{fig:stNwk}
