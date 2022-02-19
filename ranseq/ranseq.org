@@ -73,8 +73,7 @@
   ``random'' sequence.
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:ran}>>=
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
   var optL = flag.Int("l", 100, "sequence length")
   var optN = flag.Int("n", 1,   "number of sequences")
   var optG = flag.Float64("g", 0.5, "G/C content")

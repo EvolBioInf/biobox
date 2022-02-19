@@ -85,8 +85,7 @@
   var optF = flag.Float64("f", 0.4, "scaling factor for plot")
   var optM = flag.Bool("m", false, "mark most recent common " +
 	  "ancestor")
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.

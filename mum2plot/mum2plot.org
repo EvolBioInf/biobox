@@ -102,8 +102,7 @@
   We declare only the version option.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:m2p}>>=
-  var optV = flag.Bool("v", false, "print program & " +
-	  "other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.

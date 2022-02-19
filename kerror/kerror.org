@@ -97,8 +97,7 @@
   and gaps, and an option to print the fragment list.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:ke}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optK = flag.Int("k", 1, "number of errors")
   var optA = flag.Float64("a", 1, "match")
   var optI = flag.Float64("i", -3, "mismatch")

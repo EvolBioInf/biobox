@@ -63,8 +63,7 @@
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:tr}>>=
   var optF = flag.Int("f", 1, "reading frame -3|-2|-1|1|2|3")
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.

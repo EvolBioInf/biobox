@@ -193,8 +193,7 @@
   var optA = flag.String("a", "", "normalize by frequencies " +
 	  "in file; default: log-transformation")
   var optB = flag.Float64("b", 0.5, "bits")
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \texttt{flag}.

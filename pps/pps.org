@@ -86,8 +86,7 @@
   \ty{-l}, and whether we exclude gaps (\ty{-g}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pp}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optL = flag.Int ("l", fasta.DefaultLineLength,
 	  "line length")
   var optG = flag.Bool("g", false, "exclude gaps")

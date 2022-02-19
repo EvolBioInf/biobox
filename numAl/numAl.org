@@ -136,8 +136,7 @@
   bottom-up (\texttt{-t}).
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:num}>>=
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
   var optT = flag.Bool("t", false, "top-down (default bottom-up)")
   var optP = flag.Bool("p", false, "print data structure (default result)")
 #+end_src

@@ -281,7 +281,7 @@
   var optR = flag.Bool("r", false, "include reverse strand")
   var optP = flag.Bool("p", false, "print all positions")
   var optS = flag.Bool("s", false, "print full sequences")
-  var optV = flag.Bool("v", false, "print version & license")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \texttt{flag}.

@@ -98,8 +98,7 @@
   var optW = flag.String("w", "", "LaTeX wrapper file")
   var optL = flag.Bool("l", false, "labeled nodes; default: plain")
   var optT = flag.Bool("t", false, "plain text; default: LaTeX")
-  var optV = flag.Bool("v", false, "print program version & " +
-	  "other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \texttt{flag}.

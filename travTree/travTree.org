@@ -113,8 +113,7 @@
 #+begin_src go <<Declare options, Ch.~\ref{ch:tt}>>=
   var optI = flag.Bool("i", false, "inorder")
   var optO = flag.Bool("o", false, "postorder")
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.

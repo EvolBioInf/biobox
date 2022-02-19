@@ -103,8 +103,7 @@
   for the random number generator (\ty{-s}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:dgn}>>=
-  var optV = flag.Bool("v", false, "print program option " +
-	  "other information")
+  var optV = flag.Bool("v", false, "version")
   var optG = flag.Int("g", 10, "number of generations")
   var optN = flag.Int("n", 10, "number of individuals")
   var optT = flag.String("t", "", "trace genealogy of " +

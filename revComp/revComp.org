@@ -64,8 +64,7 @@
   reverse, \texttt{-r}.
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:rev}>>=
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
   var optR = flag.Bool("r", false, "reverse only")
 #+end_src
 #+begin_src latex

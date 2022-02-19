@@ -120,8 +120,7 @@
   (\ty{-s}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:gc}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optN = flag.Int("n", 0, "number of iterations")
   var optS = flag.Int("s", 0, "seed of random number generator")
 #+end_src

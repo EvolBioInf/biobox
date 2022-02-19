@@ -87,8 +87,7 @@
   pair of most distant taxa (\ty{-p}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:mr}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optP = flag.Bool("p", false, "print most distant pair")
 #+end_src
 #+begin_src latex

@@ -50,8 +50,7 @@
   version, and \texttt{-p} to enter a file of patterns.
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:nm}>>=
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
   var optP = flag.String("p", "", "file of patterns")
 #+end_src
 #+begin_src latex

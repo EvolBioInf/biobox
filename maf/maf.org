@@ -70,8 +70,7 @@
   rather than the actual factors.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:ma}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optN = flag.Bool("n", false, "print number of factors " +
 	  "instead of factors")
 #+end_src

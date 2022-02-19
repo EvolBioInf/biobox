@@ -67,8 +67,7 @@
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:f2t}>>=
   var optD = flag.String("d", "\t", "field delimiter")
-  var optV = flag.Bool("v", false, "print program version & " +
-	  "other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.

@@ -102,8 +102,7 @@
   instead of the default raw counts.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:his}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optB = flag.Int("b", 0, "number of bins")
   var optR = flag.String("r", "xmin:xmax", "range")
   var optF = flag.Bool("f", false, "print frequencies")

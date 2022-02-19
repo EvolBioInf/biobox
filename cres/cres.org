@@ -52,8 +52,7 @@
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:cr}>>=
   var optS = flag.Bool("s", false, "count sequences separately")
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   This requires the \texttt{flag} package.

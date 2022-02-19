@@ -114,8 +114,7 @@
   var optE = flag.Float64("e", 0.001, "error rate")
   var optS = flag.Int("s", 0, "seed for random number generator")
   var optO = flag.Bool("o", false, "circular template")
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We parse the options and first respond to \ty{-v}, as this stops the

@@ -68,8 +68,7 @@
   the intermediate matrices (\ty{-m}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:upgma}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optM = flag.Bool("m", false, "print intermediate " +
 	  "matrices")
 #+end_src

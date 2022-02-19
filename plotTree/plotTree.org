@@ -85,8 +85,7 @@
   irrespective of the degree of the root.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optR = flag.Bool("r", false, "rooted tree (default input)")
   var optU = flag.Bool("u", false, "unrooted tree (default input)")
 #+end_src

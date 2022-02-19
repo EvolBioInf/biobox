@@ -70,8 +70,7 @@
   var optN = flag.Int("n", 0, "sample size")
   var optT = flag.Float64("t", 0, "theta = 4Nu")
   var optA = flag.Bool("a", false, "use approximation")
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \texttt{flag},

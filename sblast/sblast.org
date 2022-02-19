@@ -123,8 +123,7 @@
   var optT = flag.Float64("t", 50.0, "threshold score")
   var optN = flag.Bool("n", false, "naive matching")
   var optL = flag.Bool("l", false, "print word list")
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.

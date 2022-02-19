@@ -72,8 +72,7 @@
   options and output options.
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:al}>>=
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
   //<<Algorithm options, Ch.~\ref{ch:al}>>
   //<<Output options, Ch.~\ref{ch:al}>>
 #+end_src

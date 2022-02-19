@@ -110,8 +110,7 @@
   repeats.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:dna}>>=
-  var optV = flag.Bool("v", false, "print version " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
   var optR = flag.Bool("r", false, "raw mismatches")
   var optU = flag.Bool("u", false, "uncorrected mismatches")
   var optK = flag.Bool("k", false, "Kimura distances (default: Jukes-Cantor)")

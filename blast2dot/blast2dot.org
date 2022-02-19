@@ -119,8 +119,7 @@
   var optC = flag.String("c", "", "color of gene families")
   var optCC = flag.String("C", "", "color of singletons; color names: " +
 	  "www.graphviz.org/doc/info/colors.html")
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We include \ty{flag}.

@@ -158,8 +158,7 @@
 	  "described by regex")
   var optR = flag.Bool("r", false, "include reverse strand")
   var optQ = flag.Bool("q", false, "quiet, don't print shustrings")
-  var optV = flag.Bool("v", false, "print program version & " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \texttt{flag}.

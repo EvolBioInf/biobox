@@ -92,8 +92,7 @@
 	  "color names: www.graphviz.org/doc/info/colors.html")
   var optS = flag.Int64("s", 0, "seed for random number generator " +
 	  "(default internal)")
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.

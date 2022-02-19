@@ -56,8 +56,7 @@
   We declare \texttt{-v},
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:wra}>>=
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   and import \texttt{flag} and \texttt{util}.

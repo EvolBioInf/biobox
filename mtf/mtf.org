@@ -101,8 +101,7 @@
   and printing of the alphabet (\ty{-a}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:mt}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optD = flag.Bool("d", false, "decode rather than encode")
   var optP = flag.Bool("p", false, "printing characters rather than DNA")
   var optA = flag.Bool("a", false, "print alphabet")

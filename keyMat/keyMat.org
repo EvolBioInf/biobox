@@ -56,8 +56,7 @@
   var optP = flag.String("p", "", "comma-separated patterns")
   var optF = flag.String("f", "", "file with FASTA-formatted patterns")
   var optR = flag.Bool("r", false, "include reverse strand")
-  var optV = flag.Bool("v", false, "print version & " +
-	  "other program information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \texttt{flag}.

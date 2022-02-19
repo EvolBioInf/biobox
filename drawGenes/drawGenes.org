@@ -85,8 +85,7 @@
   We only declare the version, \ty{-v}.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:dg}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.

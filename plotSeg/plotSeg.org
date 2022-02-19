@@ -78,8 +78,7 @@
   axes, and the graphics device.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:ps}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   //<<Declare axis options, Ch.~\ref{ch:ps}>>
   //<<Declare device options, Ch.~\ref{ch:ps}>>
 #+end_src

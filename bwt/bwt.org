@@ -122,8 +122,7 @@
   \ty{-d}.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:bw}>>=
-  var optV = flag.Bool("v", false, "print program version " +
-	  "and other information")
+  var optV = flag.Bool("v", false, "version")
   var optD = flag.Bool("d", false, "decode")
 #+end_src
 #+begin_src latex

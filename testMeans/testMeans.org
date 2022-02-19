@@ -108,8 +108,7 @@
   var optU = flag.Bool("u", false, "unequal variance")
   var optM = flag.Int("m", 0, "Monte-Carlo iterations")
   var optS = flag.Int("s", 0, "seed for random number generator")
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \texttt{flag}.

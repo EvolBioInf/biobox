@@ -70,8 +70,7 @@
   for joining the regions, \texttt{-j}.
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:cut}>>=
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
   var optR = flag.String("r", "", "regions")
   var optF = flag.String("f", "", "file with regions; " +
 	  "one white-space delimited start/end pair per line")

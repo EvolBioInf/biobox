@@ -184,8 +184,7 @@
   var optX = flag.Float64("x", 1, "x-unit in LaTeX")
   var optY = flag.Float64("y", 1.5, "y-unit in LaTeX")
   var optS = flag.Bool("s", false, "add sentinel character")
-  var optV = flag.Bool("v", false, "print program version & " +
-	  "other information")
+  var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
   We import \texttt{flag}.

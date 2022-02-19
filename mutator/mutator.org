@@ -60,8 +60,7 @@
   \end{enumerate}
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:mut}>>=
-  var optV = flag.Bool("v", false, "print version & " +
-	  "program information")
+  var optV = flag.Bool("v", false, "version")
   var optM = flag.Float64("m", 0.01, "mutation rate")
   var optP = flag.String("p", "", "positions to be mutated; " +
 	  "comma-separated, one-based")
