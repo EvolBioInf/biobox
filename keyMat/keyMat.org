@@ -31,9 +31,9 @@
   the program's purpose, and an example command.
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:km}>>=
-  u := "keyMat [-h] [options] [file(s)]"
-  p := "Set matching in sequence data"
-  e := "keyMat -p ATTC,ATTG foo.fasta"
+  u := "keyMat [-h] [options] [patterns] [file(s)]"
+  p := "Match one or more patterns in sequence data."
+  e := "keyMat -r ATTC,ATTG foo.fasta"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -43,18 +43,16 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  Apart from the default help option, \texttt{-h}, we declare four
+  Apart from the default help option, \texttt{-h}, we declare three
   additional options:
   \begin{enumerate}
-  \item \texttt{-p}: one or more patterns
   \item \texttt{-f}: file containing patterns
   \item \texttt{-r}: include reverse strand
   \item \texttt{-v}: program version
   \end{enumerate}
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:km}>>=
-  var optP = flag.String("p", "", "comma-separated patterns")
-  var optF = flag.String("f", "", "file with FASTA-formatted patterns")
+  var optP = flag.String("p", "", "file with FASTA-formatted patterns")
   var optR = flag.Bool("r", false, "include reverse strand")
   var optV = flag.Bool("v", false, "version")
 #+end_src
@@ -83,17 +81,20 @@
   "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
-  The patterns are collected from the command line and/or a file. Since
-  the file contains FASTA-formatted sequences, all patterns are stored
-  in this format.
+  The patterns are collected from the command line or a file. Since the
+  file contains FASTA-formatted sequences, all patterns are stored in
+  this format. If no pattern file is given, the first token on the
+  command line is assumed to contain the patterns and is lopped of the
+  beginning of the list of input files.
 #+end_src
 #+begin_src go <<Collec patterns, Ch.~\ref{ch:km}>>=
   var patterns []*fasta.Sequence
+  files := flag.Args()
   if *optP != "" {
-	  //<<Collect patterns from command line, Ch.~\ref{ch:km}>>
-  }
-  if *optF != "" {
 	  //<<Collect patterns from file, Ch.~\ref{ch:km}>>
+  } else if len(files) > 0 {
+	  //<<Collect patterns from command line, Ch.~\ref{ch:km}>>
+	  files = files[1:]
   }
 #+end_src
 #+begin_src latex
@@ -107,7 +108,7 @@
   the patterns to sequences, we use the sequence as header.
 #+end_src
 #+begin_src go <<Collect patterns from command line, Ch.~\ref{ch:km}>>=
-  p := strings.Split(*optP, ",")
+  p := strings.Split(files[0], ",")
   for _, s := range p {
 	  seq := fasta.NewSequence(s, []byte(s))
 	  patterns = append(patterns, seq)
@@ -123,9 +124,9 @@
   We use a scanner to collect the patterns from the file.
 #+end_src
 #+begin_src go <<Collect patterns from file, Ch.~\ref{ch:km}>>=
-  file, err := os.Open(*optF)
+  file, err := os.Open(*optP)
   if err != nil {
-	  log.Fatalf("couldn't open %q\n", *optF)
+	  log.Fatalf("couldn't open %q\n", *optP)
   }
   scanner := fasta.NewScanner(file)
   for scanner.ScanSequence() {
@@ -159,10 +160,11 @@
   "fmt"
 #+end_src
 #+begin_src latex
-  When running the search, we iterate over the input files and apply the
-  function \texttt{scan} to each one. This function takes as argument
-  the keyword tree constructed from the patterns, the patterns in
-  sequence and string format, and the \texttt{-r} flag.
+  When running the search, we iterate over the input files, which are
+  the remaining command line arguments. We apply the function
+  \texttt{scan} to each file. This function takes as argument the
+  keyword tree constructed from the patterns, the patterns in sequence
+  and string format, and the \texttt{-r} flag.
 #+end_src
 #+begin_src go <<Run search, Ch.~\ref{ch:km}>>=
   var sp []string
@@ -170,7 +172,6 @@
 	  sp = append(sp, string(s.Data()))
   }
   tree := kt.NewKeywordTree(sp)
-  files := flag.Args()
   clio.ParseFiles(files, scan, tree, patterns, sp, *optR)
 #+end_src
 #+begin_src latex
@@ -287,15 +288,13 @@
   The commands go through the options.
 #+end_src
 #+begin_src go <<Write commands, Ch.~\ref{ch:km}>>=
-  c := exec.Command(r, "-p",  p, i)
+  c := exec.Command(r, p, i)
   commands = append(commands, c)
-  c = exec.Command(r, "-p", p, "-r", i)
+  c = exec.Command(r, "-r", p, i)
   commands = append(commands, c)
-  c = exec.Command(r, "-f", f, i)
+  c = exec.Command(r, "-p", f, i)
   commands = append(commands, c)
-  c = exec.Command(r, "-f", f, "-r", i)
-  commands = append(commands, c)
-  c = exec.Command(r, "-f", f, "-p", "ATTA", i)
+  c = exec.Command(r, "-p", f, "-r", i)
   commands = append(commands, c)
 #+end_src
 #+begin_src latex
