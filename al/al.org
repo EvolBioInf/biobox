@@ -103,7 +103,7 @@
 #+end_src
 #+begin_src go <<Output options, Ch.~\ref{ch:al}>>=
   var optLL = flag.Int("L", fasta.DefaultLineLength, "line length")
-  var optPP = flag.String("P", "", "print programming matrix (v|e|f|g|t)")
+  var optPP = flag.String("P", "", "print programming matrix (d|v|h|s|t)")
 #+end_src
 #+begin_src latex
   We import \ty{fasta}.
@@ -132,20 +132,40 @@
   "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
-  The matrix printing option should be one of v, e, f, g for the four
-  elements of a matrix cell, or t for trace back.
+  The four matrix elements are called \ty{d} for \emph{diagonal}, \ty{v} for
+  \emph{vertical}, \ty{h} for \ty{horizontal}, and \ty{s} for \emph{score}. We
+  can think of them as arranged in a square 
+  \begin{center}
+    \begin{tabular}{|c|c|}
+      \hline
+      \ty{d} & \ty{v}\\
+      \ty{h} & \ty{s}\\\hline
+    \end{tabular}
+  \end{center}
+  Our program should check that only one of these four options has been
+  entered, plus \ty{t} for trace back.
+  However, in package \ty{pal}, these elements are called like this:
+  \begin{center}
+    \begin{tabular}{|c|c|}
+      \hline
+      \ty{g} & \ty{e}\\
+      \ty{f} & \ty{v}\\\hline
+    \end{tabular}
+  \end{center}
+  So we also translate to the nomenclature of \ty{pal}.
 #+end_src
 #+begin_src go <<Check matrix printing, Ch.~\ref{ch:al}>>=
-  m := "-P should be v, e, f, g for the cell element " +
+  m := "-P should be d, v, h, s for the cell element " +
 	  "or t for the traceback"
   if *optPP != "" {
-	  if *optPP != "v" && *optPP != "e" &&
-		  (*optPP) != "f" && *optPP != "g" &&
+	  if *optPP != "d" && *optPP != "v" &&
+		  (*optPP) != "h" && *optPP != "s" &&
 		  (*optPP) != "t" {
 		  fmt.Println(m)
 		  os.Exit(-1)
 	  }
   }
+  //<<Translate cell nomenclature, Ch.~\ref{ch:al}>>
 #+end_src
 #+begin_src latex
   We import \texttt{fmt} and \texttt{os}.
@@ -153,6 +173,28 @@
 #+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
   "fmt"
   "os"
+#+end_src
+#+begin_src latex
+  As shown in the squares above, we translate
+  \begin{center}
+    \begin{tabular}{ccc}
+      \ty{d} to \ty{g}\\
+      \ty{v} to \ty{e}\\
+      \ty{h} to \ty{f}\\
+      \ty{s} to \ty{v}
+    \end{tabular}
+  \end{center}
+#+end_src
+#+begin_src go <<Translate cell nomenclature, Ch.~\ref{ch:al}>>=
+  if *optPP == "d" {
+	  (*optPP) = "g"
+  } else if *optPP == "v" {
+	  (*optPP) = "e"
+  } else if *optPP == "h" {
+	  (*optPP) = "f"
+  } else if *optPP == "s" {
+	  (*optPP) = "v"
+  }
 #+end_src
 #+begin_src latex
   When accessing the input files, we make sure that the user has
@@ -402,13 +444,13 @@
   \ty{s3.fasta} and \ty{s4.fasta}.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:al}>>=
+  test = exec.Command("./al", "-P", "s", "s3.fasta", "s4.fasta")
+  tests = append(tests, test)
   test = exec.Command("./al", "-P", "v", "s3.fasta", "s4.fasta")
   tests = append(tests, test)
-  test = exec.Command("./al", "-P", "e", "s3.fasta", "s4.fasta")
+  test = exec.Command("./al", "-P", "h", "s3.fasta", "s4.fasta")
   tests = append(tests, test)
-  test = exec.Command("./al", "-P", "f", "s3.fasta", "s4.fasta")
-  tests = append(tests, test)
-  test = exec.Command("./al", "-P", "g", "s3.fasta", "s4.fasta")
+  test = exec.Command("./al", "-P", "d", "s3.fasta", "s4.fasta")
   tests = append(tests, test)
   test = exec.Command("./al", "-P", "t", "s3.fasta", "s4.fasta")
   tests = append(tests, test)
