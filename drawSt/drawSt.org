@@ -173,8 +173,9 @@
   Figure~\ref{fig:stInt}), and Newick notation (\ty{-n},
   Figure~\ref{fig:stNwk}A). The user can also print the node depth
   (\ty{-d}), label the nodes (\ty{-l}), change the default x- and
-  y-units (\ty{-x} \& \ty{-y}), add a sentinel character, and print the
-  program version (\ty{-v}).
+  y-units (\ty{-x} \& \ty{-y}), add a sentinel character (\ty{-w}),
+  write a \LaTeX{} wrapper (\ty{-w}), and print the program version
+  (\ty{-v}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:dst}>>=
   var optI = flag.Bool("i", false, "interval notation, LaTeX")
@@ -184,6 +185,7 @@
   var optX = flag.Float64("x", 1, "x-unit in LaTeX")
   var optY = flag.Float64("y", 1.5, "y-unit in LaTeX")
   var optS = flag.Bool("s", false, "add sentinel character")
+  var optW = flag.String("w", "", "LaTeX wrapper file")
   var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
@@ -210,12 +212,16 @@
 #+begin_src latex
   The remaining tokens on the command line are interpreted as input
   files, which get parsed using the function \ty{scan}. It takes as
-  arguments the seven options specifying the tree format.
+  arguments the seven options specifying the tree format. Once we've
+  parsed the input files, we print the \LaTeX{} wrapper, if desired.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:dst}>>=
   files := flag.Args()
   clio.ParseFiles(files, scan, *optI, *optN, *optD, *optL, *optX,
-	  *optY, *optS)
+	  (*optY), *optS)
+  if *optW != "" {
+	  //<<Write wrapper, Ch.~\ref{ch:dst}>>
+  }
 #+end_src
 #+begin_src latex
   In \texttt{scan}, we retrieve the options before iterating over the
@@ -907,6 +913,57 @@
   }
 #+end_src
 #+begin_src latex
+  We've now written the tree, but the user might also have requested a
+  \LaTeX{} wrapper. We open the file for it, write the wrapper to that
+  file, and tell the user about it.
+#+end_src
+#+begin_src go <<Write wrapper, Ch.~\ref{ch:dst}>>=
+  //<<Open file, Ch.~\ref{ch:dst}>>
+  //<<Write to file, Ch.~\ref{ch:dst}>>
+  //<<Tell user, Ch.~\ref{ch:dst}>>
+#+end_src
+#+begin_src latex
+  We open the file passed with \ty{-w} and bail on fail.
+#+end_src
+#+begin_src go <<Open file, Ch.~\ref{ch:dst}>>=
+  f, err := os.Create(*optW)
+  if err != nil {
+	  log.Fatalf("couldn't open %q\n", *optW)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{os} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dst}>>=
+  "os"
+  "log"
+#+end_src
+#+begin_src latex
+  We write a \LaTeX article that wraps the hypothetical input file
+  \ty{st.tex}.
+#+end_src
+#+begin_src go <<Write to file, Ch.~\ref{ch:dst}>>=
+  fmt.Fprintf(f, "\\documentclass{article}\n")
+  fmt.Fprintf(f, "\\usepackage{pst-all}\n")
+  fmt.Fprintf(f, "\\begin{document}\n")
+  fmt.Fprintf(f, "\\begin{center}\n\\input{st}\n\\end{center}\n")
+  fmt.Fprintf(f, "\\end{document}\n")
+  f.Close()
+#+end_src
+#+begin_src latex
+  We tell the user via the standard error stream how to use the
+  wrapper. The file names used in the instructions are constructed by
+  trimming \ty{.tex} off the wrapper file name.
+#+end_src
+#+begin_src go <<Tell user, Ch.~\ref{ch:dst}>>=
+  old := *optW
+  new := strings.TrimSuffix(old, ".tex")
+  fmt.Fprintf(os.Stderr, "# Wrote wrapper to %s; if the suffix tree is in " +
+	  "st.tex, run\n# latex %s\n# dvips %s -o -q\n# " +
+	  "ps2pdf %s.ps\n", old, new, new, new)
+#+end_src
+#+begin_src latex
+
   The program \ty{drawSt} is finished, so we test it next.
 
   \section*{Testing}
