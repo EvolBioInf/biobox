@@ -109,7 +109,8 @@
 #+begin_src latex
   Before scanning a file, the arguments are retrieved. Then the data is
   scanned line-wise. Each line is either a header or consists of
-  characters to be counted.
+  characters to be counted. After using \ty{ScanLine}, we flush the
+  scanner.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:cr}>>=
   func scan(r io.Reader, args ...interface{}) {
@@ -122,6 +123,7 @@
 			  count(counts, scanner.Line())
 		  }
 	  }
+	  count(counts, scanner.Flush())
   }
 #+end_src
 #+begin_src latex

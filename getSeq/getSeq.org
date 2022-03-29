@@ -110,7 +110,8 @@
 #+end_src
 #+begin_src latex
   Before a file is scanned, we retrieve the arguments just passed. Then
-  we go through it line by line and open or close the printing channel.
+  we go through it line by line and open or close the printing
+  channel. After scanning the file we flush the scanner.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:get}>>=
   func scan(r io.Reader, args ...interface{}) {
@@ -122,6 +123,7 @@
 		  //<<Deal with header, Ch.~\ref{ch:get}>>
 		  if open { fmt.Println(string(l)) }
 	  }
+	  //<<Flush scanner, Ch.~\ref{ch:get}>>
   }
 #+end_src
 #+begin_src latex
@@ -161,6 +163,15 @@
 	  } else if m != nil && !optC { open = true 
 	  } else if m == nil && optC { open = true 
 	  } else {open = false}
+  }
+#+end_src
+#+begin_src latex
+  We flush the scanner and print any remaining bytes.
+#+end_src
+#+begin_src go <<Flush scanner, Ch.~\ref{ch:get}>>=
+  l := sc.Flush()
+  if open && len(l) > 0 {
+	  fmt.Println(string(sc.Flush()))
   }
 #+end_src
 #+begin_src latex
