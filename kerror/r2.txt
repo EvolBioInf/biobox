@@ -1,6 +1,6 @@
 Query   DMADH X78384.1 D.melanogaster Adh and Adh-dup genes. 1..1000         (1000 residues)
 Subject NT_033779.5 Drosophila melanogaster chromosome 2L 14613315..14620084 (6770 residues)
-Score   972
+Score   974
 Errors  6 (1 gap, 5 mismatches)
 
 
