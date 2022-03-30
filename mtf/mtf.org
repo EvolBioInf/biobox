@@ -5,8 +5,8 @@
   characters. Moreover, we'd like to transform runs of any kind of
   character to runs of zeros.
 
-  To do this, we start from an alphabet, say DNA, where each residue of
-  the four is associated with a number:
+  To do this, we start from an alphabet, say DNA, where each of the four
+  residues is associated with a number:
   \begin{center}
     \begin{tabular}{c|c}
       Residue & Number\\\hline
@@ -43,11 +43,12 @@
   2\ 3\ 0\ 0
   \]
 
-  Not surprisingly, this technique is called ``move to front''. It is
-  reversible using the same reasoning. We start from the original
-  alphabet and a sequence of integers, say that above. The initial 2
-  corresponds to \ty{G}. Then we move the \ty{G} to front, find \ty{T}
-  for 3, and so on.
+  Not surprisingly, this technique is called ``move to front''. It
+  converts any run of $n$ characters $c$ into a code for $c$ followed by
+  $n-1$ zeros~\cite{bur94:blo}. Move to front is reversible using the
+  same reasoning. We start from the original alphabet and a sequence of
+  integers, say that above. The initial 2 corresponds to \ty{G}. Then we
+  move the \ty{G} to front, find \ty{T} for 3, and so on.
 
   The program \ty{mtf} reads a text in FASTA format and encodes it as
   integers by move to front. It can also decode a list of integers
@@ -161,13 +162,15 @@
   }
 #+end_src
 #+begin_src latex
-  For the DNA alphabet we just specify the four nucleotides.
+  For the DNA alphabet we specify the four nucleotides and the sentinel,
+  \verb+$+.
 #+end_src
 #+begin_src go <<Make DNA alphabet, Ch.~\ref{ch:mt}>>=
   al = append(al, byte('A'))
   al = append(al, byte('C'))
   al = append(al, byte('G'))
   al = append(al, byte('T'))
+  al = append(al, byte('$'))
 #+end_src
 #+begin_src latex
   We import \ty{unicode}.
