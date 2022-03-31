@@ -1,0 +1,374 @@
+#+begin_src latex
+  \section*{Introduction}
+  Characters typically take up one byte of computer memory. This is true
+  even for texts over alphabets much smaller than the ASCII code, or
+  where characters frequencies vary
+  significantly. Huffman~\cite{huf52:met} first proposed a method for
+  finding variable length codes that occupy the smallest amount of space
+  possible. These codes are represented in the form of binary trees,
+  Huffman trees.
+
+  A Huffman tree is constructed starting with the leaves, which contain
+  the character to be encoded and its
+  frequency~\cite[p. 385ff]{cor01:int}. The frequencies are interpreted
+  as node weights, and the two lightest leaves are merged into a parent
+  whose weight is the sum of its children's weights. This procedure is
+  repeated until the last two nodes are merged into the root.
+
+  To read optimal codes from such a tree, the incoming edge for each
+  node is labeled. Edges leading to a left child are labeled 0, edges
+  leading to a right child are labeled 1. Now the optimal code for the
+  character of a leaf consists of its path label.
+
+  The program \ty{hut} reads sequences and prints their Huffman
+  trees. For example, Figure~\ref{fig:hut}A shows the nucleotide
+  frequencies in the genome of \emph{M. genitalium}. When \ty{hut} is
+  applied to the actual genome sequence, it returns the tree in
+  Figure~\ref{fig:hut}B, where branch lengths are proportional to node
+  weights.
+
+  \begin{figure}
+    \begin{center}
+      \begin{tabular}{cc}
+	\textbf{A} & \textbf{B}\\
+	\input{../hut/freq} &
+	\scalebox{0.75}{\includegraphics{../hut/hut}}
+      \end{tabular}
+    \end{center}
+    \caption{Nucleotide frequencies in the genome of
+      \emph{M. genitalium} (\textbf{A}) and the corresponding Huffman
+      tree (\textbf{B}).}\label{fig:hut}
+  \end{figure}
+
+  \section*{Implementation}
+  The outline of \ty{hut} contains hooks for imports, types, methods,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<hut.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:hut}>>
+  )
+  //<<Types, Ch.~\ref{ch:hut}>>
+  //<<Methods, Ch.~\ref{ch:hut}>>
+  //<<Functions, Ch.~\ref{ch:hut}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:hut}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, parse the
+  options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:hut}>>=
+  //<<Set usage, Ch.~\ref{ch:hut}>>
+  //<<Declare options, Ch.~\ref{ch:hut}>>
+  //<<Parse options, Ch.~\ref{ch:hut}>>
+  //<<Parse input files, Ch.~\ref{ch:hut}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{hut}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:hut}>>=
+  m := "hut [-h|-v] [file]..."
+  p := "Convert sequences into their Huffman trees."
+  e := "hut foo.fasta"
+  clio.Usage(m, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:hut}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  There is only one option to declare, the version, \ty{-v}.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:hut}>>=
+  var optV = flag.Bool("v", false, "version")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:hut}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:hut}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("hut")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:hut}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are interpreted as input
+  files, which we parse using the function \ty{scan}.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:hut}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan} we iterate over the sequences contained in the
+  file. For each sequence we count the characters, construct a tree, and
+  print it.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:hut}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  sc := fasta.NewScanner(r)
+	  counts := make([]int, 256)
+	  for sc.ScanSequence() {
+		  seq := sc.Sequence()
+		  //<<Count characters, Ch.~\ref{ch:hut}>>
+		  //<<Construct tree, Ch.~\ref{ch:hut}>>
+		  //<<Print tree, Ch.~\ref{ch:hut}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:hut}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  To count the characters, we reset all counts to zero and iterate over
+  the sequence data.
+#+end_src
+#+begin_src go <<Count characters, Ch.~\ref{ch:hut}>>=
+  for i, _ := range counts { counts[i] = 0 }
+  for _, c := range seq.Data() {
+	  counts[c]++
+  }
+#+end_src
+#+begin_src latex
+  We construct the tree in three steps. First, we construct the
+  leaves. Then we cluster the leaves into the tree topology. Given the
+  topology, we look up the character codes.
+#+end_src
+#+begin_src go <<Construct tree, Ch.~\ref{ch:hut}>>=
+  //<<Construct tree leaves, Ch.~\ref{ch:hut}>>
+  //<<Construct tree topology, Ch.~\ref{ch:hut}>>
+  //<<Construct character codes, Ch.~\ref{ch:hut}>>
+#+end_src
+#+begin_src latex
+  For each character with at least one occurrence we make a new leaf and
+  store it in a slice of leaves. The labels of the incoming edges, 0 or
+  1, will later be written as the node label. So we keep the characters
+  that label the leaves in a separate map referenced by their ID.
+#+end_src
+#+begin_src go <<Construct tree leaves, Ch.~\ref{ch:hut}>>=
+  leaves := make([]*nwk.Node, 0)
+  labels := make(map[int]byte)
+  for i, c := range counts {
+	  if c > 0 {
+		  n := nwk.NewNode()
+		  n.Length = float64(c) / float64(len(seq.Data()))
+		  n.HasLength = true
+		  labels[n.Id] = byte(i)
+		  leaves = append(leaves, n)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{nwk}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:hut}>>=
+  "github.com/evolbioinf/nwk"
+#+end_src
+#+begin_src latex
+  To construct the tree topology, we sort the leaves, label the two
+  lightest 0 and 1, and merge them into a new node.
+#+end_src
+#+begin_src go <<Construct tree topology, Ch.~\ref{ch:hut}>>=
+  for len(leaves) > 1 {
+	  sort.Sort(leafSlice(leaves))
+	  leaves[0].Label = "0"
+	  leaves[1].Label = "1"
+	  //<<Merge two lightest nodes, Ch.~\ref{ch:hut}>>
+  }
+  root := leaves[0]
+#+end_src
+#+begin_src latex
+  We import \ty{sort}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:hut}>>=
+  "sort"
+#+end_src
+#+begin_src latex
+  To enable node sorting, we define the type \ty{leafSlice}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:hut}>>=
+type leafSlice []*nwk.Node
+#+end_src
+#+begin_src latex
+  We also implement the methods of the \ty{Sort} interface, \ty{Len},
+  \ty{Less}, and \ty{Swap} on \ty{leafSlice}.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:hut}>>=
+  func (l leafSlice) Len() int { return len(l) }
+  func (l leafSlice) Less(i, j int) bool {
+	  return l[i].Length < l[j].Length
+  }
+  func (l leafSlice) Swap(i, j int) {
+	  l[i], l[j] = l[j], l[i]
+  }
+#+end_src
+#+begin_src latex
+  We merge the two lightest nodes into a new node. Its edge length is
+  the sum of its child lengths. The new node is appended to the slice of
+  leaves and those we just merged are sliced off.
+#+end_src
+#+begin_src go <<Merge two lightest nodes, Ch.~\ref{ch:hut}>>=
+  n := nwk.NewNode()
+  n.AddChild(leaves[0])
+  n.AddChild(leaves[1])
+  n.Length = leaves[0].Length + leaves[1].Length
+  n.HasLength = true
+  leaves = append(leaves, n)
+  leaves = leaves[2:]
+#+end_src
+#+begin_src latex
+  Character codes reside in the leaves. To find them, we traverse the
+  tree.
+#+end_src
+#+begin_src go <<Construct character codes, Ch.~\ref{ch:hut}>>=
+  traverse(root, labels)
+#+end_src
+#+begin_src latex
+  Inside \ty{traverse}, we seek out the leaves. For a given leaf, we
+  initialize its code with the current label. Then we climb to the root
+  to find the rest of the code in right-to-left orientation. The code
+  thus collected is still written right-to-left. So we reverse it before
+  storing it as part of the leaf label.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:hut}>>=
+  func traverse(n *nwk.Node, labels map[int]byte) {
+	  if n == nil { return }
+	  if n.Child == nil {
+		  code := n.Label
+		  //<<Climb to root, Ch.~\ref{ch:hut}>>
+		  //<<Reverse code, Ch.~\ref{ch:hut}>>
+		  //<<Store leaf label, Ch.~\ref{ch:hut}>>
+	  }
+	  traverse(n.Child, labels)
+	  traverse(n.Sib, labels)
+  }
+#+end_src
+#+begin_src latex
+  On our climb to the root we extend the code by the labels we
+  encounter.
+#+end_src
+#+begin_src go <<Climb to root, Ch.~\ref{ch:hut}>>=
+  v := n.Parent
+  for v != nil {
+	  code += v.Label
+	  v = v.Parent
+  }
+#+end_src
+#+begin_src latex
+  To reverse the code string, we convert it into a byte slice, reverse
+  that, and convert the bytes back to a string.
+#+end_src
+#+begin_src go <<Reverse code, Ch.~\ref{ch:hut}>>=
+  b := []byte(code)
+  for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+	  b[i], b[j] = b[j], b[i]
+  }
+  code = string(b)
+#+end_src
+#+begin_src latex
+  We label a leaf for character \ty{c} using the pattern
+  \begin{verbatim}
+  [0|1] c/code
+  \end{verbatim}
+#+end_src
+#+begin_src go <<Store leaf label, Ch.~\ref{ch:hut}>>=
+  n.Label = fmt.Sprintf("\"%s %c/%s\"", n.Label, labels[n.Id], code)
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:hut}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We print the tree by printing its root.
+#+end_src
+#+begin_src go <<Print tree, Ch.~\ref{ch:hut}>>=
+  fmt.Println(root)
+#+end_src
+#+begin_src latex
+  We've finished \ty{hut}, time to test it.
+  \section*{Testing}
+  The outline of our testing program has hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<hut_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:hut}>>
+  )
+
+  func TestHut(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:hut}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct one test and then run it.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:hut}>>=
+  //<<Construct test, Ch.~\ref{ch:hut}>>
+  //<<Run test, Ch.~\ref{ch:hut}>>
+#+end_src
+#+begin_src latex
+  We apply \ty{hut} to a short random sequence contained in
+  \ty{test.fasta}.
+#+end_src
+#+begin_src go <<Construct test, Ch.~\ref{ch:hut}>>=
+  test := exec.Command("./hut", "test.fasta")
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:hut}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We run the test and compare the result we get with the result we want,
+  which is stored in the file \ty{r.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:hut}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q", test)
+  }
+  f := "r.txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil {
+	  t.Errorf("couldn't open %q", f)
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{ioutil} and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:hut}>>=
+  "io/ioutil"
+  "bytes"
+#+end_src
