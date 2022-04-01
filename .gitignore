@@ -1,4 +1,4 @@
-fixMod.sh
+progs.txt
 */*.go
 !util/util.go
 !newick/newick.go

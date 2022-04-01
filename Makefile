@@ -9,8 +9,10 @@ all:
 	for pack in $(packs); do \
 		make -C $$pack; \
 	done
+	printf "" > progs.txt
 	for prog in $(progs); do \
 		make -C $$prog; \
+		echo $$prog >> progs.txt; \
 		cp $$prog/$$prog bin; \
 	done
 .PHONY: doc
@@ -20,7 +22,7 @@ clean:
 	for prog in $(progs) $(packs) doc; do \
 		make clean -C $$prog; \
 	done
-	rm bin/*
+	rm -f bin/* progs.txt
 test:
 	for prog in $(progs) $(packs); do \
 		make test -C $$prog; \

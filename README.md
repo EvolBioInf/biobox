@@ -4,28 +4,19 @@ Tools for Bioinformatics
 ## Author
 [Bernhard Haubold](http://guanine.evolbio.mpg.de/), `haubold@evolbio.mpg.de`
 ## Windows-Ubuntu
-- Install Go  
-  - Download Go compiler  
-  `$ wget https://go.dev/dl/go1.17.6.linux-amd64.tar.gz`
-  - Remove existing Go installation  
-  `$ sudo rm -rf /usr/local/go`
-  - Install new go package  
-  `$ sudo tar -C /usr/local -xzf go1.17.6.linux-amd64.tar.gz`
-  - Add Go to PATH  
-  `$ echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc`
-  `$ source ~/.bashrc`
-  - Test new Go installation  
-  `$ go version`
+- [Install Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install)
+- Install gWSL from the Microsoft Store and start it to run Linux graphics applications
+- [Install Go](https://go.dev/doc/install) under your new Linux system 
 - Install additional packages  
   `$ sudo apt update`
   `$ sudo apt install r-base-core r-cran-ggplot2 libgsl-dev noweb libdivsufsort-dev`
 - Make package  
   `$ make`  
-  The directory `bin` now contains the programs.
+  The directory `bin` should now contain the programs listed in `progs.txt`
 - Optional: Documentation  
   `$ sudo apt install graphviz texlive-latex-extra texlive-science texlive-pstricks texlive-fonts-extra`  
   `$ make doc`  
-  The documentation is now in `doc/bioboxDoc.pdf`.
+  The documentation should now be in `doc/bioboxDoc.pdf`
 ## macOS
 - X-Code  
   `$ xcode-select --install`
@@ -37,7 +28,7 @@ Tools for Bioinformatics
 - [xQuartz](https://www.xquartz.org)
 - Make package  
   `$ make`  
-  The directory `bin` now contains the programs.
+  The directory `bin` should now contain the programs listed in `progs.txt`
 - Optional: Documentation  
   `$ brew install texlive graphviz`  
   `$ make doc`  
