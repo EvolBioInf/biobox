@@ -1,5 +1,5 @@
 progs = al blast2dot bwt cres cutSeq dnaDist drag drawf drawGenes drawKt drawSt fasta2tab geco genTree getSeq hut histogram kerror keyMat midRoot maf mtf \
-mum2plot mutator naiveMatcher nj numAl pam plotLine plotSeg plotTree pps randomizeSeq ranDot ranseq rep2plot \
+mum2plot mutator naiveMatcher nj num2char numAl pam plotLine plotSeg plotTree pps randomizeSeq ranDot ranseq rep2plot \
 repeater revComp rpois sblast sequencer shustring simNorm simOrf testMeans translate travTree upgma var watterson \
 wrapSeq
 packs = util

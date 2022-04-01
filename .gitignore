@@ -40,6 +40,7 @@ doc/mum2plot.tex
 doc/mutator.tex
 doc/naiveMatcher.tex
 doc/nj.tex
+doc/num2char.tex
 doc/numAl.tex
 doc/pam.tex
 doc/plotLine.tex
@@ -94,6 +95,7 @@ mum2plot/mum2plot
 mutator/mutator
 naiveMatcher/naiveMatcher
 nj/nj
+num2char/num2char
 numAl/numAl
 pam/pam
 plotLine/plotLine
