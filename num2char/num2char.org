@@ -100,14 +100,14 @@
 #+end_src
 #+begin_src latex
   In the encoding dictionary we map string representations of the
-  numbers 0--127 to letters and digits.
+  numbers 0--127 to letters and digits
 #+end_src
 #+begin_src go <<Construct encoding dictionary, Ch.~\ref{ch:n2c}>>=
   j := 0
   for i := 0; i < 128; i++ {
 	  for i+j < 256 {
 		  r := rune(i + j)
-		  if unicode.IsLetter(r) && !unicode.IsDigit(r) {
+		  if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			  dict[strconv.Itoa(i)] = string(r)
 			  break
 		  }
