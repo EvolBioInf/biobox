@@ -1,0 +1,407 @@
+#+begin_src latex
+  \begin{figure}
+    \begin{center}
+      \scalebox{0.75}{\includegraphics{../hut/hut}}
+    \end{center}
+    \vspace{0.4cm}
+    \caption{Huffman tree of the \emph{M. genitalium} genome sequence.}\label{fig:huf1}
+  \end{figure}
+
+  \section*{Introduction}
+  Given a Huffman tree, the program \ty{huff} encodes input sequences
+  into their binary representation. For example, Figure~\ref{fig:huf1}
+  shows the Huffman tree for the genome of \emph{M. genitalium}
+  calculated with the program \ty{hut}. Given this tree, \ty{huff}
+  converts the DNA sequence in Figure~\ref{fig:huf2}A into the string
+  representation of a bit stream in Figure~\ref{fig:huf2}B. \ty{huff} can
+  also reverse this step and decode such a stream of zeros and ones.
+
+  \begin{figure}
+    \begin{center}
+      \textbf{A}
+    \end{center}
+    \begin{center}
+      \begin{minipage}{10.3cm}
+      \verb+>gi|84626123|gb|L43967.2| Mycoplasma genitalium...+\\
+      \verb+TAAGTTATTATTTAGTTAATACTTTTAACAATATTATTAAGGTATTTAAA+\\
+      \verb+AAATACTATTATAGTATTTAACATAGTTAAATACCTTCCTTAATACTGTT+\\
+      \end{minipage}
+    \end{center}
+    \begin{center}
+      \textbf{B}
+    \end{center}
+    \begin{center}
+      \begin{minipage}{10.3cm}
+      \verb+>gi|84626123|gb|L43967.2| Mycoplasma genitalium...+\\
+      \verb+11001011111011110111111010111110011010011111111001+\\
+      \verb+00001101111011110010110111011111100000011010011011+\\
+      \verb+11011010111011111100100011010111110001101001001111+\\
+      \verb+100100111100110100111011111+
+      \end{minipage}
+    \end{center}
+    \caption{The first 100 nuceleotides of the genome file of
+      \emph{M. genitalium} printed as nucleotides (\textbf{A}) and as
+      binary codes (\textbf{B}) according to the Huffman tree in
+      Figure~\ref{fig:huf1}.}\label{fig:huf2}
+  \end{figure}
+
+  \section*{Implementation}
+  Our outline of \ty{huff} contains hooks for imports, functions, and
+  the logic of the main function.
+#+end_src
+#+begin_src go <<huff.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:huf}>>
+  )
+
+  //<<Functions, Ch.~\ref{ch:huf}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:huf}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage of \ty{huff}, declare its
+  options, parse the options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:huf}>>=
+  //<<Set usage, Ch.~\ref{ch:huf}>>
+  //<<Declare options, Ch.~\ref{ch:huf}>>
+  //<<Parse options, Ch.~\ref{ch:huf}>>
+  //<<Parse input files, Ch.~\ref{ch:huf}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{huff}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:huf}>>=
+  u := "huff [-h] [option]... [file]..."
+  p := "Convert residue sequences to bit sequences given " +
+	  "a Huffman tree computed with hut."
+  e := "hut foo.fasta > foo.nwk; huff foo.nwk foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:huf}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare two options, version (\ty{-v}), and decoding (\ty{-d}).
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:huf}>>=
+  var optV = flag.Bool("v", false, "version")
+  var optD = flag.Bool("d", false, "decode")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:huf}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v}, as this stops \ty{huff}.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:huf}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("huff")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:huf}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  We interpret the remaining tokens on the command line as file
+  names. The first of these is assumed to be the name of the file
+  containing the code tree. If it doesn't exist, we bail asking for a
+  tree file. If it does exist, we iterate over the trees.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:huf}>>=
+  files := flag.Args()
+  if len(files) == 0 {
+	  m := "please provide a file containing one " +
+		  "or more code trees computed with hut"
+	  log.Fatal(m)
+  }
+  //<<Iterate over code trees, Ch.~\ref{ch:huf}>>
+#+end_src
+#+begin_src latex
+  We import \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:huf}>>=
+  "log"
+#+end_src
+#+begin_src latex
+  For each tree we scan the sequence files using the function
+  \ty{scan}. The function \ty{scan} takes as argument the code tree,
+  represented by its root, and the decoding option.
+#+end_src
+#+begin_src go <<Iterate over code trees, Ch.~\ref{ch:huf}>>=
+  tf, err := os.Open(files[0])
+  if err != nil { log.Fatalf("cannot open %q", files[0]) }
+  defer tf.Close()
+  files = files[1:]
+  sc := nwk.NewScanner(tf)
+  for sc.Scan() {
+	  root := sc.Tree()
+	  clio.ParseFiles(files, scan, root, *optD)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{os} and \ty{nwk}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:huf}>>=
+  "os"
+  "github.com/evolbioinf/nwk"
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the two arguments just passed and
+  deal with each sequence in the file.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:huf}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  root := args[0].(*nwk.Node)
+	  dec := args[1].(bool)
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  seq := sc.Sequence()
+		  //<<Deal with sequence, Ch.~\ref{ch:huf}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io} and \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:huf}>>=
+  "io"
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  Sequences consist of headers and data. Both are transformed depending
+  on whether the sequence is being decoded or encoded. The header is
+  derived from the current header by appending \ty{huff} with or without
+  the decoding switch. The actual sequence data requires a bit more
+  thought. When we are done with the data, we wrap it together with the
+  header in a new sequence and print it.
+#+end_src
+#+begin_src go <<Deal with sequence, Ch.~\ref{ch:huf}>>=
+  header := seq.Header() + " - huff"
+  var data []byte
+  if dec {
+	  header += " -d"
+	  //<<Decode sequence, Ch.~\ref{ch:huf}>>
+  } else {
+	  //<<Encode sequence, Ch.~\ref{ch:huf}>>
+  }
+  seq = fasta.NewSequence(header, data)
+  fmt.Println(seq)
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:huf}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  To decode a sequence, we first extract the decoder from the code
+  tree. Then we iterate over the zeros and ones in the original
+  data. These are part of a code, which we read and for which we store
+  the corresponding byte.
+#+end_src
+#+begin_src go <<Decode sequence, Ch.~\ref{ch:huf}>>=
+  //<<Extract decoder, Ch.~\ref{ch:huf}>>
+  od := seq.Data()
+  i := 0
+  for i < len(od) {
+	  //<<Read code, Ch.~\ref{ch:huf}>>
+	  //<<Store decoded character, Ch.~\ref{ch:huf}>>
+  }
+#+end_src
+#+begin_src latex
+  The decoder is a map between leaf IDs and bytes. The leaf representing
+  a code is discovered through a traversal of the code tree, which we
+  delegate to a call to the function \ty{extractDecoder}.
+#+end_src
+#+begin_src go <<Extract decoder, Ch.~\ref{ch:huf}>>=
+  i2c := make(map[int]byte)
+  i2c = extractDecoder(root, i2c)
+#+end_src
+#+begin_src latex
+  Inside \ty{extractDecoder}, we concentrate on the leaves. A leaf is
+  labeled by a zero or a one, followed by an underscore, the encoded
+  character, a slash, and the actual code. We summarize this pattern as
+  \begin{verbatim}
+  [0|1]_c/011   
+  \end{verbatim}
+  where \ty{c} is the character the leaf stands for. We extract that
+  character and store it as a function of the leaf ID.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:huf}>>=
+  func extractDecoder(v *nwk.Node, i2c map[int]byte) map[int]byte {
+	  if v == nil { return i2c }
+	  if v.Child == nil {
+		  i2c[v.Id] = v.Label[2]
+	  }
+	  i2c = extractDecoder(v.Child, i2c)
+	  i2c = extractDecoder(v.Sib, i2c)
+	  return i2c
+  }
+#+end_src
+#+begin_src latex
+  We read a code by walking into the bit array and the code tree until
+  the function \ty{search} returns a nil node or we run out of ``bits''.
+#+end_src
+#+begin_src go <<Read code, Ch.~\ref{ch:huf}>>=
+  id := -1
+  v := root
+  for v != nil && i < len(od) {
+	  v, id = search(v, od[i])
+	  if v != nil { i++ }
+  }
+#+end_src
+#+begin_src latex
+  Inside \ty{search}, we might have reached a leaf, in which case we
+  return a nil node and the ID. Otherwise, we look for the child with
+  the bit passed. As we've already seen, that bit is always represented
+  as the first byte in a node label.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:huf}>>=
+  func search(v *nwk.Node, b byte) (*nwk.Node, int) {
+	  if v.Child == nil { return nil, v.Id }
+	  if v.Child.Label[0] == b {
+		  return v.Child, v.Child.Id
+	  } else {
+		  return v.Child.Sib, v.Child.Sib.Id
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The leaf ID we've just found corresponds to a character that we append
+  to the new sequence data. When looking up this character, we check we
+  actually found a mapping and bail otherwise.
+#+end_src
+#+begin_src go <<Store decoded character, Ch.~\ref{ch:huf}>>=
+  c, ok := i2c[id]
+  if !ok {
+	  log.Fatalf("couldn't decode leaf %d", id)
+  }
+  data = append(data, c)
+#+end_src
+#+begin_src latex
+  We're done decoding. To \emph{encode} a sequence, we again traverse
+  the code tree, this time using the function \ty{extractEncoder}. The
+  encoder it returns is a map between a byte and a byte slice. Then we
+  iterate over the bytes in the original data and store the
+  corresponding bits.
+#+end_src
+#+begin_src go <<Encode sequence, Ch.~\ref{ch:huf}>>=
+  byte2bits := make(map[byte][]byte)
+  byte2bits = extractEncoder(root, byte2bits)
+  od := seq.Data()
+  for _, b := range od {
+	  code := byte2bits[b]
+	  data = append(data, code...)
+  }
+#+end_src
+#+begin_src latex
+  In \ty{extractEncoder} we seek out the leaves again. Whenever we find
+  one, we store its code as a function of its character.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:huf}>>=
+  func extractEncoder(v *nwk.Node,
+	  b2b map[byte][]byte) map[byte][]byte {
+	  if v == nil { return b2b }
+	  if v.Child == nil {
+		  //<<Store code, Ch.~\ref{ch:huf}>>
+	  }
+	  b2b = extractEncoder(v.Child, b2b)
+	  b2b = extractEncoder(v.Sib, b2b)
+	  return b2b
+  }
+#+end_src
+#+begin_src latex
+  The character encoded is the third byte in the label, the code starts
+  at the fifth byte.
+#+end_src
+#+begin_src go <<Store code, Ch.~\ref{ch:huf}>>=
+  c := v.Label[2]
+  code := []byte(v.Label[4:])
+  b2b[c] = code
+#+end_src
+#+begin_src latex
+  We've finished \ty{huff}, let's test it.
+
+  \section*{Testing}
+  Our testing code has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<huff_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:huf}>>
+  )
+
+  func TestHuff(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:huf}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct our tests and run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:huf}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:huf}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:huf}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:huf}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  There are two tests. One for default encoding, the other for
+  decoding. The decoding is applied to the output of the encoding.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:huf}>>=
+  test := exec.Command("./huff", "mght.nwk", "test.fasta")
+  tests = append(tests, test)
+  test = exec.Command("./huff", "-d", "mght.nwk", "r1.txt")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We store the result we get from the test and compare it to the result
+  we want, which is stored in files \ty{r1.txt} and \ty{r2.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:huf}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %s", test)
+  }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil {
+	  t.Errorf("couldn't open %q", f)
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:huf}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src
+

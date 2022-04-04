@@ -30,6 +30,7 @@ doc/geco.tex
 doc/genTree.tex
 doc/getSeq.tex
 doc/histogram.tex
+doc/huff.tex
 doc/hut.tex
 doc/kerror.tex
 doc/keyMat.tex
@@ -85,6 +86,7 @@ geco/geco
 genTree/genTree
 getSeq/getSeq
 histogram/histogram
+huff/huff
 hut/hut
 kerror/kerror
 keyMat/keyMat
