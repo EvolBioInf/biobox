@@ -144,12 +144,32 @@
 #+end_src
 #+begin_src latex
   To count the characters, we reset all counts to zero and iterate over
-  the sequence data.
+  the sequence data. We are going to build a binary tree from these
+  characters. This only works if there are at least two characters to
+  construct a tree from. So we ensure that's the case.
 #+end_src
 #+begin_src go <<Count characters, Ch.~\ref{ch:hut}>>=
   for i, _ := range counts { counts[i] = 0 }
   for _, c := range seq.Data() {
 	  counts[c]++
+  }
+  //<<Ensure at least two characters, Ch.~\ref{ch:hut}>>
+#+end_src
+#+begin_src latex
+  We count the distinct characters. If there's only one, we add a dummy
+  character nucleotide.
+#+end_src
+#+begin_src go <<Ensure at least two characters, Ch.~\ref{ch:hut}>>=
+  n := 0
+  for _, count := range counts {
+	  if count > 0 { n++ }
+  }
+  if n == 1 {
+	  if counts['A'] == 0 {
+		  counts['A'] = 1
+	  } else {
+		  counts['C'] = 1
+	  }
   }
 #+end_src
 #+begin_src latex
@@ -291,11 +311,11 @@ type leafSlice []*nwk.Node
 #+begin_src latex
   We label a leaf for character \ty{c} using the pattern
   \begin{verbatim}
-  [0|1] c/code
+  [0|1]_c/code
   \end{verbatim}
 #+end_src
 #+begin_src go <<Store leaf label, Ch.~\ref{ch:hut}>>=
-  n.Label = fmt.Sprintf("\"%s %c/%s\"", n.Label, labels[n.Id], code)
+  n.Label = fmt.Sprintf("\"%s_%c/%s\"", n.Label, labels[n.Id], code)
 #+end_src
 #+begin_src latex
   We import \ty{fmt}.
