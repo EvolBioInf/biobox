@@ -1,9 +1,9 @@
 #+begin_src latex
   \section*{Introduction}
   Compression works best on runs of small integers, like zeros and
-  ones. However, zeros and ones don't directly correspond to printing
-  characters. Moreover, we'd like to transform runs of any kind of
-  character to runs of zeros.
+  ones. However, zeros and ones don't directly correspond to
+  residues. Moreover, we'd like to transform runs of any kind of
+  residue to runs of zeros.
 
   To do this, we start from an alphabet, say DNA, where each of the four
   residues is associated with a number:
@@ -52,8 +52,8 @@
 
   The program \ty{mtf} reads a text in FASTA format and encodes it as
   integers by move to front. It can also decode a list of integers
-  separated by blanks. Two alphabets are supported, DNA and printing
-  ASCII characters.
+  separated by blanks. Three alphabets are supported, DNA, protein, and
+  ASCII.
 
   \section*{Implementation}
   Our outline of \ty{mtf} has hooks for imports, functions, and the
@@ -98,14 +98,14 @@
 #+end_src
 #+begin_src latex
   As options we declare the version (\ty{-v}), decoding (\ty{-d}) as
-  opposed to encoding, printing characters as opposed to DNA (\ty{-p}),
-  and printing of the alphabet (\ty{-a}).
+  opposed to encoding, the alphabet, \ty{-a}, and and printing of the
+  alphabet (\ty{-p}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:mt}>>=
   var optV = flag.Bool("v", false, "version")
   var optD = flag.Bool("d", false, "decode rather than encode")
-  var optP = flag.Bool("p", false, "printing characters rather than DNA")
-  var optA = flag.Bool("a", false, "print alphabet")
+  var optA = flag.String("a", "a", "a|d|p for ASCII, DNA, or protein alphabet")
+  var optP = flag.Bool("p", false, "print alphabet")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -114,8 +114,9 @@
   "flag"
 #+end_src
 #+begin_src latex
-  We parse the options and respond to \ty{-v} as this stops the program.
-  Then we print the alphabet if desired. As we need a fresh alphabet
+  We parse the options and respond to \ty{-v} as this stops the
+  program. We also check the user requested a sensible alphabet.  Then
+  we print the alphabet if desired and quit. As we need a fresh alphabet
   every time we start work on a new sequence, we delegate alphabet
   construction to a function call.
 #+end_src
@@ -124,69 +125,71 @@
   if *optV {
 	  util.PrintInfo("mtf")
   }
-  if *optA {
-	  alphabet := makeAlphabet(*optP)
-	  //<<Print alphabet, Ch.~\ref{ch:mt}>>
+  if *optA != "a" && *optA != "d" && *optA != "p" {
+	  log.Fatal("please use alphabet a (ASCII), d (DNA), or p (protein)")
+  }
+  if *optP {
+	  alphabet := makeAlphabet(*optA)
+	  //<<Print alphabet and quit, Ch.~\ref{ch:mt}>>
   }
 #+end_src
 #+begin_src latex
-  We import \ty{util}.
+  We import \ty{util} and \ty{log}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
   "github.com/evolbioinf/biobox/util"
+  "log"
 #+end_src
 #+begin_src latex
-  The alphabet is either DNA or the printing characters of the ASCII
-  set.
+  The alphabet is either DNA, protein, or ASCII.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:mt}>>=
-  func makeAlphabet(printing bool) []byte {
+  func makeAlphabet(a string) []byte {
 	  al := make([]byte, 0)
-	  if printing {
-		  //<<Make printing alphabet, Ch.~\ref{ch:mt}>>
-	  } else {
+	  if a == "p" {
+		  //<<Make protein alphabet, Ch.~\ref{ch:mt}>>
+	  } else if a == "d" {
 		  //<<Make DNA alphabet, Ch.~\ref{ch:mt}>>
+	  } else {
+		  //<<Make ASCII alphabet, Ch.~\ref{ch:mt}>>
 	  }
 	  return al
   }
 #+end_src
 #+begin_src latex
-  We iterate over all characters of the ASCII alphabet and store those
-  classified as printing.
+  We iterate over all characters the characters that occur in a protein
+  sequence data base and store them together with \verb+$+.
 #+end_src
-#+begin_src go <<Make printing alphabet, Ch.~\ref{ch:mt}>>=
-  for i := 0; i < 128; i++ {
-	  if unicode.IsPrint(rune(i)) {
-		  al = append(al, byte(i))
-	  }
-  }
+#+begin_src go <<Make protein alphabet, Ch.~\ref{ch:mt}>>=
+  aa := "ABCDEFGHIKLMNOPQRSTUVWXYZ$"
+  al = []byte(aa)
 #+end_src
 #+begin_src latex
   For the DNA alphabet we specify the four nucleotides and the sentinel,
   \verb+$+.
 #+end_src
 #+begin_src go <<Make DNA alphabet, Ch.~\ref{ch:mt}>>=
-  al = append(al, byte('A'))
-  al = append(al, byte('C'))
-  al = append(al, byte('G'))
-  al = append(al, byte('T'))
-  al = append(al, byte('$'))
+  nu := "ACGT$"
+  al = []byte(nu)
 #+end_src
 #+begin_src latex
-  We import \ty{unicode}.
+  We encode the extended ASCII alphabet consisting of the first 256 integers.
 #+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
-  "unicode"
+#+begin_src go <<Make ASCII alphabet, Ch.~\ref{ch:mt}>>=
+  for i := 0; i < 256; i++ {
+	  al = append(al, byte(i))
+  }
 #+end_src
 #+begin_src latex
   We print the alphabet using a tab writer.
 #+end_src
-#+begin_src go <<Print alphabet, Ch.~\ref{ch:mt}>>=
+#+begin_src go <<Print alphabet and quit, Ch.~\ref{ch:mt}>>=
   w := tabwriter.NewWriter(os.Stdout, 1, 0, 2, ' ', 0)
   for i, a := range alphabet {
 	  fmt.Fprintf(w, "%c\t%d\n", a, i)
   }
   w.Flush()
+  os.Exit(0)
 #+end_src
 #+begin_src latex
   We import \ty{tabwriter}, \ty{os}, and \ty{fmt}.
@@ -203,7 +206,7 @@
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:mt}>>=
   files := flag.Args()
-  clio.ParseFiles(files, scan, *optD, *optP)
+  clio.ParseFiles(files, scan, *optD, *optA)
 #+end_src
 #+begin_src latex
   Inside scan, we retrieve the decoding option and the alphabet
@@ -213,7 +216,7 @@
 #+begin_src go <<Functions, Ch.~\ref{ch:mt}>>=
   func scan(r io.Reader, args ...interface{}) {
 	  dec := args[0].(bool)
-	  printing := args[1].(bool)
+	  al := args[1].(string)
 	  var alphabet []byte
 	  if dec {
 		  //<<Decode, Ch.~\ref{ch:mt}>>
@@ -258,7 +261,7 @@
   reset it.
 #+end_src
 #+begin_src go <<Deal with header in decoding, Ch.~\ref{ch:mt}>>=
-  alphabet = makeAlphabet(printing)
+  alphabet = makeAlphabet(al)
   if first {
 	  first = false
   } else {
@@ -291,7 +294,7 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{strings}, \ty{strconv}, and \ty{log}.
+  We import \ty{strings}, and \ty{strconv}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
   "strings"
@@ -330,7 +333,7 @@
   var ns []int
   for sc.ScanSequence() {
 	  seq := sc.Sequence()
-	  alphabet = makeAlphabet(printing)
+	  alphabet = makeAlphabet(al)
 	  //<<Encode sequence, Ch.~\ref{ch:mt}>>
 	  //<<Print encoded sequence, Ch.~\ref{ch:mt}>>
 	  ns = ns[:0]
@@ -415,12 +418,13 @@
 #+end_src
 #+begin_src latex
   We run two tests, one for encoding, the second for decoding. The input
-  for these tests in in files \ty{t1.fasta} and \ty{t2.fasta}.
+  for these tests are in files \ty{t1.fasta} and \ty{t2.fasta}, the
+  alphabet is DNA.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:mt}>>=
-  test := exec.Command("./mtf", "t1.fasta")
+  test := exec.Command("./mtf", "-a", "d", "t1.fasta")
   tests = append(tests, test)
-  test = exec.Command("./mtf", "-d", "t2.fasta")
+  test = exec.Command("./mtf", "-a", "d", "-d", "t2.fasta")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
