@@ -1,19 +1,22 @@
 #+begin_src latex
   \section*{Introduction}
-  Characters typically take up one byte of computer memory. This is true
-  even for texts over alphabets much smaller than the ASCII code, or
-  where characters frequencies vary
+  Characters typically take up one byte of computer memory. A byte
+  consists of 8 bits, enough to encode the 256 characters of the
+  extended ASCII code. This space requirement of eight bits per
+  character applies even for texts over alphabets much smaller than the
+  ASCII code, or where characters frequencies vary
   significantly. Huffman~\cite{huf52:met} first proposed a method for
   finding variable length codes that occupy the smallest amount of space
   possible. These codes are represented in the form of binary trees,
   Huffman trees.
 
   A Huffman tree is constructed starting with the leaves, which contain
-  the character to be encoded and its
-  frequency~\cite[p. 385ff]{cor01:int}. The frequencies are interpreted
-  as node weights, and the two lightest leaves are merged into a parent
-  whose weight is the sum of its children's weights. This procedure is
-  repeated until the last two nodes are merged into the root.
+  the characters to be encoded and their
+  frequencies~\cite[p. 385ff]{cor01:int}. The frequencies are
+  interpreted as node weights, and the two lightest leaves are merged
+  into a parent whose weight is the sum of its children's weights. This
+  procedure is repeated until the last two nodes are merged into the
+  root.
 
   To read optimal codes from such a tree, the incoming edge for each
   node is labeled. Edges leading to a left child are labeled 0, edges
@@ -23,9 +26,10 @@
   The program \ty{hut} reads sequences and prints their Huffman
   trees. For example, Figure~\ref{fig:hut}A shows the nucleotide
   frequencies in the genome of \emph{M. genitalium}. When \ty{hut} is
-  applied to the actual genome sequence, it returns the tree in
-  Figure~\ref{fig:hut}B, where branch lengths are proportional to node
-  weights.
+  applied to the genome sequence of \emph{M. genitalium}, it returns the
+  tree in Figure~\ref{fig:hut}B, where branch lengths are proportional
+  to node weights. Instead of a tree, \ty{hut} can also just compute the
+  number of bits required to encode the sequence.
 
   \begin{figure}
     \begin{center}
@@ -72,7 +76,7 @@
   purpose of \ty{hut}, and an example command.
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:hut}>>=
-  m := "hut [-h|-v] [file]..."
+  m := "hut [-h] [option]... [file]..."
   p := "Convert sequences into their Huffman trees."
   e := "hut foo.fasta"
   clio.Usage(m, p, e)
@@ -84,10 +88,12 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  There is only one option to declare, the version, \ty{-v}.
+  There are two options to declare, the version, \ty{-v}, and the bit
+  computation, \ty{-b}.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:hut}>>=
   var optV = flag.Bool("v", false, "version")
+  var optB = flag.Bool("b", false, "bits")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -112,26 +118,24 @@
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are interpreted as input
-  files, which we parse using the function \ty{scan}.
+  files, which we parse using the function \ty{scan}. It takes as
+  argument the bits option, \ty{-b}.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:hut}>>=
   files := flag.Args()
-  clio.ParseFiles(files, scan)
+  clio.ParseFiles(files, scan, *optB)
 #+end_src
 #+begin_src latex
-  Inside \ty{scan} we iterate over the sequences contained in the
-  file. For each sequence we count the characters, construct a tree, and
-  print it.
+  Inside \ty{scan} we retrieve the bits option and analyze the sequences
+  in the file.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:hut}>>=
   func scan(r io.Reader, args ...interface{}) {
+	  bits := args[0].(bool)
 	  sc := fasta.NewScanner(r)
-	  counts := make([]int, 256)
 	  for sc.ScanSequence() {
 		  seq := sc.Sequence()
-		  //<<Count characters, Ch.~\ref{ch:hut}>>
-		  //<<Construct tree, Ch.~\ref{ch:hut}>>
-		  //<<Print tree, Ch.~\ref{ch:hut}>>
+		  //<<Analyze sequence, Ch.~\ref{ch:hut}>>
 	  }
   }
 #+end_src
@@ -143,13 +147,32 @@
   "github.com/evolbioinf/fasta"
 #+end_src
 #+begin_src latex
-  To count the characters, we reset all counts to zero and iterate over
-  the sequence data. We are going to build a binary tree from these
-  characters. This only works if there are at least two characters to
-  construct a tree from. So we ensure that's the case.
+  A sequence is analyzed by counting the characters and constructing the
+  Huffman tree.
+#+end_src
+#+begin_src latex
+  To analyze a sequence, we count its characters and construct the
+  Huffman tree. The tree is either printed, or we just print the number
+  of bits it implies.
+#+end_src
+#+begin_src go <<Analyze sequence, Ch.~\ref{ch:hut}>>=
+  //<<Count characters, Ch.~\ref{ch:hut}>>
+  //<<Construct tree, Ch.~\ref{ch:hut}>>
+  if bits {
+	  //<<Calculate bits, Ch.~\ref{ch:hut}>>
+	  //<<Print bits, Ch.~\ref{ch:hut}>>
+  } else {
+	  //<<Print tree, Ch.~\ref{ch:hut}>>
+  }
+#+end_src
+#+begin_src latex
+  To count the characters, we reserve space for counting the 256
+  possible characters. We can only build the desired binary tree from
+  them if there are at least two characters. So we ensure that's the
+  case.
 #+end_src
 #+begin_src go <<Count characters, Ch.~\ref{ch:hut}>>=
-  for i, _ := range counts { counts[i] = 0 }
+  counts := make([]int, 256)
   for _, c := range seq.Data() {
 	  counts[c]++
   }
@@ -186,7 +209,7 @@
   For each character with at least one occurrence we make a new leaf and
   store it in a slice of leaves. The labels of the incoming edges, 0 or
   1, will later be written as the node label. So we keep the characters
-  that label the leaves in a separate map referenced by their ID.
+  that label the leaves in a separate map referenced by their IDs.
 #+end_src
 #+begin_src go <<Construct tree leaves, Ch.~\ref{ch:hut}>>=
   leaves := make([]*nwk.Node, 0)
@@ -269,9 +292,8 @@ type leafSlice []*nwk.Node
 #+begin_src latex
   Inside \ty{traverse}, we seek out the leaves. For a given leaf, we
   initialize its code with the current label. Then we climb to the root
-  to find the rest of the code in right-to-left orientation. The code
-  thus collected is still written right-to-left. So we reverse it before
-  storing it as part of the leaf label.
+  to find the rest of the code in right-to-left orientation. We reverse
+  the code before storing it as part of the leaf label.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:hut}>>=
   func traverse(n *nwk.Node, labels map[int]byte) {
@@ -309,7 +331,10 @@ type leafSlice []*nwk.Node
   code = string(b)
 #+end_src
 #+begin_src latex
-  We label a leaf for character \ty{c} using the pattern
+  We label a leaf for character \ty{c} using a constant-length prefix
+  followed by the variable-length code. The prefix consists of either a
+  zero or a one, an underscore, the character encoded, and a slash. In
+  other words, the label follows the pattern
   \begin{verbatim}
   [0|1]_c/code
   \end{verbatim}
@@ -324,7 +349,51 @@ type leafSlice []*nwk.Node
   "fmt"
 #+end_src
 #+begin_src latex
-  We print the tree by printing its root.
+  Given the code tree, we can calculate the number of bits required to
+  encode the sequence. This is the product of the sequence length and
+  the sum of leaf weights, which we round to the correct integer.
+#+end_src
+#+begin_src go <<Calculate bits, Ch.~\ref{ch:hut}>>=
+  sl := len(seq.Data())
+  lw := 0.0
+  lw = sumLeafWeights(root, lw)
+  nb := float64(sl) * lw
+  nb = math.Ceil(nb)
+#+end_src
+#+begin_src latex
+  We import \ty{math}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:hut}>>=
+  "math"
+#+end_src
+#+begin_src latex
+  We traverse the code tree with \ty{sumLeafWeights}. Whenever we find a
+  leaf, we multiply its weight with the length of its code, which is the
+  length of its label minus the length of the code prefix, 4. The result
+  gets added to the current weight and returned.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:hut}>>=
+  func sumLeafWeights(v *nwk.Node, w float64) float64 {
+	  if v == nil { return w }
+	  if v.Child == nil {
+		  cl := float64(len(v.Label) - 4)
+		  w += v.Length * cl
+	  }
+	  w = sumLeafWeights(v.Child, w)
+	  w = sumLeafWeights(v.Sib, w)
+	  return w
+  }
+#+end_src
+#+begin_src latex
+  We print the sequence header and the number of bits.
+#+end_src
+#+begin_src go <<Print bits, Ch.~\ref{ch:hut}>>=
+  fmt.Printf(">%s\n", seq.Header())
+  fmt.Printf("Bits: %g\n", nb)
+#+end_src
+#+begin_src latex
+  Rather than printing the number of bits, the standard use case is to
+  print the tree. We do this by applying a print function to the root.
 #+end_src
 #+begin_src go <<Print tree, Ch.~\ref{ch:hut}>>=
   fmt.Println(root)
@@ -348,18 +417,26 @@ type leafSlice []*nwk.Node
   }
 #+end_src
 #+begin_src latex
-  We construct one test and then run it.
+  We construct the tests and run them.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:hut}>>=
-  //<<Construct test, Ch.~\ref{ch:hut}>>
-  //<<Run test, Ch.~\ref{ch:hut}>>
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:hut}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:hut}>>
+  }
 #+end_src
 #+begin_src latex
   We apply \ty{hut} to a short random sequence contained in
-  \ty{test.fasta}.
+  \ty{test.fasta} and construct two tests; one for the tree output and
+  one for the bits output.
 #+end_src
-#+begin_src go <<Construct test, Ch.~\ref{ch:hut}>>=
-  test := exec.Command("./hut", "test.fasta")
+#+begin_src go <<Construct tests, Ch.~\ref{ch:hut}>>=
+  f := "test.fasta"
+  test := exec.Command("./hut", f)
+  tests = append(tests, test)
+  test = exec.Command("./hut", "-b", f)
+  tests = append(tests, test)
 #+end_src
 #+begin_src latex
   We import \ty{exec}.
@@ -369,14 +446,14 @@ type leafSlice []*nwk.Node
 #+end_src
 #+begin_src latex
   We run the test and compare the result we get with the result we want,
-  which is stored in the file \ty{r.txt}.
+  which is stored in the files \ty{r1.txt} and \ty{r2.txt}.
 #+end_src
 #+begin_src go <<Run test, Ch.~\ref{ch:hut}>>=
   get, err := test.Output()
   if err != nil {
 	  t.Errorf("couldn't run %q", test)
   }
-  f := "r.txt"
+  f := "r" + strconv.Itoa(i+1) + ".txt"
   want, err := ioutil.ReadFile(f)
   if err != nil {
 	  t.Errorf("couldn't open %q", f)
@@ -386,9 +463,10 @@ type leafSlice []*nwk.Node
   }
 #+end_src
 #+begin_src latex
-  We import \ty{ioutil} and \ty{bytes}.
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
 #+end_src
 #+begin_src go <<Testing imports, Ch.~\ref{ch:hut}>>=
+  "strconv"
   "io/ioutil"
   "bytes"
 #+end_src
