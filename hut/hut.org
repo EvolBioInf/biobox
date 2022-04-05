@@ -389,7 +389,7 @@ type leafSlice []*nwk.Node
 #+end_src
 #+begin_src go <<Print bits, Ch.~\ref{ch:hut}>>=
   fmt.Printf(">%s\n", seq.Header())
-  fmt.Printf("Bits: %g\n", nb)
+  fmt.Printf("Bits: %d\n", int(nb))
 #+end_src
 #+begin_src latex
   Rather than printing the number of bits, the standard use case is to
