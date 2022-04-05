@@ -5,8 +5,12 @@
   residues. Moreover, we'd like to transform runs of any kind of
   residue to runs of zeros.
 
-  To do this, we start from an alphabet, say DNA, where each of the four
-  residues is associated with a number:
+  To do this, we start from a text, for example
+  \begin{center}
+    \ty{TTTCCCAAAGGG}
+  \end{center}
+  This implies an alphabet, where each of the characters in the text is
+  associated with a number:
   \begin{center}
     \begin{tabular}{c|c}
       Residue & Number\\\hline
@@ -16,44 +20,36 @@
       \ty{T} & 3
     \end{tabular}
   \end{center}
-  We encode the sequence \ty{GTTT}. The first \ty{G} is looked up in the
-  alphabet, where it's a 2. Then we move the \ty{G} to the front of the
-  alphabet to get
-  \begin{center}
-    \begin{tabular}{c|c}
-      Residue & Number\\\hline
-      \ty{G} & 0\\
-      \ty{A} & 1\\
-      \ty{C} & 2\\
-      \ty{T} & 3
-    \end{tabular}
-  \end{center}
-  The next residue is a \ty{T}, encoded as 3. Now the alphabet is
+  We start enoding the first \ty{T}. It corresponds to number 3 in the
+  alphabet. Then we move the \ty{T} to the front of the alphabet to get
   \begin{center}
     \begin{tabular}{c|c}
       Residue & Number\\\hline
       \ty{T} & 0\\
-      \ty{G} & 1\\
-      \ty{A} & 2\\
-      \ty{C} & 3
-      \end{tabular}
+      \ty{A} & 1\\
+      \ty{C} & 2\\
+      \ty{G} & 3
+    \end{tabular}
   \end{center}
-  The third and the fourth \ty{T} are encoded as zero to yield
+  The next residue is another \ty{T}, this time encoded as 0. The
+  alphabet remains unchanged until we encounter the \ty{C}, a 2, but
+  next a 0, and so on. The transformed text is
   \[
-  2\ 3\ 0\ 0
+  3\ 0\ 0\ 2\ 0\ 0\ 2\ 0\ 0\ 3\ 0\ 0
   \]
 
-  Not surprisingly, this technique is called ``move to front''. It
-  converts any run of $n$ characters $c$ into a code for $c$ followed by
-  $n-1$ zeros~\cite{bur94:blo}. Move to front is reversible using the
-  same reasoning. We start from the original alphabet and a sequence of
-  integers, say that above. The initial 2 corresponds to \ty{G}. Then we
-  move the \ty{G} to front, find \ty{T} for 3, and so on.
+  Not surprisingly, this technique is called ``move to front''. Its
+  defining characteristic is that it transforms runs of \emph{any}
+  character into runs of zeros.~\cite{bur94:blo}. Move to front is
+  reversible using the same reasoning. We start from the original
+  alphabet and a sequence of integers, say that above. The initial 3
+  corresponds to \ty{T}. Then we move the \ty{T} to front, find another
+  \ty{T} for 0, and so on.
 
   The program \ty{mtf} reads a text in FASTA format and encodes it as
-  integers by move to front. It can also decode a list of integers
-  separated by blanks. Three alphabets are supported, DNA, protein, and
-  ASCII.
+  blank-separated integers by move to front. It stores the alphabet as
+  the last field in the FASTA header of its output. It can also reverse
+  this step and decode the output of a previous \ty{mtf} step.
 
   \section*{Implementation}
   Our outline of \ty{mtf} has hooks for imports, functions, and the
@@ -97,15 +93,11 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  As options we declare the version (\ty{-v}), decoding (\ty{-d}) as
-  opposed to encoding, the alphabet, \ty{-a}, and and printing of the
-  alphabet (\ty{-p}).
+  As options we declare the version, \ty{-v}, and decoding, \ty{-d}.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:mt}>>=
   var optV = flag.Bool("v", false, "version")
-  var optD = flag.Bool("d", false, "decode rather than encode")
-  var optA = flag.String("a", "a", "a|d|p for ASCII, DNA, or protein alphabet")
-  var optP = flag.Bool("p", false, "print alphabet")
+  var optD = flag.Bool("d", false, "decode")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -115,108 +107,38 @@
 #+end_src
 #+begin_src latex
   We parse the options and respond to \ty{-v} as this stops the
-  program. We also check the user requested a sensible alphabet.  Then
-  we print the alphabet if desired and quit. As we need a fresh alphabet
-  every time we start work on a new sequence, we delegate alphabet
-  construction to a function call.
+  program.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:mt}>>=
   flag.Parse()
   if *optV {
 	  util.PrintInfo("mtf")
   }
-  if *optA != "a" && *optA != "d" && *optA != "p" {
-	  log.Fatal("please use alphabet a (ASCII), d (DNA), or p (protein)")
-  }
-  if *optP {
-	  alphabet := makeAlphabet(*optA)
-	  //<<Print alphabet and quit, Ch.~\ref{ch:mt}>>
-  }
 #+end_src
 #+begin_src latex
-  We import \ty{util} and \ty{log}.
+  We import \ty{util}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
   "github.com/evolbioinf/biobox/util"
   "log"
 #+end_src
 #+begin_src latex
-  The alphabet is either DNA, protein, or ASCII.
-#+end_src
-#+begin_src go <<Functions, Ch.~\ref{ch:mt}>>=
-  func makeAlphabet(a string) []byte {
-	  al := make([]byte, 0)
-	  if a == "p" {
-		  //<<Make protein alphabet, Ch.~\ref{ch:mt}>>
-	  } else if a == "d" {
-		  //<<Make DNA alphabet, Ch.~\ref{ch:mt}>>
-	  } else {
-		  //<<Make ASCII alphabet, Ch.~\ref{ch:mt}>>
-	  }
-	  return al
-  }
-#+end_src
-#+begin_src latex
-  We iterate over all characters the characters that occur in a protein
-  sequence data base and store them together with \verb+$+.
-#+end_src
-#+begin_src go <<Make protein alphabet, Ch.~\ref{ch:mt}>>=
-  aa := "ABCDEFGHIKLMNOPQRSTUVWXYZ$"
-  al = []byte(aa)
-#+end_src
-#+begin_src latex
-  For the DNA alphabet we specify the four nucleotides and the sentinel,
-  \verb+$+.
-#+end_src
-#+begin_src go <<Make DNA alphabet, Ch.~\ref{ch:mt}>>=
-  nu := "ACGT$"
-  al = []byte(nu)
-#+end_src
-#+begin_src latex
-  We encode the extended ASCII alphabet consisting of the first 256 integers.
-#+end_src
-#+begin_src go <<Make ASCII alphabet, Ch.~\ref{ch:mt}>>=
-  for i := 0; i < 256; i++ {
-	  al = append(al, byte(i))
-  }
-#+end_src
-#+begin_src latex
-  We print the alphabet using a tab writer.
-#+end_src
-#+begin_src go <<Print alphabet and quit, Ch.~\ref{ch:mt}>>=
-  w := tabwriter.NewWriter(os.Stdout, 1, 0, 2, ' ', 0)
-  for i, a := range alphabet {
-	  fmt.Fprintf(w, "%c\t%d\n", a, i)
-  }
-  w.Flush()
-  os.Exit(0)
-#+end_src
-#+begin_src latex
-  We import \ty{tabwriter}, \ty{os}, and \ty{fmt}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
-  "text/tabwriter"
-  "os"
-  "fmt"
-#+end_src
-#+begin_src latex
   The remaining tokens on the command line are taken as the names of
   input files. Each file is scanned with the function \ty{scan}, which
-  takes as argument the decoding switch, \ty{-d}, and the type of alphabet.
+  takes as argument the decoding switch, \ty{-d}.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:mt}>>=
   files := flag.Args()
-  clio.ParseFiles(files, scan, *optD, *optA)
+  clio.ParseFiles(files, scan, *optD)
 #+end_src
 #+begin_src latex
-  Inside scan, we retrieve the decoding option and the alphabet
-  type. Then we declare an alphabet and go on to either decode or
-  encode the FASTA formatted input.
+  Inside scan, we retrieve the decoding option. Then we declare the
+  alphabet, which we still have to actually determine, and go on to
+  either decode or encode the FASTA formatted input.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:mt}>>=
   func scan(r io.Reader, args ...interface{}) {
 	  dec := args[0].(bool)
-	  al := args[1].(string)
 	  var alphabet []byte
 	  if dec {
 		  //<<Decode, Ch.~\ref{ch:mt}>>
@@ -261,7 +183,7 @@
   reset it.
 #+end_src
 #+begin_src go <<Deal with header in decoding, Ch.~\ref{ch:mt}>>=
-  alphabet = makeAlphabet(al)
+  //<<Get alphabet from header, Ch.~\ref{ch:mt}>>
   if first {
 	  first = false
   } else {
@@ -272,18 +194,30 @@
   header = sc.Text()[1:] + " - decoded"
 #+end_src
 #+begin_src latex
-  We import \ty{fasta}.
+  We import \ty{fasta} and \ty{fmt}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
   "github.com/evolbioinf/fasta"
+  "fmt"
 #+end_src
 #+begin_src latex
-  A row of data consists of comma- or blank-separated strings representing
-  integers. We convert them to actual integers and iterate over them.
+  The last field in the header contains the alphabet. This is surrounded
+  by quotes, which we remove.
+#+end_src
+#+begin_src go <<Get alphabet from header, Ch.~\ref{ch:mt}>>=
+  fields := strings.Fields(sc.Text())
+  al := fields[len(fields)-1]
+  al = al[1:len(al)-1]
+  for _, c := range al {
+	  alphabet = append(alphabet, byte(c))
+  }
+#+end_src
+#+begin_src latex
+  A row of data consists of strings representing integers. We convert
+  them to actual integers and iterate over them.
 #+end_src
 #+begin_src go <<Deal with data in decoding, Ch.~\ref{ch:mt}>>=
-  str := strings.ReplaceAll(sc.Text(), ",", " ")
-  fields := strings.Fields(str)
+  fields := strings.Fields(sc.Text())
   for _, field := range fields {
 	  i, err := strconv.Atoi(field)
 	  if err != nil { log.Fatalf("can't convert %q", field) }
@@ -294,7 +228,7 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{strings}, and \ty{strconv}.
+  We import \ty{strings}, \ty{strconv}, and \ty{log}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:mt}>>=
   "strings"
@@ -326,24 +260,38 @@
   seq = seq[:0]
 #+end_src
 #+begin_src latex
-  We encode sequences in FASTA format and then print them.
+  For encoding, we deduce the alphabet from the sequence, encode the
+  sequence, and print it.
 #+end_src
 #+begin_src go <<Encode, Ch.~\ref{ch:mt}>>=
   sc := fasta.NewScanner(r)
   var ns []int
   for sc.ScanSequence() {
 	  seq := sc.Sequence()
-	  alphabet = makeAlphabet(al)
+	  //<<Get alphabet from sequence, Ch.~\ref{ch:mt}>>
 	  //<<Encode sequence, Ch.~\ref{ch:mt}>>
 	  //<<Print encoded sequence, Ch.~\ref{ch:mt}>>
 	  ns = ns[:0]
   }
 #+end_src
 #+begin_src latex
+  To construct the alphabet, we keep track of the distinct characters
+  using a map.
+#+end_src
+#+begin_src go <<Get alphabet from sequence, Ch.~\ref{ch:mt}>>=
+  cm := make(map[byte]bool)
+  data := seq.Data()
+  for _, c := range data {
+	  if !cm[c] {
+		  alphabet = append(alphabet, c)
+		  cm[c] = true
+	  }
+  }
+#+end_src
+#+begin_src latex
   We iterate over the residues (or characters) and encode each one as an integer.
 #+end_src
 #+begin_src go <<Encode sequence, Ch.~\ref{ch:mt}>>=
-  data := seq.Data()
   for _, c := range data {
 	  i, err := encode(c, alphabet)
 	  if err == nil {
@@ -368,11 +316,11 @@
   }
 #+end_src
 #+begin_src latex
-  We print an encoded sequence as a FASTA header followed by rows of
-  integers separated by blanks.
+  We print an encoded sequence as a FASTA header with the alphabet as
+  the last field, followed by rows of integers separated by blanks.
 #+end_src
 #+begin_src go <<Print encoded sequence, Ch.~\ref{ch:mt}>>=
-  fmt.Printf(">%s - mtf\n", seq.Header())
+  fmt.Printf(">%s - mtf %q\n", seq.Header(), string(alphabet))
   ll := fasta.DefaultLineLength
   n := len(ns)
   for i := 0; i < n; i += ll {
@@ -418,13 +366,12 @@
 #+end_src
 #+begin_src latex
   We run two tests, one for encoding, the second for decoding. The input
-  for these tests are in files \ty{t1.fasta} and \ty{t2.fasta}, the
-  alphabet is DNA.
+  for these tests are in files \ty{t1.fasta} and \ty{t2.fasta}.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:mt}>>=
-  test := exec.Command("./mtf", "-a", "d", "t1.fasta")
+  test := exec.Command("./mtf", "t1.fasta")
   tests = append(tests, test)
-  test = exec.Command("./mtf", "-a", "d", "-d", "t2.fasta")
+  test = exec.Command("./mtf", "-d", "t2.fasta")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
