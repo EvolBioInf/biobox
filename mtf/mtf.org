@@ -275,8 +275,10 @@
   }
 #+end_src
 #+begin_src latex
-  To construct the alphabet, we keep track of the distinct characters
-  using a map.
+  To construct the alphabet, we keep track of the distinct characters in
+  the data using a map. Having established the alphabet, we keep a copy
+  of its original order, before any move to front has occurred. This is
+  later used for decoding.
 #+end_src
 #+begin_src go <<Get alphabet from sequence, Ch.~\ref{ch:mt}>>=
   cm := make(map[byte]bool)
@@ -287,6 +289,7 @@
 		  cm[c] = true
 	  }
   }
+  oa := string(alphabet)
 #+end_src
 #+begin_src latex
   We iterate over the residues (or characters) and encode each one as an integer.
@@ -316,11 +319,12 @@
   }
 #+end_src
 #+begin_src latex
-  We print an encoded sequence as a FASTA header with the alphabet as
-  the last field, followed by rows of integers separated by blanks.
+  We print an encoded sequence as a FASTA header with the original
+  alphabet as the last field, followed by rows of integers separated by
+  blanks.
 #+end_src
 #+begin_src go <<Print encoded sequence, Ch.~\ref{ch:mt}>>=
-  fmt.Printf(">%s - mtf %q\n", seq.Header(), string(alphabet))
+  fmt.Printf(">%s - mtf %q\n", seq.Header(), oa)
   ll := fasta.DefaultLineLength
   n := len(ns)
   for i := 0; i < n; i += ll {
@@ -366,12 +370,13 @@
 #+end_src
 #+begin_src latex
   We run two tests, one for encoding, the second for decoding. The input
-  for these tests are in files \ty{t1.fasta} and \ty{t2.fasta}.
+  for encoding is \ty{t1.fasta}, the input for decoding the output from
+  encoding, \ty{r1.fasta}.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:mt}>>=
   test := exec.Command("./mtf", "t1.fasta")
   tests = append(tests, test)
-  test = exec.Command("./mtf", "-d", "t2.fasta")
+  test = exec.Command("./mtf", "-d", "r1.fasta")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
