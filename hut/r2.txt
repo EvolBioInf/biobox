@@ -1,2 +1,2 @@
 >Rand1
-Bits: 400
+Bits: 200

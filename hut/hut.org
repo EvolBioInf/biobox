@@ -369,18 +369,20 @@ type leafSlice []*nwk.Node
 #+begin_src latex
   We traverse the code tree with \ty{sumLeafWeights}. Whenever we find a
   leaf, we multiply its weight with the length of its code, which is the
-  length of its label minus the length of the code prefix, 4. The result
-  gets added to the current weight and returned.
+  length of its label minus the length of the code prefix, 4, minus the
+  two quotes that frame the label. The result gets added to the current
+  weight and returned.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:hut}>>=
   func sumLeafWeights(v *nwk.Node, w float64) float64 {
 	  if v == nil { return w }
+	  x := 0.0
 	  if v.Child == nil {
-		  cl := float64(len(v.Label) - 4)
+		  cl := float64(len(v.Label) - 6)
 		  w += v.Length * cl
 	  }
-	  w = sumLeafWeights(v.Child, w)
-	  w = sumLeafWeights(v.Sib, w)
+	  w = sumLeafWeights(v.Child, w+x)
+	  w = sumLeafWeights(v.Sib, w+x)
 	  return w
   }
 #+end_src
