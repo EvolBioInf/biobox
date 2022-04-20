@@ -289,13 +289,14 @@
   fragments[nf-1] = string(q[starts[nf-1]:])
 #+end_src
 #+begin_src latex
-  We print the query fragments using a tab writer.
+  We print the query fragments using a tab writer and one-based
+  positions.
 #+end_src
 #+begin_src go <<Print query fragments, Ch.~\ref{ch:ke}>>=
   w := tabwriter.NewWriter(os.Stdout, 1, 0, 1, ' ', 0)
   fmt.Fprintf(w, "#Id\tStart\tFragment\n")
   for i, f := range fragments {
-	  fmt.Fprintf(w, "%d\t%d\t%s\n", i+1, starts[i], f)
+	  fmt.Fprintf(w, "%d\t%d\t%s\n", i+1, starts[i]+1, f)
   }
   w.Flush()
 #+end_src
