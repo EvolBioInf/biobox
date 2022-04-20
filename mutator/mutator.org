@@ -6,7 +6,8 @@
   sibling. The program \texttt{mutator} implements this
   transformation. By default, it mutates positions drawn with
   replacement with a given probability. However, the user can also opt
-  to supply a list of positions to be mutated.
+  to supply a list of positions to be mutated, or the number of
+  mutations.
 
   \section*{Implementation}
   The program outline contains hooks for imports, functions, and the
@@ -50,11 +51,12 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  There are five options,
+  There are six options,
   \begin{enumerate}
   \item \texttt{-v} to print the program's version,
   \item \texttt{-m} to set the mutation rate,
   \item \texttt{-p} to set a list of positions to be mutated,
+  \item \texttt{-n} to set the number of mutations,
   \item \texttt{-P} to switch from DNA to protein sequences, and
   \item \texttt{-s} the seed for the random number generator.
   \end{enumerate}
@@ -64,6 +66,7 @@
   var optM = flag.Float64("m", 0.01, "mutation rate")
   var optP = flag.String("p", "", "positions to be mutated; " +
 	  "comma-separated, one-based")
+  var optN = flag.Int("n", 0, "number of mutations")
   var optPP = flag.Bool("P", false, "protein instead of DNA")
   var optS = flag.Int("s", 0, "seed for random number genrator; " +
 	  "default: internal")
@@ -134,7 +137,8 @@
 #+end_src
 #+begin_src go <<Check and store position, Ch.~\ref{ch:mut}>>=
   if position < 0 {
-	  fmt.Fprintf(os.Stderr, "position %d cannot be mutated\n", position+1)
+	  fmt.Fprintf(os.Stderr, "position %d cannot be mutated\n",
+		  position+1)
   } else {
 	  positions = append(positions, position)
   }
@@ -177,12 +181,13 @@
   Scanning the input files is delegated to the function
   \texttt{ParseFiles}. It takes as arguments the names of the input
   files, and the name of a function, \texttt{scan}, applied to each
-  file. The arguments of \texttt{scan} are the alphabet, the mutation
-  rate, the positions, and the random number generator.
+  file. The arguments of \texttt{scan} are the alphabet, the number of
+  mutations, the mutation rate, the positions, and the random number
+  generator.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:mut}>>=
   f := flag.Args()
-  clio.ParseFiles(f, scan, alphabet, *optM, positions, ran)
+  clio.ParseFiles(f, scan, alphabet, *optN, *optM, positions, ran)
 #+end_src
 #+begin_src latex
   Inside \texttt{scan}, we retrieve the arguments just passed, and
@@ -206,9 +211,10 @@
 #+end_src
 #+begin_src go <<Retrieve arguments, Ch.~\ref{ch:mut}>>=
   alphabet := args[0].(string)
-  mu := args[1].(float64)
-  pos := args[2].([]int)
-  ran := args[3].(*rand.Rand)
+  n := args[1].(int)
+  mu := args[2].(float64)
+  pos := args[3].([]int)
+  ran := args[4].(*rand.Rand)
 #+end_src
 #+begin_src latex
   We iterate over the sequences with a dedicated scanner. For each
@@ -231,14 +237,42 @@
   "github.com/evolbioinf/fasta"
 #+end_src
 #+begin_src latex
-  The residues are either mutated position-wise or according to the
-  mutation rate.
+  We either generate $n$ mutations, or mutate the residues
+  position-wise, or according to the mutation rate.
 #+end_src
 #+begin_src go <<Mutate residues, Ch.~\ref{ch:mut}>>=
-  if len(pos) > 0 {
+  if n > 0 {
+	  //<<Generate $n$ mutations, Ch.~\ref{ch:mut}>>
+  } else if len(pos) > 0 {
 	  //<<Mutate position-wise, Ch.~\ref{ch:mut}>>
   } else {
 	  //<<Mutate with rate, Ch.~\ref{ch:mut}>>
+  }
+#+end_src
+#+begin_src latex
+  We generate $n$ mutations, where $n$ can be larger than the number of
+  residues. In that case positions might be mutated more than once.
+#+end_src
+#+begin_src go <<Generate $n$ mutations, Ch.~\ref{ch:mut}>>=
+  l := len(res)
+  for i := 0; i < n; i++ {
+	  p := ran.Intn(l)
+	  res[p] = mutate(res[p], ran, alphabet)
+  }
+#+end_src
+#+begin_src latex
+  The function \texttt{mutate} takes as arguments a random number
+  generator, the alphabet, and the residue to be mutated.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:mut}>>=
+  func mutate(res byte, ran *rand.Rand, alphabet string) byte {
+	  n := len(alphabet)
+	  new := res
+	  for new == res {
+		  p := ran.Intn(n)
+		  new = alphabet[p]
+	  }
+	  return new
   }
 #+end_src
 #+begin_src latex
@@ -256,21 +290,6 @@
 			  "position %d, but sequence only " +
 			  "contains %d residues\n", p+1, l)
 	  }
-  }
-#+end_src
-#+begin_src latex
-  The function \texttt{mutate} takes as arguments a random number
-  generator, the alphabet, and the residue to be mutated.
-#+end_src
-#+begin_src go <<Functions, Ch.~\ref{ch:mut}>>=
-  func mutate(res byte, ran *rand.Rand, alphabet string) byte {
-	  n := len(alphabet)
-	  new := res
-	  for new == res {
-		  p := ran.Intn(n)
-		  new = alphabet[p]
-	  }
-	  return new
   }
 #+end_src
 #+begin_src latex
@@ -332,15 +351,16 @@
 #+end_src
 #+begin_src latex
   We carry out three tests on the file \texttt{dna.fa}, which contains
-  two random DNA sequences length 100, and a fourth test on
-  \texttt{pro.fa}, which contains two human protein sequences. In each
-  test we set the seed of the random number gnerator to make the run
-  reproducible.
+  two random DNA sequences length 100, a fourth test on \texttt{pro.fa},
+  which contains two human protein sequences, and a fifth test to
+  generate $n$ mutations. In each test we set the seed of the random
+  number gnerator to make the run reproducible.
   \begin{enumerate}
     \item Run with defaults.
     \item Mutate positions.
     \item Change mutation rate.
     \item Mutate protein sequence.
+    \item Generate $n$ mutations.
   \end{enumerate}
 #+end_src
 #+begin_src latex
@@ -358,6 +378,8 @@
   c = exec.Command("./mutator", "-s", "3", "-m", "0.2", "dna.fa")
   commands = append(commands, c)
   c = exec.Command("./mutator", "-s", "3", "-P", "pro.fa")
+  commands = append(commands, c)
+  c = exec.Command("./mutator", "-s", "3", "-n", "2", "dna.fa")
   commands = append(commands, c)
 #+end_src
 #+begin_src latex
