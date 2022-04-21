@@ -225,27 +225,28 @@
 #+begin_src latex
   We prepare the sequence, compute coverage as the number of nucleotides
   to be sequenced, and declare variables for the number of nucleotides
-  sequenced and for counting the reads. Then we iterate until the number
-  of nucleotides sequenced exceeds the coverage. Inside this loop we
-  branch between paired-end and single-end sequencing.
+  sequenced and for counting the reads. We also construct a buffer for
+  writing the reads. Then we iterate until the number of nucleotides
+  sequenced exceeds the coverage. Inside this loop we sequence according
+  to the mode chosen by the user. After the loop we flush the buffer.
 #+end_src
 #+begin_src go <<Carry out sequencing, Ch.~\ref{ch:seq}>>=
   n := len(seq.Data())
   //<<Prepare sequence, Ch.~\ref{ch:seq}>>
   cov := int(math.Round(float64(n) * op.c))
   var ns, rc int
+  w := bufio.NewWriter(os.Stdout)
   for ns < cov {
-	  if op.p {
-		  //<<Paired-end sequencing, Ch.~\ref{ch:seq}>>
-	  } else {
-		  //<<Single-end sequencing, Ch.~\ref{ch:seq}>>
-	  }
+	  //<<Sequence according to mode, Ch.~\ref{ch:seq}>>
   }
+  w.Flush()
 #+end_src
 #+begin_src latex
-  We import \ty{math}.
+  We import \ty{bufio}, \ty{os}, and \ty{math}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
+  "bufio"
+  "os"
   "math"
 #+end_src
 #+begin_src latex
@@ -259,6 +260,16 @@
   se[1] = make([]byte, n)
   seq.ReverseComplement()
   copy(se[1], seq.Data())
+#+end_src
+#+begin_src latex
+  We branch between two sequencing modes, paired-end and single-end.
+#+end_src
+#+begin_src go <<Sequence according to mode, Ch.~\ref{ch:seq}>>=
+  if op.p {
+	  //<<Paired-end sequencing, Ch.~\ref{ch:seq}>>
+  } else {
+	  //<<Single-end sequencing, Ch.~\ref{ch:seq}>>
+  }
 #+end_src
 #+begin_src latex
   In paired-end sequencing, we pick an insert position and length. If
@@ -282,15 +293,15 @@
 #+end_src
 #+begin_src go <<Sequence first read mate, Ch.~\ref{ch:seq}>>=
   rc++
-  fmt.Printf(">Read%d mate=1\n", rc)
+  fmt.Fprintf(w, ">Read%d mate=1\n", rc)
   rl := int(math.Round(rn.NormFloat64() * op.R + op.r))
   if rl < 0 { rl *= -1 }
   for i := pos; i < pos + rl; i++ {
 	  c := se[0][i % n]
 	  c = mutate(c, rn, op.e)
-	  fmt.Printf("%c", c)
+	  fmt.Fprintf(w, "%c", c)
   }
-  fmt.Printf("\n")
+  fmt.Fprintf(w, "\n")
   ns += rl
 #+end_src
 #+begin_src latex
@@ -320,15 +331,15 @@
 #+end_src
 #+begin_src go <<Sequence second read mate, Ch.~\ref{ch:seq}>>=
   pos = n - (pos + il - 1)
-  fmt.Printf(">Read%d mate=2\n", rc)
+  fmt.Fprintf(w, ">Read%d mate=2\n", rc)
   rl = int(math.Round(rn.NormFloat64() * op.R + op.r))
   if rl < 0 { rl *= -1 }
   for i := pos; i < pos + rl; i++ {
 	  c := se[1][i % n]
 	  c = mutate(c, rn, op.e)
-	  fmt.Printf("%c", c)
+	  fmt.Fprintf(w, "%c", c)
   }
-  fmt.Printf("\n")
+  fmt.Fprintf(w, "\n")
   ns += rl
 #+end_src
 #+begin_src latex
@@ -353,13 +364,13 @@
 #+end_src
 #+begin_src go <<Sequence single read, Ch.~\ref{ch:seq}>>=
   rc++
-  fmt.Printf(">Read%d\n", rc)
+  fmt.Fprintf(w, ">Read%d\n", rc)
   for i := pos; i  < pos + rl; i++ {
 	  c := se[strand][i % n]
 	  c = mutate(c, rn, op.e)
-	  fmt.Printf("%c", c)
+	  fmt.Fprintf(w, "%c", c)
   }
-  fmt.Printf("\n")
+  fmt.Fprintf(w, "\n")
   ns += rl
 #+end_src
 #+begin_src latex
