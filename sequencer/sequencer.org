@@ -49,7 +49,7 @@
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:seq}>>=
   u := "sequencer [-h] [option]... [foo.fasta]..."
-  p := "Simulate a DNA sequencing maching."
+  p := "Simulate a DNA sequencing machine."
   e := "sequencer -c 20 foo.fasta"
   clio.Usage(u, p, e)
 #+end_src
