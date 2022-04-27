@@ -391,7 +391,7 @@
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:r2p}>>=
   var tests []*exec.Cmd
-  //<<Construct tests, Ch.~\ref{r2p}>>
+  //<<Construct tests, Ch.~\ref{ch:r2p}>>
   for i, test := range tests {
 	  //<<Run test, Ch.~\ref{ch:r2p}>>
   }
@@ -407,7 +407,7 @@
   of two sequences (\ty{test1.txt}, the other on data obtained from the
   forward and reverse strands (\ty{test2.txt}).
 #+end_src
-#+begin_src go <<Construct tests, Ch.~\ref{r2p}>>=
+#+begin_src go <<Construct tests, Ch.~\ref{ch:r2p}>>=
   test := exec.Command("./rep2plot", "test1.txt")
   tests = append(tests, test)
   test = exec.Command("./rep2plot", "test2.txt")
