@@ -1,0 +1,504 @@
+#+begin_src latex
+  \section*{Introduction}
+  Forty years after its invention, shotgun sequencing remains the method
+  of choice for sequencing any significant piece of
+  DNA~\cite{san82:nuc}. Shotgun sequencing consists of two steps,
+  sequencing and assembly. \ty{sass} is a simple assembly program. It
+  reads a set of sequencing reads, which form the initial set of
+  contigs. Then it aligns all pairs of contigs and merges the
+  pair the best score. This is repeated until only one
+  contig is left, or the remaining contigs don't overlap.
+
+  \ty{sass} really \emph{is} simple---it knows nothing about quality
+  scores or paired-end reads to name but two glaring omissions compared
+  to modern assemblers. To get a specific idea of what it \emph{can} do,
+  consider the two reads in Fig.~\ref{fig:sass}A, which overlap as shown
+  in Fig.~\ref{fig:sass}B. \ty{sass} takes these reads, merges them, and
+  returns the resulting contig, Fig.~\ref{fig:sass}C. While not much of
+  a genome assembler, this is enough to demonstrate the principal of
+  sequence assembly.
+
+  \begin{figure}
+    \begin{center}
+      \input{../sass/example}
+    \end{center}
+    \caption{Assembly of two reads (\textbf{A}) that overlap by four
+      nucleotides (\textbf{B}) into one contig (\textbf{C})}\label{fig:sass}
+  \end{figure}
+
+  \section*{Implementation}
+  The outline of \ty{sass} has hooks for imports, types, methods,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<sass.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:sas}>>
+  )
+  //<<Types, Ch.~\ref{ch:sas}>>
+  //<<Methods, Ch.~\ref{ch:sas}>>
+  //<<Functions, Ch.~\ref{ch:sas}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:sas}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function, we set the usage, declare the options, parse the
+  options, and parse the input files containing the sequencing
+  reads. Then we calculate the assembly.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:sas}>>=
+  //<<Set usage, Ch.~\ref{ch:sas}>>
+  //<<Declare options, Ch.~\ref{ch:sas}>>
+  //<<Parse options, Ch.~\ref{ch:sas}>>
+  //<<Read sequencing reads, Ch.~\ref{ch:sas}>>
+  //<<Calculate assembly, Ch.~\ref{ch:sas}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{sass}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:sas}>>=
+  u := "sass [option]... [file]..."
+  p := "Calculate assembly using a simple algorithm."
+  e := "sass -r reads.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  In addition to the version, we declare two kinds of options, options
+  that affect the alignment algorithm and options that affect the
+  assembly proper.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:sas}>>=
+  var optV = flag.Bool("v", false, "version")
+  //<<Declare alignment options, Ch.~\ref{ch:sas}>>
+  //<<Declare assembly options, Ch.~\ref{ch:sas}>>
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  An alignment is determined by its score scheme, which consists of
+  residue scores and gap scores.
+#+end_src
+#+begin_src go <<Declare alignment options, Ch.~\ref{ch:sas}>>=
+  //<<Declare residue scores, Ch.~\ref{ch:sas}>>
+  //<<Declare gap scores, Ch.~\ref{ch:sas}>>
+#+end_src
+#+begin_src latex
+  Residue scores are either match/mismatch or summarized in a score
+  matrix.
+#+end_src
+#+begin_src go <<Declare residue scores, Ch.~\ref{ch:sas}>>=
+  var optA = flag.Float64("a",  1, "match")
+  var optI = flag.Float64("i", -3, "mismatch")
+  var optM = flag.String("m", "", "file containing score matrix")
+#+end_src
+#+begin_src latex
+  Gaps are scored according to existence and length.
+#+end_src
+#+begin_src go <<Declare gap scores, Ch.~\ref{ch:sas}>>=
+  var optO = flag.Float64("o", -5, "gap opening")
+  var optE = flag.Float64("e", -2, "gap extension")
+#+end_src
+#+begin_src latex
+  As to the actual assembly, the user can opt to include the reverse
+  strand (\ty{-r}), print the merge steps (\ty{-M}), and set the score
+  threshold (\ty{-t}).
+#+end_src
+#+begin_src go <<Declare assembly options, Ch.~\ref{ch:sas}>>=
+  var optR = flag.Bool("r", false, "include reverse strand")
+  var optMM = flag.Bool("M", false, "print merge steps")
+  var optT = flag.Float64("t", 15.0, "score threshold")
+#+end_src
+#+begin_src latex
+  We parse the options and respond to the version, as this stops the
+  program. We also read the score matrix and collect the alignment
+  parameters for easy handling.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:sas}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("sass")
+  }
+  //<<Get score matrix, Ch.~\ref{ch:sas}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_src latex
+  A score matrix is either constructed from the match and mismatch
+  scores or read from a file given by the user.
+#+end_src
+#+begin_src go <<Get score matrix, Ch.~\ref{ch:sas}>>=
+  var sm *pal.ScoreMatrix
+  if *optM == "" {
+	  sm = pal.NewScoreMatrix(*optA, *optI)
+  } else {
+	  f, err := os.Open(*optM)
+	  if err != nil {
+		  log.Fatalf("couldn't open score matrix %q\n",
+			  (*optM))
+	  }
+	  sm = pal.ReadScoreMatrix(f)
+	  f.Close()
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{pal}, \ty{os}, and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "github.com/evolbioinf/pal"
+  "os"
+  "log"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are interpreted as the names
+  of read files. We apply the function \ty{scan} to each of them, which
+  saves the reads in the initial slice of contigs.
+#+end_src
+#+begin_src go <<Read sequencing reads, Ch.~\ref{ch:sas}>>=
+  files := flag.Args()
+  contigs := make([]*fasta.Sequence, 0)
+  clio.ParseFiles(files, scan, &contigs)
+#+end_src
+#+begin_src latex
+  We import \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the slice of contigs, iterate over the
+  sequences in the file, and store them.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:sas}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  contigs := args[0].(*([]*fasta.Sequence))
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  s := sc.Sequence()
+		  (*contigs) = append(*contigs, s)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  The assembly is calculated by repeatedly finding the best pair of
+  alignments and merging them into contigs. After the last merger, we
+  sort the remaining contigs by length and print them. We delegate the
+  search for the best alignment to the function \ty{bestAl}.
+#+end_src
+#+begin_src go <<Calculate assembly, Ch.~\ref{ch:sas}>>=
+  i, j, bal := bestAl(contigs, sm, *optR, *optO, *optE)
+  for len(contigs) > 1 && bal.Score() >= *optT  {
+	  //<<Merge contigs $i$ and $j$, Ch.~\ref{ch:sas}>>
+	  i, j, bal = bestAl(contigs, sm, *optR, *optO, *optE)
+  }
+  //<<Sort contigs by length, Ch.~\ref{ch:sas}>>
+  //<<Print contigs, Chr.~\ref{ch:sas}>>
+#+end_src
+#+begin_src latex
+  Inside \ty{bestAl}, we set up variables to hold the indexes of the
+  sequences that make up the best alignment and the actual
+  alignment. Then we iterate over all piaris of contigs and return the
+  best alignment and its indexes.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:sas}>>=
+  func bestAl(contigs []*fasta.Sequence, sm *pal.ScoreMatrix,
+	  rev bool, optO, optE float64) (i, j int,
+	  oal *pal.OverlapAlignment) {
+	  var mi, mj int
+	  var mo *pal.OverlapAlignment
+	  ms := 0.0
+	  //<<Iterate over pairs of contigs, Ch.~\ref{ch:sas}>>
+	  return mi, mj, mo
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{pal}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "github.com/evolbioinf/pal"
+#+end_src
+#+begin_src latex
+  We iterate over all pairs of contigs and calculate an alignment for
+  each. If the user opted to include the reverse strand, we also do
+  that. You might wonder why inclusion of the reverse strand is not the
+  default behavior. This is to also allow protein sequences to be
+  assembled, which isn't a standard use case but might be interesting in
+  demos.
+#+end_src
+#+begin_src go <<Iterate over pairs of contigs, Ch.~\ref{ch:sas}>>=
+  for i := 0; i < len(contigs); i++ {
+	  for j := i+1; j < len(contigs); j++ {
+		  //<<Align forward, Ch.~\ref{ch:sas}>>
+		  if rev {
+			  //<<Align reverse, Ch.~\ref{ch:sas}>>
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We calculate the overlap alignment of the forward strand and check its
+  score.
+#+end_src
+#+begin_src go <<Align forward, Ch.~\ref{ch:sas}>>=
+  oal := pal.NewOverlapAlignment(contigs[i], contigs[j],
+	  sm, optO, optE)
+  oal.Align()
+  //<<Check score, Ch.~\ref{ch:sas}>>
+#+end_src
+#+begin_src latex
+  If the score is better than the previous best score, we store the
+  alignment.
+#+end_src
+#+begin_src go <<Check score, Ch.~\ref{ch:sas}>>=
+  if oal.Score() > ms {
+	  mo = oal
+	  mi = i
+	  mj = j
+	  ms = oal.Score()
+  }
+#+end_src
+#+begin_src latex
+  Similarly, we align the reverse strand of the shorter contig and check
+  for a new maximum score.
+#+end_src
+#+begin_src go <<Align reverse, Ch.~\ref{ch:sas}>>=
+  if len(contigs[i].Data()) < len(contigs[j].Data()) {
+	  contigs[i].ReverseComplement()
+  } else {
+	  contigs[j].ReverseComplement()
+  }
+  oal = pal.NewOverlapAlignment(contigs[i], contigs[j],
+	  sm, optO, optE)
+  oal.Align()
+  //<<Check score, Ch.~\ref{ch:sas}>>
+#+end_src
+#+begin_src latex
+  To merge two contigs, we generate the merged contig, store it, and
+  remove the contigs just merged.
+#+end_src
+#+begin_src go <<Merge contigs $i$ and $j$, Ch.~\ref{ch:sas}>>=
+  //<<Generate merged contig, Ch.~\ref{ch:sas}>>
+  if *optMM {
+	  //<<Print merged contig, Ch.~\ref{ch:sas}>>
+  }
+  //<<Store merged contig, Ch.~\ref{ch:sas}>>
+  //<<Remove merged contigs, Ch.~\ref{ch:sas}>>
+#+end_src
+#+begin_src latex
+  We generate the merged contig from the raw alignment data of the best
+  alignment.
+#+end_src
+#+begin_src go <<Generate merged contig, Ch.~\ref{ch:sas}>>=
+  a1, a2 := bal.RawAlignment()
+  var m []byte
+  for i, c := range a1 {
+	  if c != '-' {
+		  m = append(m, c)
+	  } else {
+		  m = append(m, a2[i])
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We print the cleaned source contigs and their merger.
+#+end_src
+#+begin_src go <<Print merged contig, Ch.~\ref{ch:sas}>>=
+  s1 := string(clean(a1))
+  s2 := string(clean(a2))
+  s3 := string(m)
+  fmt.Println(s1, s2, s3)
+#+end_src
+#+begin_src latex
+  In the function \ty{clean} we generate a version of the sequence
+  without flanking gaps.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:sas}>>=
+  func clean(b []byte) []byte {
+	  n := 0
+	  for i := 0; i < len(b); i++ {
+		  if b[i] != '-' {
+			  b[n] = b[i]
+			  n++
+		  }
+	  }
+	  b = b[:n]
+	  return b
+  }
+#+end_src
+#+begin_src latex
+  We convert the merged string into a new contig and append it to the
+  list of contigs. We leave the header of the new contig blank for now.
+#+end_src
+#+begin_src go <<Store merged contig, Ch.~\ref{ch:sas}>>=
+  contig := fasta.NewSequence("", m)
+  contigs = append(contigs, contig)
+#+end_src
+#+begin_src latex
+  We remove the contigs we've just merged.
+#+end_src
+#+begin_src go <<Remove merged contigs, Ch.~\ref{ch:sas}>>=
+  n := 0
+  for k := 0; k < len(contigs); k++ {
+	  if k != i && k != j {
+		  contigs[n] = contigs[k]
+		  n++
+	  }
+  }
+  contigs = contigs[:n]
+#+end_src
+#+begin_src latex
+  To sort the contigs, we cast them to a sortable type and apply \ty{Sort}.
+#+end_src
+#+begin_src go <<Sort contigs by length, Ch.~\ref{ch:sas}>>=
+  sc := sortableContigs(contigs)
+  sort.Sort(sc)
+#+end_src
+#+begin_src latex
+  We declare \ty{sortableContigs}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:sas}>>=
+  type sortableContigs []*fasta.Sequence
+#+end_src
+#+begin_src latex
+  We implement the three methods of the \ty{Sort} interface on
+  \ty{sortableContigs}, \ty{Len}, \ty{Less}, and \ty{Swap}.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:sas}>>=
+  func (s sortableContigs) Len() int {
+	  return len(s)
+  }
+  func (s sortableContigs) Less(i, j int) bool {
+	  return len(s[i].Data()) < len(s[j].Data())
+  }
+  func (s sortableContigs) Swap(i, j int) {
+	  s[i], s[j] = s[j], s[i]
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{Sort}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "sort"
+#+end_src
+#+begin_src latex
+  We name the sorted contigs, contig1, contig2, and so on. If a read has
+  not been incorporated into a contig, we just leave the header as
+  is. Then we print the contigs in reverse order.
+#+end_src
+#+begin_src go <<Print contigs, Chr.~\ref{ch:sas}>>=
+  for i := len(sc)-1; i >= 0; i-- {
+	  if len(sc[i].Header()) == 0 {
+		  sc[i].AppendToHeader("Contig_" +
+			  strconv.Itoa(i+1))
+	  }
+	  fmt.Println(sc[i])
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strcovn} and \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "strconv"
+  "fmt"
+#+end_src
+#+begin_src latex
+  We've finished writing \ty{sass}, let's test it.
+  \section*{Testing}
+  The testing code for \ty{sass} contains hooks for imports and the
+  testing logic.
+#+end_src
+#+begin_src go <<sass_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:sas}>>
+  )
+
+  func TestSass(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:sas}>>
+  }
+#+end_src
+#+begin_src latex
+  To test \ty{sass}, we construct a set of tests and then run each one
+  in a loop.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:sas}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:sas}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:sas}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:sas}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct a test for a default run and for each of the three
+  options concerned with the assembly itself, print the merge steps
+  (\ty{-M}), include the reverse strand (\ty{-r}), and set the score
+  threshold (\ty{-t}). Each test is run on the same set of three
+  fragments in \ty{f.fasta}.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:sas}>>=
+  f := "f.fasta"
+  test := exec.Command("./sass", f)
+  tests = append(tests, test)
+  test = exec.Command("./sass", "-r", f)
+  tests = append(tests, test)
+  test = exec.Command("./sass", "-r", "-M", f)
+  tests = append(tests, test)
+  test = exec.Command("./sass", "-r", "-t", "20", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We run the test and compare the result we get to the result we want,
+  which is contained in files \ty{r1.txt}, \ty{r2.txt}, and so on.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:sas}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q", test)
+  }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil {
+	  t.Errorf("couldn't open %q", f)
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:sas}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src

@@ -55,6 +55,7 @@ doc/rep2plot.tex
 doc/repeater.tex
 doc/revComp.tex
 doc/rpois.tex
+doc/sass.tex
 doc/sblast.tex
 doc/sequencer.tex
 doc/shustring.tex
@@ -111,6 +112,7 @@ rep2plot/rep2plot
 repeater/repeater
 revComp/revComp
 rpois/rpois
+sass/sass
 sblast/sblast
 sequencer/sequencer
 shustring/shustring
