@@ -228,7 +228,7 @@
 	  oal *pal.OverlapAlignment) {
 	  var mi, mj int
 	  var mo *pal.OverlapAlignment
-	  ms := 0.0
+	  ms := -1.0
 	  //<<Iterate over pairs of contigs, Ch.~\ref{ch:sas}>>
 	  return mi, mj, mo
   }
