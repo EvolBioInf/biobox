@@ -141,12 +141,13 @@
 #+end_src
 #+begin_src latex
   A score matrix is either constructed from the match and mismatch
-  scores or read from a file given by the user.
+  scores or read from a file given by the user. For match/mismatch we
+  allow any byte in the input.
 #+end_src
 #+begin_src go <<Get score matrix, Ch.~\ref{ch:sas}>>=
   var sm *pal.ScoreMatrix
   if *optM == "" {
-	  sm = pal.NewScoreMatrix(*optA, *optI)
+	  sm = pal.NewByteScoreMatrix(*optA, *optI)
   } else {
 	  f, err := os.Open(*optM)
 	  if err != nil {
