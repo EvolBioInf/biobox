@@ -10,5 +10,5 @@ require (
 	github.com/evolbioinf/fasta v0.0.0-20220329100526-fa625fa59b5d
 	github.com/evolbioinf/kt v0.0.0-20220217115230-7df97358e858
 	github.com/evolbioinf/nwk v0.0.0-20211207083629-c5df2cc39f5d
-	github.com/evolbioinf/pal v0.0.0-20220307145336-e8a6c4e3c804
+	github.com/evolbioinf/pal v0.0.0-20220428140747-3c2a18bb380c
 )
