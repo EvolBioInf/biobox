@@ -63,7 +63,8 @@
   Apart from the version (\ty{-v}), we declare options for the coverage,
   to set the mean read and insert length, paired-end \emph{vs.}
   single-end, the error rate, a seed for the random number generator,
-  and whether the genome is circular. The ten options are listed in
+  whether the genome is circular, and whether or not \ty{sequencer}
+  works as a simple shredder. The eleven options are listed in
   Table~\ref{tab:seq}.
   \begin{table}
     \caption{Options of \ty{sequencer}.}\label{tab:seq}
@@ -79,7 +80,8 @@
 	7 & \ty{-I} & standard deviation of insert length & 0\\
 	8 & \ty{-e} & sequencing error & $10^{-3}$\\
 	9 & \ty{-s} & seed for random number generator & internal\\
-	10 & \ty{-o} & circular genome & linear\\\hline
+	10 & \ty{-o} & circular genome & linear\\
+	11 & \ty{-S} & shredder\\\hline
       \end{tabular}
     \end{center}
   \end{table}
@@ -108,12 +110,14 @@
 #+end_src
 #+begin_src latex
   We declare the sequencing error, the seed for the random number
-  generator, the option for circular genomes, and the version.
+  generator, the option for circular genomes, for shredder mode, and the
+  version.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:seq}>>=
   var optE = flag.Float64("e", 0.001, "error rate")
   var optS = flag.Int("s", 0, "seed for random number generator")
   var optO = flag.Bool("o", false, "circular template")
+  var optSS = flag.Bool("S", false, "shredder - forward strand only")
   var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
@@ -166,7 +170,7 @@
 #+begin_src go <<Types, Ch.~\ref{ch:seq}>>=
   type opts struct {
 	  c, r, R, i, I, e float64
-	  p, o bool
+	  p, o, S bool
   }
 #+end_src
 #+begin_src latex
@@ -182,6 +186,7 @@
   op.e = *optE
   op.p = *optP
   op.o = *optO
+  op.S = *optSS
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are taken as the names of
@@ -352,7 +357,7 @@
   rl := int(math.Round(rn.NormFloat64() * op.R + op.r))
   if rl < 0 { rl *= -1 }
   strand := 0
-  if rn.Float64() < 0.5 { strand = 1 }
+  if rn.Float64() < 0.5 && !op.S { strand = 1 }
   if pos + rl < n || op.o {
 	  //<<Sequence single read, Ch.~\ref{ch:seq}>>
   }
