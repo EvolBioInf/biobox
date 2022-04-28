@@ -408,10 +408,12 @@
   is. Then we print the contigs in reverse order.
 #+end_src
 #+begin_src go <<Print contigs, Chr.~\ref{ch:sas}>>=
+  nc := 0
   for i := len(sc)-1; i >= 0; i-- {
 	  if len(sc[i].Header()) == 0 {
 		  sc[i].AppendToHeader("Contig_" +
-			  strconv.Itoa(i+1))
+			  strconv.Itoa(nc+1))
+		  nc++
 	  }
 	  fmt.Println(sc[i])
   }
