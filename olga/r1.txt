@@ -1,7 +1,6 @@
 # Overlap graph generated with olga.
 # Render: dot foo.dot
 digraph G {
-	node [fontname="New Courier"]
 	n0 [label="AATTT"]
 	n1 [label="AGTTC"]
 	n2 [label="CCTTG"]

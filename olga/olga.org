@@ -217,14 +217,12 @@
 #+begin_src latex
   We start the graph with comments as to its origin and how it is
   rendered. Then we open the actual graph, which is a directed
-  graph. All node labels should be typeset in a monospaced font, we
-  choose New Courier.
+  graph.
 #+end_src
 #+begin_src go <<Print graph header, Ch.~\ref{ch:olga}>>=
   fmt.Println("# Overlap graph generated with olga.")
   fmt.Println("# Render: dot foo.dot")
   fmt.Println("digraph G {")
-  fmt.Printf("\tnode [fontname=\"New Courier\"]\n")
 #+end_src
 #+begin_src latex
   We import \ty{fmt}.
