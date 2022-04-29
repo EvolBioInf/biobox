@@ -358,7 +358,7 @@
   if rl < 0 { rl *= -1 }
   strand := 0
   if rn.Float64() < 0.5 && !op.S { strand = 1 }
-  if pos + rl < n || op.o {
+  if pos + rl <= n || op.o {
 	  //<<Sequence single read, Ch.~\ref{ch:seq}>>
   }
 #+end_src
