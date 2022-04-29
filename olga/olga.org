@@ -169,21 +169,17 @@
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:olga}>>=
   func overlap(a, b []byte, k int) int {
-	  s := 0
+	  p := 0
 	  //<<Check $k$, Ch.~\ref{ch:olga}>>
 	  //<<Find overlap, Ch.~\ref{ch:olga}>>
-	  return s
+	  return p
   }
 #+end_src
 #+begin_src latex
-  If $k$ is less than the length of \ty{b}, we increment it so $k$ can
-  serve as right hand border. If, on the other hand, $k$ is greater than
-  the length of \ty{b}, we bail with message.
+  If $k$ is greater than the length of \ty{b}, we bail with message.
 #+end_src
 #+begin_src go <<Check $k$, Ch.~\ref{ch:olga}>>=
-  if k < len(b) {
-	  k++
-  } else if k > len(b) {
+  if k > len(b) {
 	  log.Fatal("can't have longer overlaps than reads")
   }
 #+end_src
@@ -195,12 +191,12 @@
 #+end_src
 #+begin_src go <<Find overlap, Ch.~\ref{ch:olga}>>=
   for true {
-	  s = bytes.Index(a[s:], b[0:k])
+	  s := bytes.Index(a[p:], b[0:k])
 	  if s == -1 { return 0 }
-	  if bytes.HasPrefix(b, a[s:]) {
-		  return len(a) - s
+	  if bytes.HasPrefix(b, a[p+s:]) {
+		  return len(a) - s - p
 	  }
-	  s++
+	  p += s+1
   }
 #+end_src
 #+begin_src latex
