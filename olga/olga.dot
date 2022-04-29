@@ -1,0 +1,3 @@
+graph G {
+      ACC -- CCT [dir=forward,label=2]
+}

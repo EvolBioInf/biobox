@@ -43,6 +43,7 @@ doc/naiveMatcher.tex
 doc/nj.tex
 doc/num2char.tex
 doc/numAl.tex
+doc/olga.tex
 doc/pam.tex
 doc/plotLine.tex
 doc/plotSeg.tex
@@ -100,6 +101,7 @@ naiveMatcher/naiveMatcher
 nj/nj
 num2char/num2char
 numAl/numAl
+olga/olga
 pam/pam
 plotLine/plotLine
 plotSeg/plotSeg

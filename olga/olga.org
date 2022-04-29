@@ -1,0 +1,341 @@
+#+begin_src latex
+  \section*{Introduction}
+  An overlap graph shows the suffix/prefix matches between all pairs of
+  strings. For example \ty{ACC} and \ty{CCT} have an overlap of
+  \ty{CC} and their overlap graph would be Figure~\ref{fig:olga}. The
+  nodes in the graph are the strings, the edge indicates the existence
+  of an overlap and the edge label the length of the overlap.
+
+  \begin{figure}
+    \begin{center}
+      \includegraphics{../olga/olga}
+    \end{center}
+  \caption{Overlap graph for \ty{ACC} and \ty{CCT}.}\label{fig:olga}
+  \end{figure}
+
+  The program \ty{olga} reads a set of strings and prints the
+  corresponding overlap graph in the dot language.
+
+  \section*{Implementation}
+  The outline of \ty{olga} has hooks for imports, functions, and the
+  logic of the main function.
+#+end_src
+#+begin_src go <<olga.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:olga}>>
+  )
+  //<<Functions, Ch.~\ref{ch:olga}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:olga}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage, declare the options, and parse
+  the options and the input files. Then we calculate the overlap graph
+  and draw it.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:olga}>>=
+    //<<Set usage, Ch.~\ref{ch:olga}>>
+    //<<Declare options, Ch.~\ref{ch:olga}>>
+    //<<Parse options, Ch.~\ref{ch:olga}>>
+    //<<Parse input files, Ch.~\ref{ch:olga}>>
+    //<<Calculate overlap graph, Ch.~\ref{ch:olga}>>
+    //<<Print overlap graph, Ch.~\ref{ch:olga}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of the
+  purpose of \ty{olga}, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:olga}>>=
+  u := "olga [-v|-h] [file]..."
+  p := "Calculate overlap graph from input strings."
+  e := "olga foo.fasta"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:olga}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  Apart from the version, we declare only one option, the minimum
+  overlap, which by default is 1.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:olga}>>=
+  var optV = flag.Bool("v", false, "version")
+  var optK = flag.Int("k", 1, "overlap")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:olga}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and respond to \ty{-v} as this stops the
+  program. We also make sure the requested overlap isn't negative.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:olga}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("olga")
+  }
+  if *optK < 0 {
+	  log.Fatal("please enter positive minimum overlap")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util} and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:olga}>>=
+  "github.com/evolbioinf/biobox/util"
+  "log"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are taken as names of input
+  files. These files are parsed with the function \ty{scan} and all
+  reads are collected in a slice of sequences.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:olga}>>=
+  files := flag.Args()
+  reads := make([]*fasta.Sequence, 0)
+  clio.ParseFiles(files, scan, &reads)
+#+end_src
+#+begin_src latex
+  We import \ty{fasta}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:olga}>>=
+  "github.com/evolbioinf/fasta"
+#+end_src
+#+begin_src latex
+  Inside \ty{scan} we retrieve the pointer to the reads slice and
+  store sequences in that slice.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:olga}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  reads := args[0].(*([]*fasta.Sequence))
+	  sc := fasta.NewScanner(r)
+	  for sc.ScanSequence() {
+		  s := sc.Sequence()
+		  (*reads) = append(*reads, s)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:olga}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  To calculate the overlap graph, we construct the graph matrix and fill
+  it in.
+#+end_src
+#+begin_src go <<Calculate overlap graph, Ch.~\ref{ch:olga}>>=
+  //<<Construct graph matrix, Ch.~\ref{ch:olga}>>
+  //<<Fill in graph matrix, Ch.~\ref{ch:olga}>>
+#+end_src
+#+begin_src latex
+  The graph matrix for $n$ strings is an $n\times n$ matrix of integers,
+  the overlaps.
+#+end_src
+#+begin_src go <<Construct graph matrix, Ch.~\ref{ch:olga}>>=
+  n := len(reads)
+  graph := make([][]int, n)
+  for i := 0; i < n; i++ {
+	  graph[i] = make([]int, n)
+  }
+#+end_src
+#+begin_src latex
+  For each pair of stings we calculate and store the overlap.
+#+end_src
+#+begin_src go <<Fill in graph matrix, Ch.~\ref{ch:olga}>>=
+  for i := 0; i < n; i++ {
+	  for j := 0; j < n; j++ {
+		  if i == j { continue }
+		  a := reads[i].Data()
+		  b := reads[j].Data()
+		  graph[i][j] = overlap(a, b, *optK)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The function \ty{overlap} takes two byte slices, $a$ and $b$, and a
+  minimum overlap, $k$, as input and returns their overlap. Initially,
+  it checks that $k$ is sensible, then it finds the overlap.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:olga}>>=
+  func overlap(a, b []byte, k int) int {
+	  s := 0
+	  //<<Check $k$, Ch.~\ref{ch:olga}>>
+	  //<<Find overlap, Ch.~\ref{ch:olga}>>
+	  return s
+  }
+#+end_src
+#+begin_src latex
+  If $k$ is less than the length of \ty{b}, we increment it so $k$ can
+  serve as right hand border. If, on the other hand, $k$ is greater than
+  the length of \ty{b}, we bail with message.
+#+end_src
+#+begin_src go <<Check $k$, Ch.~\ref{ch:olga}>>=
+  if k < len(b) {
+	  k++
+  } else if k > len(b) {
+	  log.Fatal("can't have longer overlaps than reads")
+  }
+#+end_src
+#+begin_src latex
+  We calculate the overlap in an infinite loop. Inside the loop we
+  search for the first occurrence of $b[1...k]$ in $a[s...]$. Then we
+  try to extend this match to the end of $a$. If that fails, we
+  increment $s$ and try again.
+#+end_src
+#+begin_src go <<Find overlap, Ch.~\ref{ch:olga}>>=
+  for true {
+	  s = bytes.Index(a[s:], b[0:k])
+	  if s == -1 { return 0 }
+	  if bytes.HasPrefix(b, a[s:]) {
+		  return len(a) - s
+	  }
+	  s++
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{bytes}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:olga}>>=
+  "bytes"
+#+end_src
+#+begin_src latex
+  For the actual graph we first print a header, then the graph body, and
+  finally the footer.
+#+end_src
+#+begin_src go <<Print overlap graph, Ch.~\ref{ch:olga}>>=
+  //<<Print graph header, Ch.~\ref{ch:olga}>>
+  //<<Print graph body, Ch.~\ref{ch:olga}>>
+  //<<Print graph footer, Ch.~\ref{ch:olga}>>
+#+end_src
+#+begin_src latex
+  We start the graph with comments as to its origin and how it is
+  rendered. Then we open the actual graph, which is a directed graph.
+#+end_src
+#+begin_src go <<Print graph header, Ch.~\ref{ch:olga}>>=
+  fmt.Println("# Overlap graph generated with olga.")
+  fmt.Println("# Render: dot foo.dot")
+  fmt.Println("digraph G {")
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:olga}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  The graph body consists of nodes and edges.
+#+end_src
+#+begin_src go <<Print graph body, Ch.~\ref{ch:olga}>>=
+  //<<Print nodes, Ch.~\ref{ch:olga}>>
+  //<<Print edges, Ch.~\ref{ch:olga}>>
+#+end_src
+#+begin_src latex
+  The reads are the nodes. Since there might be repeated strings in the
+  input, we distinguish between the ID and the label of a node.
+#+end_src
+#+begin_src go <<Print nodes, Ch.~\ref{ch:olga}>>=
+  for i := 0; i < n; i++ {
+	  fmt.Printf("\tn%d [label=\"%s\"]\n", i,
+		  string(reads[i].Data()))
+  }
+#+end_src
+#+begin_src latex
+  We print all non-zero edges labeled by the overlap.
+#+end_src
+#+begin_src go <<Print edges, Ch.~\ref{ch:olga}>>=
+  for i := 0; i < n; i++ {
+	  for j := 0; j < n; j++ {
+		  if graph[i][j] == 0 { continue }
+		  fmt.Printf("\tn%d -> n%d [label=%d]\n",
+			  i, j, graph[i][j])
+	  }
+  }
+#+end_src
+#+begin_src latex
+  The footer is just the closing curly bracket.
+#+end_src
+#+begin_src go <<Print graph footer, Ch.~\ref{ch:olga}>>=
+  fmt.Println("}")
+#+end_src
+#+begin_src latex
+  We've finished writing \ty{olga}, time to test it.
+  \section*{Testing}
+  Out testing code has hooks for imports and the testing logic.
+#+end_src
+#+begin_src go <<olga_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:olga}>>
+  )
+
+  func TestOlga(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:olga}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a set of tests and iterate over them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:olga}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:olga}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:olga}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:olga}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct two tests, one with default parameters, the other with
+  $k=3$.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:olga}>>=
+  f := "reads.fasta"
+  test := exec.Command("./olga", f)
+  tests = append(tests, test)
+  test = exec.Command("./olga", "-k", "3", f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We store the result we get from a test and compare it to the result we
+  want, which is stored in files \ty{r1.txt} and \ty{r2.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:olga}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Errorf("can't run %q", test)
+  }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil {
+	  t.Errorf("can't open %q", f)
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:olga}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src
+

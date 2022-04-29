@@ -1,0 +1,13 @@
+# Overlap graph generated with olga.
+# Render: dot foo.dot
+digraph G {
+	n0 [label="CTCC"]
+	n1 [label="CCCA"]
+	n2 [label="CCCA"]
+	n3 [label="CTCC"]
+	n4 [label="CATA"]
+	n0 -> n3 [label=4]
+	n1 -> n2 [label=4]
+	n2 -> n1 [label=4]
+	n3 -> n0 [label=4]
+}
