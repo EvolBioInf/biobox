@@ -1,65 +1,65 @@
 #+begin_src latex
-    \section*{Introduction}
-    MUMmer is a software package for quickly aligning pairs of
-    genomes~\cite{kur04:ver}. Its output consists of the coordinates of
-    exact matches between the two input genomes. The matches are written
-    in two lists, one for the forward, the other for the reverse
-    strand. Each list is opened by a header line that looks like a FASTA
-    header (Table~\ref{tab:mum}A). The header of the reverse list ends in
-    the word ``Reverse''.
+  \section*{Introduction}
+  MUMmer is a software package for quickly aligning pairs of
+  genomes~\cite{kur04:ver}. Its output consists of the coordinates of
+  exact matches between the two input genomes. The matches are written
+  in two lists, one for the forward, the other for the reverse
+  strand. Each list is opened by a header line that looks like a FASTA
+  header (Table~\ref{tab:mum}A). The header of the reverse list ends in
+  the word ``Reverse''.
 
-    \begin{table}
-	\caption{Example output from MUMmer (\textbf{A}); after
-	  transformation with \ty{mum2plot} (\textbf{B})}\label{tab:mum}
-      \begin{center}
-	\begin{tabular}{c|c}
-	  \textbf{A} & \textbf{B}\\\hline
-	  \begin{tabular}{rrr}
-	    \multicolumn{3}{l}{$\mathtt{>}$ s1}\\
-      128 &       42 &        45\\
-      129 &      163 &        51\\
-      75 &       114 &        56\\
-    \multicolumn{3}{l}{$\mathtt{>}$ s1 Reverse}\\
-      253 &    50 &        20\\
-      253 &    57 &        21\\
-      305 &    60 &        20
-	  \end{tabular} &
-	  \begin{tabular}{rrrr}
-	    128 & 42 & 172 & 86\\
-	    129 & 163 & 179 & 213\\
-	    75 & 114 & 130 & 169\\
-	    253 & 50 & 234 & 69\\
-	    253 & 57 & 233 & 77\\
-	    305 & 60 & 286 & 79\\
-	  \end{tabular}
-    \end{tabular}
-      \end{center}
-    \end{table}
+  \begin{table}
+      \caption{Example output from MUMmer (\textbf{A}); after
+	transformation with \ty{mum2plot} (\textbf{B})}\label{tab:mum}
+    \begin{center}
+      \begin{tabular}{c|c}
+	\textbf{A} & \textbf{B}\\\hline
+	\begin{tabular}{rrr}
+	  \multicolumn{3}{l}{$\mathtt{>}$ s1}\\
+    128 &       42 &        45\\
+    129 &      163 &        51\\
+    75 &       114 &        56\\
+  \multicolumn{3}{l}{$\mathtt{>}$ s1 Reverse}\\
+    253 &    50 &        20\\
+    253 &    57 &        21\\
+    305 &    60 &        20
+	\end{tabular} &
+	\begin{tabular}{rrrr}
+	  128 & 42 & 172 & 86\\
+	  129 & 163 & 179 & 213\\
+	  75 & 114 & 130 & 169\\
+	  272 & 50 & 253 & 69\\
+	  273 & 57 & 253 & 77\\
+	  324 & 60 & 305 & 79
+	\end{tabular}
+  \end{tabular}
+    \end{center}
+  \end{table}
 
-    Each entry in the two match lists consists of the starting point of a
-    line and its length. For example, the first line starts at $x_1=128,
-    y_1=42$ and has $\ell=45$. In the forward list, the implied end point
-    of this line is $x_2=x_1+\ell-1=172$ and $y_2=y_1+\ell-1=86$. Reverse
-    matches lean in the opposite direction, so the x-coordinate of their
-    end-points is $x_2=x_1-\ell+1$.
+  Each entry in the two match lists consists of the starting point of a
+  line and its length. For example, the first line starts at $x_1=128,
+  y_1=42$ and has $\ell=45$. In the forward list, the implied end point
+  of this line is $x_2=x_1+\ell-1=172$ and $y_2=y_1+\ell-1=86$. Reverse
+  matches lean in the opposite direction, so the x-coordinate of their
+  end-points is $x_2=x_1-\ell+1$.
 
-    The program \ty{mum2plot} converts MUMmer output to quartets
-    $(x_1,y_2,x_2,y_2)$. Thus the data in Table~\ref{tab:mum}A becomes
-    Table~\ref{fig:mum}B, which can be plotted with \ty{plotSeg} to give
-    Figure~\ref{fig:mum}.
+  The program \ty{mum2plot} converts MUMmer output to quartets
+  $(x_1,y_2,x_2,y_2)$. Thus the data in Table~\ref{tab:mum}A becomes
+  Table~\ref{fig:mum}B, which can be plotted with \ty{plotSeg} to give
+  Figure~\ref{fig:mum}.
 
-    \begin{figure}
-      \begin{center}
-	\includegraphics{mummer.ps}
-      \end{center}
-      \caption{A plot of the MUMmer data shown in Table~\ref{tab:mum}A
-	after it was transformed to the data in Table~\ref{tab:mum}B using
-      \ty{mum2plot | plotSeg}.}\label{fig:mum}
-    \end{figure}
+  \begin{figure}
+    \begin{center}
+      \scalebox{0.75}{\includegraphics{mummer.ps}}
+    \end{center}
+    \caption{A plot of the MUMmer data shown in Table~\ref{tab:mum}A
+      after it was transformed to the data in Table~\ref{tab:mum}B using
+    \ty{mum2plot | plotSeg}.}\label{fig:mum}
+  \end{figure}
 
-    \section*{Implementation}
-    The outline of \ty{mum2plot} contains hooks for imports, functions,
-    and the logic of the main function.
+  \section*{Implementation}
+  The outline of \ty{mum2plot} contains hooks for imports, functions,
+  and the logic of the main function.
 #+end_src
 #+begin_src go <<mum2plot.go>>=
   package main
@@ -230,14 +230,16 @@
   "strconv"
 #+end_src
 #+begin_src latex
-  We compute the end coordinates depending on the list we're reading.
+  We compute the end coordinates for matches on the forward strand. For
+  matches on the reverse strand the start and end positions on the
+  x-axis are swapped.
 #+end_src
 #+begin_src go <<Compute end coordinates, Ch.~\ref{ch:m2p}>>=
   x2 := x1 + le - 1
-  if reverse {
-	  x2 = x1 - le + 1
-  }
   y2 := y1 + le - 1
+  if reverse {
+	  x1, x2 = x2, x1
+  }
 #+end_src
 #+begin_src latex
   Each line corresponds a quartet of numbers, $(x_1,y_1,x_2,y_2)$.
