@@ -13,5 +13,5 @@ p <- p + ylim(-0.5272915928116878, 1.0122052987647574)
 x11()
 plot(p)
 while(names(dev.cur()) != 'null device')
-    Sys.sleep(0.1)
+    Sys.sleep(1)
 

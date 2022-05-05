@@ -594,7 +594,7 @@
   )
 #+end_src
 #+begin_src latex
-  If we are running an x11 window, we check every 0.1 s whether it's
+  If we are running an x11 window, we check every second whether it's
   still active. If is isn't active any more, we end the script. This
   crutch simulates the expected behavior that \ty{plotLine} returns when
   the graphics window is closed. If instead of running an x11 window we
@@ -603,7 +603,7 @@
 #+begin_src go <<Close device, Ch.~\ref{ch:pl}>>=
   {{if not .Ps -}}
   while(names(dev.cur()) != 'null device')
-      Sys.sleep(0.1)
+      Sys.sleep(1)
   {{else -}}
   dev.off()
   {{end -}}

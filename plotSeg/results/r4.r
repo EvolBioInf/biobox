@@ -11,4 +11,4 @@ x11(
 )
 plot(p)
 while(names(dev.cur()) != 'null device')
-    Sys.sleep(0.1)
+    Sys.sleep(1)

@@ -15,4 +15,4 @@ height=2.3622047244094486
 )
 plot(p)
 while(names(dev.cur()) != 'null device')
-    Sys.sleep(0.1)
+    Sys.sleep(1)

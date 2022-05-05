@@ -416,7 +416,7 @@
 #+begin_src go <<Close device, Ch.~\ref{ch:ps}>>=
   {{if not .Ps -}}
   while(names(dev.cur()) != 'null device')
-      Sys.sleep(0.1)
+      Sys.sleep(1)
   {{- else}}
   dev.off()
   {{- end}}
