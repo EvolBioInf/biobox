@@ -22,7 +22,8 @@ Tools for Bioinformatics
   `$ xcode-select --install`
 - [Homebrew](https://brew.sh)
 - Brew packages  
-  `$ brew install xquartz r tcl-tk brewsci/bio`
+  `$ brew tap brewsci/bio`
+  `$ brew install xquartz r tcl-tk gsl noweb texlive graphciz bewsci/bio/libdivsufsort`__
 - Install the R-package `ggplot2` inside R  
   `> install.packages("ggplot2")` 
 - [xQuartz](https://www.xquartz.org)
@@ -30,7 +31,6 @@ Tools for Bioinformatics
   `$ make`  
   The directory `bin` should now contain the programs listed in `progs.txt`
 - Optional: Documentation  
-  `$ brew install texlive graphviz`  
   `$ make doc`  
   The documentation should now be in `doc/bioboxDoc.pdf`
 ## License
