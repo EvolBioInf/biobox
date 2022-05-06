@@ -303,20 +303,21 @@
 #+end_src
 #+begin_src latex
   Inside \ty{scan}, we retrieve the variable \ty{args} by type
-  assertion, read the data, and construct the R script. If we're asked
-  to write the R script, we exit afterwards. Otherwise, we construct the
-  R command that runs the script, pipe the data into it, and run
-  it. Then we delete the R script again.
+  assertion, read and write the data, and construct the R script. If
+  we're asked to write the R script, we exit afterwards. Otherwise, we
+  construct the R command that runs the script and run it. Then we
+  delete the R script and the data.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pl}>>=
   func scan(r io.Reader, a ...interface{}) {
 	  args := a[0].(*Args)
 	  //<<Read data, Ch.~\ref{ch:pl}>>
+	  //<<Write data, Ch.~\ref{ch:pl}>>
 	  //<<Construct R script, Ch.~\ref{ch:pl}>>
 	  //<<Construct R command, Ch.~\ref{ch:pl}>>
-	  //<<Pipe data into R command, Ch.~\ref{ch:pl}>>
 	  //<<Run R command, Ch.~\ref{ch:pl}>>
 	  //<<Delete R script, Ch.~\ref{ch:pl}>>
+	  //<<Delete data, Ch.~\ref{ch:pl}>>
   }
 #+end_src
 #+begin_src latex
@@ -369,8 +370,40 @@
   }
 #+end_src
 #+begin_src latex
-  We open a file to write the script to. But before actually doing that,
-  we make sure the input data has either two or three columns.
+  We open a file, store its name as one of the arguments, and write the
+  data to it.
+#+end_src
+#+begin_src go <<Write data, Ch.~\ref{ch:pl}>>=
+  file, err := ioutil.TempFile("", "tmp_*.dat")
+  if err != nil {
+	  log.Fatalf("can't create data file")
+  }
+  defer file.Close()
+  args.File = file.Name()
+  for _, d := range data {
+	  fmt.Fprintln(file, d)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We add the field \ty{File} to \ty{Args}.
+#+end_src
+#+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
+  File string
+#+end_src
+#+begin_src latex
+  We import \ty{ioutil}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
+  "io/ioutil"
+#+end_src
+#+begin_src latex
+  We open a file to write the script to.
 #+end_src
 #+begin_src go <<Construct R script, Ch.~\ref{ch:pl}>>=
   //<<Open script file, Ch.~\ref{ch:pl}>>
@@ -382,7 +415,6 @@
 #+end_src
 #+begin_src go <<Open script file, Ch.~\ref{ch:pl}>>=
   var script *os.File
-  var err error
   if args.Script == "" {
 	  script, err = ioutil.TempFile("", "tmp_*.r")
   } else {
@@ -392,12 +424,6 @@
 	  log.Fatalf("can't create script file")
   }
   defer script.Close()
-#+end_src
-#+begin_src latex
-  We import \ty{ioutil}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
-  "io/ioutil"
 #+end_src
 #+begin_src latex
   We write the script using a template. If the user just requested the
@@ -448,11 +474,12 @@
 #+end_src
 #+begin_src latex
   In the header of the script, we load the ggplot2 library and read the
-  data from the standard input stream.
+  data from the file we wrote them to.
 #+end_src
 #+begin_src r <<Construct header, Ch.~\ref{ch:pl}>>=
-  library("ggplot2")
-  data <- read.table(file="stdin")
+  suppressPackageStartupMessages(require(ggplot2)) ||
+      stop("no support for ggplot2")
+  data <- read.table(file="{{.File}}")
 #+end_src
 #+begin_src latex
   We construct the plot and group the data if there are three columns.
@@ -594,16 +621,17 @@
   )
 #+end_src
 #+begin_src latex
-  If we are running an x11 window, we check every second whether it's
-  still active. If is isn't active any more, we end the script. This
-  crutch simulates the expected behavior that \ty{plotLine} returns when
-  the graphics window is closed. If instead of running an x11 window we
-  print postscript output, we switch the device off afterwards.
+  If we are running an x11 window, we check every onehundredth second
+  whether it's still active. If is isn't active any more, we end the
+  script. This crutch simulates the expected behavior that \ty{plotLine}
+  returns when the graphics window is closed. If instead of running an
+  x11 window we print postscript output, we switch the device off
+  afterwards.
 #+end_src
 #+begin_src go <<Close device, Ch.~\ref{ch:pl}>>=
   {{if not .Ps -}}
   while(names(dev.cur()) != 'null device')
-      Sys.sleep(1)
+      Sys.sleep(0.01)
   {{else -}}
   dev.off()
   {{end -}}
@@ -625,11 +653,21 @@
   "os"
 #+end_src
 #+begin_src latex
-  We run R via its scripting front end in ``vanilla'' mode to suppress
-  all additional output.
+  We also delete the data.
+#+end_src
+#+begin_src go <<Delete data, Ch.~\ref{ch:pl}>>=
+  err = os.Remove(args.File)
+  if err != nil {
+	  log.Fatalf("can't remove %q", args.File)
+  }
+#+end_src
+#+begin_src latex
+  We run R in ``vanilla'' mode and send the standard output stream to
+  null.
 #+end_src
 #+begin_src go <<Construct R command, Ch.~\ref{ch:pl}>>=
-  cmd := exec.Command("Rscript", "--vanilla", script.Name())
+  cmd := exec.Command("R", "--vanilla", "-f", script.Name(),
+	  "> /dev/null")
 #+end_src
 #+begin_src latex
   We import \ty{exec}.
@@ -638,31 +676,13 @@
   "os/exec"
 #+end_src
 #+begin_src latex
-  We wrap the data piping in a goroutine that signals it has finished
-  via a channel.
-#+end_src
-#+begin_src go <<Pipe data into R command, Ch.~\ref{ch:pl}>>=
-  stdin, err := cmd.StdinPipe()
-  if err != nil { log.Fatal("can't open stdin") }
-  done := make(chan struct{})
-  go func() {
-	  for _, d := range data {
-		  stdin.Write([]byte(d))
-		  stdin.Write([]byte("\n"))
-	  }
-	  stdin.Close()
-	  done <- struct{}{}
-  }()
-#+end_src
-#+begin_src latex
-  We start the command and wait for it to finish.
+  We run the command and check for errors.
 #+end_src
 #+begin_src go <<Run R command, Ch.~\ref{ch:pl}>>=
   err = cmd.Run()
   if err != nil {
 	  log.Fatalf("can't run %q", cmd)
   }
-  <-done
 #+end_src
 #+begin_src latex
   We are done writing \ty{plotLine}, let's test it.

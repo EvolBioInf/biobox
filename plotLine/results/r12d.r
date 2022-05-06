@@ -1,5 +1,6 @@
-library("ggplot2")
-data <- read.table(file="stdin")
+suppressPackageStartupMessages(require(ggplot2)) ||
+    stop("no support for ggplot2")
+data <- read.table(file="/tmp/tmp_1070323159.dat")
 plot <- ggplot(data, aes(V1, V2, group=V3))
 
 plot <- plot + xlab(NULL)
@@ -17,4 +18,4 @@ plot <- plot + labs(color="")
 quartz()
 plot(plot)
 while(names(dev.cur()) != 'null device')
-    Sys.sleep(1)
+    Sys.sleep(0.01)

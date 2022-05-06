@@ -1,5 +1,6 @@
-library("ggplot2")
-data <- read.table(file="stdin")
+suppressPackageStartupMessages(require(ggplot2)) ||
+    stop("no support for ggplot2")
+data <- read.table(file="/tmp/tmp_2944296172.dat")
 plot <- ggplot(data, aes(V1, V2))
 
 plot <- plot + xlab(NULL)
@@ -14,4 +15,4 @@ plot <- plot + geom_path()
 x11()
 plot(plot)
 while(names(dev.cur()) != 'null device')
-    Sys.sleep(1)
+    Sys.sleep(0.01)
