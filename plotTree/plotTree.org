@@ -66,7 +66,9 @@
 #+begin_src go <<Set usage, Ch.~\ref{ch:pt}>>=
   u := "plotTree [-h] [option]... [foo.nwk]..."
   p := "Plot Newick-formatted trees."
-  e := "plotTree foo.nwk"
+  e := "a) plotTree foo.nwk\n" +
+	  "\t b) plotTree -S foo.r -d foo.nwk > foo.dat; " +
+	  "R -f foo.r < foo.dat > /dev/null"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -121,10 +123,12 @@
   var optS = flag.Float64("s", 0.0, "scale")
 #+end_src
 #+begin_src latex
-  Finally, the user may opt to just print the R script and quit.
+  Finally, the user may opt to just print the R script and quit and/or
+  print the raw data.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
   var optSS = flag.String("S", "", "write R script to file")
+  var optD = flag.Bool("d", false, "print raw data")
 #+end_src
 #+begin_src latex
   We parse the options and immediately respond to \ty{-v} as this might
@@ -169,12 +173,13 @@
   opts.RaiseScale = *optRR
   opts.Scale = *optS
   opts.Script = *optSS
+  opts.Data = *optD
 #+end_src
 #+begin_src latex
   We declare the fields we just used.
 #+end_src
 #+begin_src go <<Opts fields, Ch.~\ref{ch:pt}>>=
-  Rooted, Unrooted, NoLabels bool
+  Rooted, Unrooted, NoLabels, Data bool
   Ps string
   Width, Height, Margin, RaiseScale, Scale float64
   Script string
@@ -278,9 +283,9 @@
 #+begin_src R <<Write plot to device, Ch.~\ref{ch:pt}>>=
   {{if .Ps}}
   //<<Write to postscript file, Ch.~\ref{ch:pt}>>
-  {{else}}
+  {{else -}}
   //<<Write to window, Ch.~\ref{ch:pt}>>
-  {{end}}
+  {{- end}}
 #+end_src
 #+begin_src latex
   We set the postscript file with vertical orientation and give it a
@@ -302,7 +307,7 @@
   {{.Win}}()
   plot(p)
   while(names(dev.cur()) != 'null device')
-      Sys.sleep(1)
+      Sys.sleep(0.01)
 #+end_src
 #+begin_src latex
   \subsection*{Scan Input Files}
@@ -411,13 +416,17 @@
 #+end_src
 #+begin_src latex
   \subsection*{Draw Tree}
-  We draw a tree by constructing its segments. We also add margins and a
-  title to the plot. Then we construct the R script and the R command to
-  run it. The segments are piped into the R script and we run the R
-  command. When we're done with the R script, we delete it.
+  We draw a tree by constructing its segments. If desired, we also print
+  the segments. We then add margins and a title to the plot. Then we
+  construct the R script and the R command to run it. The segments are
+  piped into the R script and we run the R command. When we're done with
+  the R script, we delete it.
 #+end_src
 #+begin_src go <<Draw tree, Ch.~\ref{ch:pt}>>=
   //<<Construct tree segments, Ch.~\ref{ch:pt}>>
+  if options.Data {
+	  //<<Print tree segments, Ch.~\ref{ch:pt}>>
+  }
   //<<Add margins, Ch.~\ref{ch:pt}>>
   //<<Add title, Ch.~\ref{ch:pt}>>
   //<<Construct R script, Ch.~\ref{ch:pt}>>
@@ -859,6 +868,17 @@
   "strconv"
 #+end_src
 #+begin_src latex
+  We print the tree segments to the standard output stream.
+#+end_src
+#+begin_src go <<Print tree segments, Ch.~\ref{ch:pt}>>=
+  f := "%.3g %.3g %.3g %.3g %q %.3g %.3g %.3g"
+  for _, s := range segments {
+	  str := fmt.Sprintf(f,
+		  s.x1, s.y1, s.x2, s.y2, s.l, s.a, s.h, s.v)
+	  fmt.Println(str)
+  }
+#+end_src
+#+begin_src latex
   We calculate the margin and store it in \ty{options}. To accommodate
   the scale, we inflate the maximum y value by 20\% of the plot height.
 #+end_src
@@ -939,12 +959,10 @@
   }
 #+end_src
 #+begin_src latex
-  Having written the R script, we construct the R command that executes
-  it. This is based on the scripting front end of R, \ty{Rscript}, which
-  we run in \emph{vanilla} mode to avoid additional output.
+  Having written the R script, we run it.
 #+end_src
 #+begin_src go <<Construct R command, Ch.~\ref{ch:pt}>>=
-  cmd := exec.Command("Rscript", "--vanilla", script.Name())
+  cmd := exec.Command("R", "-f", script.Name())
 #+end_src
 #+begin_src latex
   We import \ty{exec}.
@@ -971,8 +989,8 @@
   stream. Labels are printed in double quotes.
 #+end_src
 #+begin_src go <<Write segments to stdin, Ch.~\ref{ch:pt}>>=
+  f := "%.3g %.3g %.3g %.3g %q %.3g %.3g %.3g\n"
   for _, s := range segments {
-	  f := "%.3g %.3g %.3g %.3g %q %.3g %.3g %.3g\n"
 	  str := fmt.Sprintf(f,
 		  s.x1, s.y1, s.x2, s.y2, s.l, s.a, s.h, s.v)
 	  stdin.Write([]byte(str))
@@ -1104,7 +1122,7 @@
   \ty{r2.r}, and so on. On darwin systems, these names are extended by ``d''.
 #+end_src
 #+begin_src go <<Construct file name, Ch.~\ref{ch:pt}>>=
-  f := "r" + strconv.Itoa(i+1)
+  f := "results/r" + strconv.Itoa(i+1)
   if runtime.GOOS == "darwin" {
 	  f += "d"
   }
