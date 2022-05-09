@@ -1,6 +1,5 @@
-suppressPackageStartupMessages(require(ggplot2)) ||
-    stop("no support for ggplot2")
-data <- read.table(file="/tmp/tmp_371346467.dat")
+library("ggplot2")
+data <- read.table(file="stdin")
 plot <- ggplot(data, aes(V1, V2, group=V3))
 plot <- plot + xlab("x")
 plot <- plot + ylab(NULL)
