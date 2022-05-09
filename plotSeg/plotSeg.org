@@ -62,9 +62,11 @@
   program's purpose, and an example command.
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:ps}>>=
-  u := "plotSeq [-h] [option]... [foo.dat]..."
+  u := "plotSeg [-h] [option]... [foo.dat]..."
   p := "Generate segment plots, also known as dot plots."
-  e := "mum2plot eco_x_y.mum | plotSeq"
+  e := "a) plotSeg foo.dat\n" +
+	  "\t b) plotSeg -s foo.r foo.dat; " +
+	  "R -f foo.r < foo.dat > /dev/null"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -332,7 +334,7 @@
 #+end_src
 #+begin_src r <<Construct plot, Ch.~\ref{ch:ps}>>=
   p <- ggplot(d, aes(V1, V2, xend=V3, yend=V4))
-  p <- p + geom_segment()
+  p <- p + geom_segment(){{printf "\n"}}
 #+end_src
 #+begin_src latex
   We set the axis labels and
@@ -347,40 +349,40 @@
   setting it to NULL.
 #+end_src
 #+begin_src go <<Deal with axis labels, Ch.~\ref{ch:ps}>>=
-  {{if .Xlab -}}
-  p <- p + xlab("{{.Xlab}}")
-  {{- else}}
-  p <- p + xlab(NULL)
-  {{- end}}
-  {{if .Ylab -}}
-  p <- p + ylab("{{.Ylab}}")
-  {{- else}}
-  p <- p + ylab(NULL)
-  {{- end}}
+  {{- if .Xlab -}}
+  p <- p + xlab("{{.Xlab}}"){{printf "\n"}}
+  {{- else -}}
+  p <- p + xlab(NULL){{printf "\n"}}
+  {{- end -}}
+  {{- if .Ylab -}}
+  p <- p + ylab("{{.Ylab}}"){{printf "\n"}}
+  {{- else -}}
+  p <- p + ylab(NULL){{printf "\n"}}
+  {{- end -}}
 #+end_src
 #+begin_src latex
   If the user set the minimum and, we write the corresponding R-code.
 #+end_src
 #+begin_src go <<Deal with axis ranges, Ch.~\ref{ch:ps}>>=
-  {{if and .Xmin .Xmax}}
-  p <- p + xlim({{.Xmin}}, {{.Xmax}})
-  {{end}}
-  {{if and .Ymin .Ymax}}
-  p <- p + ylim({{.Ymin}}, {{.Ymax}})
-  {{end}}
+  {{- if and .Xmin .Xmax -}}
+  p <- p + xlim({{.Xmin}}, {{.Xmax}}){{printf "\n"}}
+  {{- end -}}
+  {{- if and .Ymin .Ymax -}}
+  p <- p + ylim({{.Ymin}}, {{.Ymax}}){{printf "\n"}}
+  {{- end -}}
 #+end_src
 #+begin_src latex
   We set postscript, or window with the plot height \&
   width. Then we draw the plot and close the device.
 #+end_src
 #+begin_src r <<Deal with device options, Ch.~\ref{ch:ps}>>=
-  {{if .Ps -}}
+  {{- if .Ps -}}
   //<<Set postscript file, Ch.~\ref{ch:ps}>>
-  {{- else}}
+  {{- else -}}
   //<<Set window, Ch.~\ref{ch:ps}>>
-  {{- end}}
+  {{- end -}}
   //<<Set height and width, Ch.~\ref{ch:ps}>>
-  plot(p)
+  plot(p){{printf "\n"}}
   //<<Close device, Ch.~\ref{ch:ps}>>
 #+end_src
 #+begin_src latex
@@ -400,12 +402,12 @@
   We set the height and the width, if requested.
 #+end_src
 #+begin_src r <<Set height and width, Ch.~\ref{ch:ps}>>=
-  {{- if .Width}}
+  {{- if .Width -}}
   width={{.Width}},
-  {{- end}}
-  {{- if .Height}}
+  {{- end -}}
+  {{- if .Height -}}
   height={{.Height}}
-  {{- end}}
+  {{- end -}}
   )
 #+end_src
 #+begin_src latex
@@ -414,20 +416,18 @@
   postscript file, we switch the device off.
 #+end_src
 #+begin_src go <<Close device, Ch.~\ref{ch:ps}>>=
-  {{if not .Ps -}}
+  {{- if not .Ps -}}
   while(names(dev.cur()) != 'null device')
-      Sys.sleep(1)
-  {{- else}}
-  dev.off()
-  {{- end}}
+      Sys.sleep(0.01){{printf "\n"}}
+  {{- else -}}
+  dev.off(){{printf "\n"}}
+  {{- end -}}
 #+end_src
 #+begin_src latex
-  The R script is written, so we turn to the R command that runs
-  it. This is based on the scripting front end of R, \ty{Rscript}, which
-  we run in ``vanilla'' mode to suppress extra output.
+  The R script is written, so we run it.
 #+end_src
 #+begin_src go <<Construct R command, Ch.~\ref{ch:ps}>>=
-  rcmd = exec.Command("Rscript", "--vanilla", rscr)
+  rcmd = exec.Command("R", "-f", rscr)
 #+end_src
 #+begin_src latex
   Inside \ty{scan}, we retrieve the command we just constructed by type

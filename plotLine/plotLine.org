@@ -64,7 +64,8 @@
   u := "plotLine [-h] [option]... [file]..."
   p := "Plot lines from columns of x/y data " +
 	  "and an optional group column."
-  e := "plotLine -x Time -y [RNA] foo.dat"
+  e := "a) plotLine foo.dat\n" +
+	  "\t b) plotLine -s foo.r foo.dat; R -f foo.r < foo.dat > /dev/null"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -489,22 +490,22 @@
   {{- if eq .Ncol 3 -}}
   , group=V3
   {{- end -}}
-  ))
+  )){{printf "\n"}}
 #+end_src
 #+begin_src latex
   If the user set axis labels, we set them here.
 #+end_src
 #+begin_src r <<Deal with axes options, Ch.~\ref{ch:pl}>>=
-  {{if .Xlab}}
-  plot <- plot + xlab("{{.Xlab}}")
-  {{else}}
-  plot <- plot + xlab(NULL)
-  {{end}}
-  {{if .Ylab}}
-  plot <- plot + ylab("{{.Ylab}}")
-  {{else}}
-  plot <- plot + ylab(NULL)
-  {{end}}
+  {{- if .Xlab -}}
+  plot <- plot + xlab("{{.Xlab}}"){{printf "\n"}}
+  {{- else -}}
+  plot <- plot + xlab(NULL){{printf "\n"}}
+  {{- end -}}
+  {{- if .Ylab -}}
+  plot <- plot + ylab("{{.Ylab}}"){{printf "\n"}}
+  {{- else -}}
+  plot <- plot + ylab(NULL){{printf "\n"}}
+  {{- end -}}
 #+end_src
 #+begin_src latex
   We scale the x-axis and the y-axis.
@@ -518,29 +519,29 @@
   be set at the same time.
 #+end_src
 #+begin_src r <<Scale x-axis, Ch.~\ref{ch:pl}>>=
-  {{if or (eq 1 .Log) (eq 3 .Log) -}}
+  {{- if or (eq 1 .Log) (eq 3 .Log) -}}
   plot <- plot + scale_x_log10(
   {{- if .Xrange -}}
   limits = c({{.Xmin}}, {{.Xmax}})
   {{- end -}}
-  )
-  {{else if .Xrange -}}
-  plot <- plot + xlim({{.Xmin}}, {{.Xmax}})
-  {{end}}
+  ){{printf "\n"}}
+  {{- else if .Xrange -}}
+  plot <- plot + xlim({{.Xmin}}, {{.Xmax}}){{printf "\n"}}
+  {{- end -}}
 #+end_src
 #+begin_src latex
   We repeat the scaling for the y-axis.
 #+end_src
 #+begin_src r <<Scale y-axis, Ch.~\ref{ch:pl}>>=
-  {{if or (eq 2 .Log) (eq 3 .Log) -}}
+  {{- if or (eq 2 .Log) (eq 3 .Log) -}}
   plot <- plot + scale_y_log10(
   {{- if .Yrange -}}
   limits = c({{.Ymin}}, {{.Ymax}})
   {{- end -}}
-  )
-  {{else if .Yrange -}}
-  plot <- plot + ylim({{.Ymin}}, {{.Ymax}})
-  {{end}}
+  ){{printf "\n"}}
+  {{- else if .Yrange -}}
+  plot <- plot + ylim({{.Ymin}}, {{.Ymax}}){{printf "\n"}}
+  {{- end}}
 #+end_src
 #+begin_src latex
   The user might have requested that only dots be plotted. If not, we
@@ -555,36 +556,34 @@
   from the third column.
 #+end_src
 #+begin_src r <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
-  {{if .Dots -}}
+  {{- if .Dots -}}
   plot <- plot + geom_point(
   {{- if eq .Ncol 3 -}}
   aes(color=factor(V3))
-  {{- end -}}
-  )
+  {{- end -}}){{printf "\n"}}
   {{- else -}}
   plot <- plot + geom_path(
   {{- if eq .Ncol 3 -}}
   aes(color=factor(V3))
+  {{- end -}}){{printf "\n"}}
   {{- end -}}
-  )
-  {{- end}}
 #+end_src
 #+begin_src latex
   The list of categories is by default now labeled ``factor(V3)''. This
   isn't very useful and we remove the category label altogether.
 #+end_src
 #+begin_src go <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
-  {{if eq .Ncol 3}}
-  plot <- plot + labs(color="")
-  {{end}}
+  {{- if eq .Ncol 3 -}}
+  plot <- plot + labs(color=""){{printf "\n"}}
+  {{- end -}}
 #+end_src
 #+begin_src latex
   The user might have requested points with the lines.
 #+end_src
 #+begin_src r <<Deal with plot type options, Ch.~\ref{ch:pl}>>=
-  {{if .DotsLines -}}
-  plot <- plot + geom_point()
-  {{end -}}
+  {{- if .DotsLines -}}
+  plot <- plot + geom_point(){{printf "\n"}}
+  {{- end -}}
 #+end_src
 #+begin_src latex
   We set up the graphical device, set its width and height, plot, and
@@ -593,16 +592,16 @@
   pages.
 #+end_src
 #+begin_src r <<Deal with device options, Ch.~\ref{ch:pl}>>=
-  {{if .Ps -}}
+  {{- if .Ps -}}
   postscript(file="{{.Ps}}", horizontal=FALSE,
   {{- if or (gt .Width 0.0) (gt .Height 0.0) -}}
   ,
   {{- end -}}
   {{- else -}}
-  {{.Win}}(
-  {{- end}}    
+  {{- .Win -}}(
+  {{- end -}}    
   //<<Set width and height, Ch.~\ref{ch:pl}>>
-  plot(plot)
+  plot(plot){{printf "\n"}}
   //<<Close device, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
@@ -613,15 +612,15 @@
   width={{.Width}}
   {{- if gt .Height 0.0 -}}
   ,
-  {{- end}}
-  {{- end}}
+  {{- end -}}
+  {{- end -}}
   {{- if gt .Height 0.0 -}}
   height={{.Height}}
   {{- end -}}
   )
 #+end_src
 #+begin_src latex
-  If we are running an x11 window, we check every onehundredth second
+  If we are running an x11 window, we check every one hundredth second
   whether it's still active. If is isn't active any more, we end the
   script. This crutch simulates the expected behavior that \ty{plotLine}
   returns when the graphics window is closed. If instead of running an
@@ -629,12 +628,12 @@
   afterwards.
 #+end_src
 #+begin_src go <<Close device, Ch.~\ref{ch:pl}>>=
-  {{if not .Ps -}}
+  {{- if not .Ps -}}
   while(names(dev.cur()) != 'null device')
-      Sys.sleep(0.01)
-  {{else -}}
-  dev.off()
-  {{end -}}
+      Sys.sleep(0.01){{printf "\n"}}
+  {{- else -}}
+  dev.off(){{printf "\n"}}
+  {{- end -}}
 #+end_src
 #+begin_src latex
   We have finished the R script and make sure it's eventually deleted
@@ -653,21 +652,10 @@
   "os"
 #+end_src
 #+begin_src latex
-  We also delete the data.
-#+end_src
-#+begin_src go <<Delete data, Ch.~\ref{ch:pl}>>=
-  err = os.Remove(args.File)
-  if err != nil {
-	  log.Fatalf("can't remove %q", args.File)
-  }
-#+end_src
-#+begin_src latex
-  We run R in ``vanilla'' mode and send the standard output stream to
-  null.
+  We run the R script.
 #+end_src
 #+begin_src go <<Construct R command, Ch.~\ref{ch:pl}>>=
-  cmd := exec.Command("R", "--vanilla", "-f", script.Name(),
-	  "> /dev/null")
+  cmd := exec.Command("R", "-f", script.Name())
 #+end_src
 #+begin_src latex
   We import \ty{exec}.

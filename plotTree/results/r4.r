@@ -7,11 +7,9 @@ p <- p + geom_text(aes(label=as.character(V5),
                          angle=V6, hjust=V7, vjust=V8))
 p <- p + theme(plot.title=element_text(hjust=0.5))
 p <- p + ggtitle("newick_1")
-p <- p + xlim(-0.1, 1.1)
-p <- p + ylim(-0.4, 5.2)
-
+p <- p + xlim(-1.0515905365124674, 0.7133939353874568)
+p <- p + ylim(-0.5272915928116878, 1.0122052987647574)
 x11()
 plot(p)
 while(names(dev.cur()) != 'null device')
-    Sys.sleep(1)
-
+    Sys.sleep(0.01)

@@ -2,16 +2,9 @@ suppressPackageStartupMessages(require(ggplot2)) ||
     stop("no support for ggplot2")
 data <- read.table(file="/tmp/tmp_2944296172.dat")
 plot <- ggplot(data, aes(V1, V2))
-
 plot <- plot + xlab(NULL)
-
-
 plot <- plot + ylab(NULL)
-
-
-
 plot <- plot + geom_path()
-
 quartz()
 plot(plot)
 while(names(dev.cur()) != 'null device')
