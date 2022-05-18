@@ -38,7 +38,9 @@
   \end{figure}
 
   There are two types of polymorphisms, gaps and mutations. By default,
-  \ty{pps} extracts them all, but the user can exclude gaps.
+  \ty{pps} extracts them all, but the user can exclude gaps. The user
+  can also opt to code positions that agree with the top row of the
+  alignment as dots.
 
   \section*{Implementation}
   The outline of our implementation of \ty{pps} contains hooks for
@@ -82,14 +84,16 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  There are three options, the version, \ty{-v}, the line length,
-  \ty{-l}, and whether we exclude gaps (\ty{-g}).
+  There are four options, the version, \ty{-v}, the line length,
+  \ty{-l}, whether we exclude gaps (\ty{-g}), and whether to dot
+  matching sites (\ty{d}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pp}>>=
   var optV = flag.Bool("v", false, "version")
   var optL = flag.Int ("l", fasta.DefaultLineLength,
 	  "line length")
   var optG = flag.Bool("g", false, "exclude gaps")
+  var optD = flag.Bool("d", false, "dot matches with top row")
 #+end_src
 #+begin_src latex
   We import \ty{flag} and \ty{fasta}.
@@ -116,21 +120,20 @@
 #+begin_src latex
   The remaining tokens on the command line are taken as the names of
   input files. Each of these is parsed with the function \ty{scan},
-  which takes as argument the line length and whether we exclude gaps.
+  which takes as argument the line length, whether we exclude gaps, and
+  whether to dot matches.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:pp}>>=
   files := flag.Args()
-  clio.ParseFiles(files, scan, *optL, *optG)
+  clio.ParseFiles(files, scan, *optL, *optG, *optD)
 #+end_src
 #+begin_src latex
-  Inside \ty{scan}, we retrieve the line length by type assertion,
-  collect all sequences in the stream, find the polymorphic sites, and
-  print them.
+  Inside \ty{scan}, we retrieve the arguments just passed, collect all
+  sequences in the stream, find the polymorphic sites, and print them.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pp}>>=
   func scan(r io.Reader, args ...interface{}) {
-	  ll := args[0].(int)
-	  exclGaps := args[1].(bool)
+	  //<<Retrieve arguments, Ch.~\ref{ch:pp}>>
 	  //<<Collect sequences, Ch.~\ref{ch:pp}>>
 	  //<<Find polymorphic sites, Ch.~\ref{ch:pp}>>
 	  //<<Print polymorphic sites, Ch.~\ref{ch:pp}>>
@@ -141,6 +144,15 @@
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pp}>>=
   "io"
+#+end_src
+#+begin_src latex
+  We retrieve the line length, whether to exclude gaps, and whether to
+  dot matches.
+#+end_src
+#+begin_src go <<Retrieve arguments, Ch.~\ref{ch:pp}>>=
+  ll := args[0].(int)
+  exclGaps := args[1].(bool)
+  dot := args[2].(bool)
 #+end_src
 #+begin_src latex
   We iterate over the sequences using a scanner and collect them into a
@@ -223,12 +235,17 @@
   ps = ps[:j]
 #+end_src
 #+begin_src latex
-  We print the positions followed by the residues. In both cases we
-  print a header followed by the remainder.
+  We print the positions and convert matches to dots if desired. Then we
+  iterate over the sequences in the alignment print their residues. For
+  both the positions and the residues we print the header followed by
+  the remainder.
 #+end_src
 #+begin_src go <<Print polymorphic sites, Ch.~\ref{ch:pp}>>=
   //<<Print header of positions, Ch.~\ref{ch:pp}>>
   //<<Print positions, Ch.~\ref{ch:pp}>>
+  if dot {
+	  //<<Convert matches to dots, Ch.~\ref{ch:pp}>>
+  }
   for _, s := range al {
 	  //<<Print header of residues, Ch.~\ref{ch:pp}>>
 	  //<<Print residues, Ch.~\ref{ch:pp}>>
@@ -271,6 +288,18 @@
 #+begin_src go <<Imports, Ch.~\ref{ch:pp}>>=
   "text/tabwriter"
   "os"
+#+end_src
+#+begin_src latex
+  We convert matches to the top row to dots.
+#+end_src
+#+begin_src go <<Convert matches to dots, Ch.~\ref{ch:pp}>>=
+  d1 := al[0].Data()
+  for i := 1; i < len(al); i++ {
+	  dx := al[i].Data()
+	  for j := 0; j < len(dx); j++ {
+		  if dx[j] == d1[j] { dx[j] = byte('.') }
+	  }
+  }
 #+end_src
 #+begin_src latex
   We print the header of the residues with a reminder that these are
@@ -327,9 +356,9 @@
   "os/exec"
 #+end_src
 #+begin_src latex
-  We construct three tests, with gaps, without, and with custom line
-  length. The input is always the file \ty{hom.fasta}, which contains an
-  aligned region of \emph{Hominidae} mitochondrial genomes.
+  We construct four tests, with gaps, without, with custom line length,
+  and with dots. The input is always the file \ty{hom.fasta}, which
+  contains an aligned region of \emph{Hominidae} mitochondrial genomes.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:pp}>>=
   f := "hom.fasta"
@@ -338,6 +367,8 @@
   test = exec.Command("./pps", "-g", f)
   tests = append(tests, test)
   test = exec.Command("./pps", "-l", "20", f)
+  tests = append(tests, test)
+  test = exec.Command("./pps", "-d", f)
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
