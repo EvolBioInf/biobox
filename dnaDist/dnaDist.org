@@ -503,14 +503,19 @@ if *optB < 0 {
   "text/tabwriter"
 #+end_src
 #+begin_src latex
-  The distances are printed in a loop over all entries in the matrix. It
-  turns out that a zero result can be \emph{negative} zero, which looks
-  awkward in the printout so we check for it. Then we flush the
-  \texttt{tabwriter} and print the buffer.
+  The distances are printed in a loop over all entries in the matrix. In
+  distance matrices, the taxon name is separated by blanks from the
+  matrix entries. So we truncate the taxon name at the first blank.
+
+  As to the matrix entries themselves, it turns out that a zero result
+  can be \emph{negative} zero, which looks awkward in the printout so we
+  check for it. Then we flush the \texttt{tabwriter} and print the
+  buffer.
 #+end_src
 #+begin_src go <<Print distances, Ch.~\ref{ch:dna}>>=
   for i := 0; i < n; i++ {
-	  fmt.Fprintf(w, "%s\t", sa[i].Header())
+	  name := strings.Fields(sa[i].Header())[0]
+	  fmt.Fprintf(w, "%s\t", name)
 	  for j := 0; j < n; j++ {
 		  //<<Check for negative zeros, Ch.~\ref{ch:dna}>>
 	  }
@@ -518,6 +523,12 @@ if *optB < 0 {
   }
   w.Flush()
   fmt.Printf("%s", buffer)
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dna}>>=
+  "strings"
 #+end_src
 #+begin_src latex
   Negative zeros are discovered using the \texttt{Signbit} library
