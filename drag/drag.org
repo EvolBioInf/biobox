@@ -39,6 +39,12 @@
   tracing the descent of all genes or only of those of a single
   individual.
 
+  Instead of thinking about individuals, we can concentrate exclusively
+  on the genes of some or all individuals. In Figure~\ref{fig:dgn}C we
+  did that for individual 5, which is a subgraph of
+  Figure~\ref{fig:dgn}B with the ancestry of genes without descendants
+  in the present removed.
+
   The program \ty{drag} draws genealogies like those in
   Figure~\ref{fig:dgn}. \ty{drag} writes genealogies in the dot notation
   of the graphviz package. A genealogy can be rendered with \ty{neato},
@@ -49,11 +55,14 @@
       \begin{tabular}{cc}
 	\textbf{A} & \textbf{B}\\
 	\input{dragFrag}\resizebox{0.475\textwidth}{!}{\includegraphics{dragAll}} &
-	\input{dragFrag}\resizebox{0.475\textwidth}{!}{\includegraphics{dragOne}}
+	\input{dragFrag}\resizebox{0.475\textwidth}{!}{\includegraphics{dragOne}}\\
+	\textbf{C}\\
+	\input{dragFrag}\resizebox{0.475\textwidth}{!}{\includegraphics{dragGenes}}
       \end{tabular}
     \end{center}
     \caption{Genealogy with genetic ancestry traced for all
-      individuals (\textbf{A}) or just one (\textbf{B}).}\label{fig:dgn}
+      individuals (\textbf{A}), just one individual (\textbf{B}), or
+      just the genes of that individual (\textbf{C}).}\label{fig:dgn}
   \end{figure}
 
   \section*{Implementation}
@@ -96,11 +105,12 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  Apart from the version, we declare six options: number of generations
-  (\ty{-g}), number of individuals (\ty{-n}), trace the ancestry of a
-  set of individuals (\ty{-t}), a scaling factor for the plot (\ty{-f}),
-  just ancestor statistics instead of the graph (\ty{-a}), and the seed
-  for the random number generator (\ty{-s}).
+  Apart from the version, we declare seven options: number of
+  generations (\ty{-g}), number of individuals (\ty{-n}), trace the
+  ancestry of a set of individuals (\ty{-t}), reduce the ancestry to
+  genes (\ty{-G}), set a scaling factor for the plot (\ty{-f}), print
+  just ancestor statistics instead of the graph (\ty{-a}), and set the
+  seed for the random number generator (\ty{-s}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:dgn}>>=
   var optV = flag.Bool("v", false, "version")
@@ -108,6 +118,7 @@
   var optN = flag.Int("n", 10, "number of individuals")
   var optT = flag.String("t", "", "trace genealogy of " +
 	  "individuals, e.g. 3,4,5; -1 for all")
+  var optGG = flag.Bool("G", false, "trace genes")
   var optF = flag.Float64("f", 1.0, "scale factor for plot")
   var optA = flag.Bool("a", false, "ancestor statistics")
   var optS = flag.Int64("s", 0, "seed for random number generator")
@@ -203,15 +214,18 @@
   A genealogy consists of individuals. An individual has two ancestors,
   a number of descendants in the present, is either male or female,
   holds its own name and the names of the ancestors of its two genes,
-  and may lie on a path to be drawn. It may also be a universal ancestor
-  or a non-ancestor.
+  one or both of which genes may be ancestral. An the individual may lie
+  on a path to be drawn and may be a universal ancestor or a
+  non-ancestor.
 #+end_src
 #+begin_src go <<Types, Ch.~\ref{ch:dgn}>>=
   type indiv struct {
-	  a1, a2 *indiv
+	  a [2]*indiv
 	  p int
 	  isMale bool
-	  n, ag1, ag2 string
+	  n string
+	  ag [2]string
+	  g [2]bool
 	  isOnPath bool
 	  isUa, isNonUa bool
   }
@@ -219,7 +233,8 @@
 #+begin_src latex
   The genealogy is an $m\times n$ population of individuals, where $m$
   is the number of generations and $n$ the population size. We construct
-  it, pick ancestors, and trace individuals.
+  it, pick ancestors, and trace the individuals. If desired, we also
+  trace individual genes.
 #+end_src
 #+begin_src go <<Construct genealogy, Ch.~\ref{ch:dgn}>>=
   m := *optG
@@ -229,6 +244,9 @@
   //<<Pick ancestors, Ch.~\ref{ch:dgn}>>
   //<<Count the descendants, Ch.~\ref{ch:dgn}>>
   //<<Trace individuals, Ch.~\ref{ch:dgn}>>
+  if *optGG {
+	  //<<Trace genes, Ch.~\ref{ch:dgn}>>
+  }
 #+end_src
 #+begin_src latex
   We iterate over the generations and allocate all individuals. We pick
@@ -288,10 +306,10 @@
 #+begin_src go <<Pick ancestors, Ch.~\ref{ch:dgn}>>=
   for i := m -1; i > 0; i-- {
 	  for j := 0; j < n; j++ {
-		  pop[i][j].a1 = pop[i-1][rand.Intn(n)]
-		  pop[i][j].a2 = pop[i-1][rand.Intn(n)]
-		  for pop[i][j].a1.isMale == pop[i][j].a2.isMale {
-			  pop[i][j].a2 = pop[i-1][rand.Intn(n)]
+		  pop[i][j].a[0] = pop[i-1][rand.Intn(n)]
+		  pop[i][j].a[1] = pop[i-1][rand.Intn(n)]
+		  for pop[i][j].a[0].isMale == pop[i][j].a[1].isMale {
+			  pop[i][j].a[1] = pop[i-1][rand.Intn(n)]
 		  }
 		  //<<Pick ancestral genes, Ch.~\ref{ch:dgn}>>
 	  }
@@ -302,12 +320,11 @@
   by \ty{\_0} or \ty{\_1}, depending on which gene we picked.
 #+end_src
 #+begin_src go <<Pick ancestral genes, Ch.~\ref{ch:dgn}>>=
-  r := rand.Intn(2)
-  name := fmt.Sprintf("%s_%d", pop[i][j].a1.n, r)
-  pop[i][j].ag1 = name
-  r = rand.Intn(2)
-  name = fmt.Sprintf("%s_%d", pop[i][j].a2.n, r)
-  pop[i][j].ag2 = name
+  for k := 0; k < 2; k++ {
+	  r := rand.Intn(2)
+	  name := fmt.Sprintf("%s_%d", pop[i][j].a[k].n, r)
+	  pop[i][j].ag[k] = name
+  }
 #+end_src
 #+begin_src latex
   We count the descendants. To begin with, we initialize the number of
@@ -333,11 +350,10 @@
   size yet.
 #+end_src
 #+begin_src go <<Add descendants to ancestors, Ch.~\ref{ch:dgn}>>=
-  if pop[i][j].a1.p < n {
-	  pop[i][j].a1.p += pop[i][j].p
-  }
-  if pop[i][j].a2.p < n {
-	  pop[i][j].a2.p += pop[i][j].p
+  for k := 0; k < 2; k++ {
+	  if pop[i][j].a[k].p < n {
+		  pop[i][j].a[k].p += pop[i][j].p
+	  }
   }
 #+end_src
 #+begin_src latex
@@ -355,10 +371,6 @@
 	  }
   }
 #+end_src
-#+begin_src latex
-  To trace individuals, we initialize the paths formed by their lines of
-  descent and then complete them.
-#+end_src
 #+begin_src go <<Trace individuals, Ch.~\ref{ch:dgn}>>=
   //<<Initialize paths, Ch.~\ref{ch:dgn}>>
   //<<Complete paths, Ch.~\ref{ch:dgn}>>
@@ -369,19 +381,76 @@
 #+begin_src go <<Initialize paths, Ch.~\ref{ch:dgn}>>=
   for _, t := range tr {
 	  pop[m-1][t].isOnPath = true
-	  pop[m-1][t].a1.isOnPath = true
-	  pop[m-1][t].a2.isOnPath = true
+	  pop[m-1][t].a[0].isOnPath = true
+	  pop[m-1][t].a[1].isOnPath = true
+	  if *optGG {
+		  pop[m-1][t].g[0] = true
+		  pop[m-1][t].g[1] = true
+	  }
   }
 #+end_src
 #+begin_src latex
-  We complete the paths from the second generation onward.
+  We complete the paths from the second generation
+  onward.
 #+end_src
 #+begin_src go <<Complete paths, Ch.~\ref{ch:dgn}>>=
   for i := m-2; i > 0; i-- {
 	  for j := 0; j < n; j++ {
 		  if pop[i][j].isOnPath {
-			  pop[i][j].a1.isOnPath = true
-			  pop[i][j].a2.isOnPath = true
+			  pop[i][j].a[0].isOnPath = true
+			  pop[i][j].a[1].isOnPath = true
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Gene tracing is also done in two steps, initialization and completion.
+#+end_src
+#+begin_src go <<Trace genes, Ch.~\ref{ch:dgn}>>=
+  //<<Initialize gene paths, Ch.~\ref{ch:dgn}>>
+  //<<Complete gene paths, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  Gene tracing is done via the \ty{g} field, with which we switch genes
+  on. The genes of the focal individual are all switched on in the first
+  generation. Each ancestor has two genes, of which we switch on the one
+  already written down as the ancestral gene.
+#+end_src
+#+begin_src go <<Initialize gene paths, Ch.~\ref{ch:dgn}>>=
+  for _, t := range tr {
+	  for i := 0; i < 2; i++ {
+		  pop[m-1][t].g[i] = true
+		  l := len(pop[m-1][t].ag[i])
+		  if pop[m-1][t].ag[i][l-1] == '0' {
+			  pop[m-1][t].a[i].g[0] = true
+		  } else {
+			  pop[m-1][t].a[i].g[1] = true
+		  }
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We iterate over the genes in every individual.
+#+end_src
+#+begin_src go <<Complete gene paths, Ch.~\ref{ch:dgn}>>=
+  for i := m-2; i > 0; i-- {
+	  for j := 0; j < n; j++ {
+		  //<<Iterate over genes, Ch.~\ref{ch:dgn}>>
+	  }
+  }
+#+end_src
+#+begin_src latex
+  For every gene that's switched on, we switch on the gene in its
+  ancestor we've already determinedc'
+#+end_src
+#+begin_src go <<Iterate over genes, Ch.~\ref{ch:dgn}>>=
+  for k := 0; k < 2; k++ {
+	  if pop[i][j].g[k] {
+		  l := len(pop[i][j].ag[k])
+		  if pop[i][j].ag[k][l-1] == '0' {
+			  pop[i][j].a[k].g[0] = true
+		  } else {
+			  pop[i][j].a[k].g[1] = true
 		  }
 	  }
   }
@@ -610,11 +679,34 @@
   }
 #+end_src
 #+begin_src latex
-  There are two edges per individual, one for each gene.
+  We either draw the edges for an individual or for genes.
 #+end_src
 #+begin_src go <<Draw edges, Ch.~\ref{ch:dgn}>>=
-  fmt.Printf("\t%s_0--%s;", in.n, in.ag1)
-  fmt.Printf("%s_1--%s;\n", in.n, in.ag2)
+  if *optGG {
+	  //<<Draw edges for genes, Ch.~\ref{ch:dgn}>>
+  } else {
+	  //<<Draw edges for individual, Ch.~\ref{ch:dgn}>>
+  }
+#+end_src
+#+begin_src latex
+  For each gene that's switched on, we print the edge to its ancestor.
+#+end_src
+#+begin_src go <<Draw edges for genes, Ch.~\ref{ch:dgn}>>=
+  for k := 0; k < 2; k++ {
+	  if in.g[k] {
+		  so := fmt.Sprintf("%s_%d", in.n, k)
+		  de := fmt.Sprintf("%s", in.ag[k])
+		  fmt.Printf("\t%s--%s\n", so, de)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  When tracing individuals, there are always two edges, one for each
+  gene.
+#+end_src
+#+begin_src go <<Draw edges for individual, Ch.~\ref{ch:dgn}>>=
+  fmt.Printf("\t%s_0--%s;", in.n, in.ag[0])
+  fmt.Printf("%s_1--%s;\n", in.n, in.ag[1])
 #+end_src
 #+begin_src latex
   The graph is closed by a curly bracket.
@@ -658,11 +750,11 @@
   "os/exec"
 #+end_src
 #+begin_src latex
-  We construct six tests. The first is without any options apart from
-  the seed for the random number generator. The second sets the number
-  of generations, the third the number of individuals, the fours traces
-  individuals 3 and 4, the fifth traces all individuals, and the sixth
-  prints the ancestor stats.
+  We construct a first batch of six tests. The first is without any
+  options apart from the seed for the random number generator. The
+  second sets the number of generations, the third the number of
+  individuals, the fours traces individuals 3 and 4, the fifth traces
+  all individuals, and the sixth prints the ancestor stats.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:dgn}>>=
   test := exec.Command("./drag", "-s", "1")
@@ -676,6 +768,13 @@
   test = exec.Command("./drag", "-s", "1", "-t", "-1")
   tests = append(tests, test)
   test = exec.Command("./drag", "-s", "1", "-a")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We also test the option for tracing only the genes of individual 5.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:dgn}>>=
+  test = exec.Command("./drag", "-s", "1", "-G", "-t", "5")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
