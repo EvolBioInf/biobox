@@ -313,8 +313,8 @@
   We count the descendants. To begin with, we initialize the number of
   descendants in the present, i. e. in generation $m-1$, to one. Then we
   iterate over the individuals. For each one we add the number of its
-  descendants to that of its ancestor. Then we determine ancestor status
-  of all individuals.
+  descendants to that of its ancestor. Then we
+  determine ancestor status of all individuals.
 #+end_src
 #+begin_src go <<Count the descendants, Ch.~\ref{ch:dgn}>>=
   for i := 0; i < n; i++ {
@@ -322,11 +322,23 @@
   }
   for i := m-1; i > 0; i-- {
 	  for j := 0; j < n; j++ {
-		  pop[i][j].a1.p += pop[i][j].p
-		  pop[i][j].a2.p += pop[i][j].p
+		  //<<Add descendants to ancestors, Ch.~\ref{ch:dgn}>>
 	  }
   }
   //<<Determine ancestor status, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  The number of ancestors grows exponentially and can thus quickly
+  overflow. So we only calculate it if it hasn't reached the population
+  size yet.
+#+end_src
+#+begin_src go <<Add descendants to ancestors, Ch.~\ref{ch:dgn}>>=
+  if pop[i][j].a1.p < n {
+	  pop[i][j].a1.p += pop[i][j].p
+  }
+  if pop[i][j].a2.p < n {
+	  pop[i][j].a2.p += pop[i][j].p
+  }
 #+end_src
 #+begin_src latex
   Depending on its number of descendants in the present, an individual
