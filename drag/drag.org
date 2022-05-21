@@ -490,7 +490,6 @@
   tua := 0
   foundUa := false
   for i := m-1; i > -1; i-- {
-	  tua++
 	  for j := 0; j < n; j++ {
 		  if pop[i][j].isUa {
 			  foundUa = true
@@ -498,6 +497,7 @@
 		  }
 	  }
 	  if foundUa { break }
+	  tua++
   }
 #+end_src
 #+begin_src latex
@@ -511,12 +511,12 @@
   foundPa := false
   for i := m-1; i > -1; i-- {
 	  npa := 0
-	  tpa++
 	  //<<Count partial ancestors, Ch.~\ref{ch:dgn}>>
 	  if npa == 0 {
 		  foundPa = true
 		  break
 	  }
+	  tpa++
   }
 #+end_src
 #+begin_src latex
@@ -536,8 +536,8 @@
 #+begin_src go <<Print ancestor statistics, Ch.~\ref{ch:dgn}>>=
   if !foundUa { tua = 0 }
   if !foundPa { tpa = 0 }
-  m1 := "Generations to universal ancestor:  %d\n"
-  m2 := "Generations to no partial ancestor: %d\n"
+  m1 := "Generations_to_first_universal_ancestor\t%d\n"
+  m2 := "Generations_to_no_partial_ancestor\t%d\n"
   fmt.Printf(m1, tua)
   fmt.Printf(m2, tpa)
 #+end_src
