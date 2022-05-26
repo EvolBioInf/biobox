@@ -209,12 +209,13 @@
   "bufio"
 #+end_src
 #+begin_src latex
-  For each sample, the key is the identifier in the first column, and
-  the value the numbers in the subsequent columns, which are stored in a
-  slice.
+  Samples are contained in unhashed lines. For each sample, the key is
+  the identifier in the first column, and the value the numbers in the
+  subsequent columns, which are stored in a slice.
 #+end_src
 #+begin_src go <<Read samples, Ch.~\ref{ch:tm}>>=
   for sc.Scan() {
+	  if sc.Text()[0] == '#' { continue }
 	  fields := strings.Fields(sc.Text())
 	  ids = append(ids, fields[0])
 	  n := len(fields)
