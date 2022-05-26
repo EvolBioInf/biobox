@@ -147,7 +147,7 @@
   if seed == 0 {
 	  seed = time.Now().UnixNano()
   }
-  rand.NewSource(seed)
+  rand.Seed(seed)
 #+end_src
 #+begin_src latex
   We import \texttt{time}.
@@ -415,7 +415,7 @@
   fmt.Printf("%s", buffer)
 #+end_src
 #+begin_src latex
-  This completes \texttt{testMeans}, time to test the test.
+  This completes \texttt{testMeans}, time to test it.
   \section*{Testing}
   The testing outline provides hooks for imports and the testing logic.
 #+end_src
