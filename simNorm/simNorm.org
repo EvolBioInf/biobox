@@ -87,7 +87,7 @@
   if seed == 0 {
 	  seed = time.Now().UnixNano()
   }
-  rand.NewSource(seed)
+  rand.Seed(seed)
 #+end_src
 #+begin_src latex
   We import \texttt{util}, \texttt{time}, and \texttt{rand}.
