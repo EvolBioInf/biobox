@@ -28,9 +28,9 @@
 	  128 & 42 & 172 & 86\\
 	  129 & 163 & 179 & 213\\
 	  75 & 114 & 130 & 169\\
-	  272 & 50 & 253 & 69\\
-	  273 & 57 & 253 & 77\\
-	  324 & 60 & 305 & 79
+	  253 & 50 & 272 & 31\\
+	  253 & 57 & 273 & 37\\
+	  305 & 60 & 324 & 41
 	\end{tabular}
   \end{tabular}
     \end{center}
@@ -230,15 +230,14 @@
   "strconv"
 #+end_src
 #+begin_src latex
-  We compute the end coordinates for matches on the forward strand. For
-  matches on the reverse strand the start and end positions on the
-  x-axis are swapped.
+  We compute the end coordinates for matches, $(x_2,y_2)$. The value of
+  $x_2$ doesn't depend on the strand, the value of $y_2$ does.
 #+end_src
 #+begin_src go <<Compute end coordinates, Ch.~\ref{ch:m2p}>>=
   x2 := x1 + le - 1
   y2 := y1 + le - 1
   if reverse {
-	  x1, x2 = x2, x1
+	  y2 = y1 - le + 1
   }
 #+end_src
 #+begin_src latex
