@@ -62,6 +62,7 @@ doc/sequencer.tex
 doc/shustring.tex
 doc/simNorm.tex
 doc/simOrf.tex
+doc/sops.tex
 doc/testMeans.tex
 doc/translate.tex
 doc/travTree.tex
@@ -120,6 +121,7 @@ sequencer/sequencer
 shustring/shustring
 simNorm/simNorm
 simOrf/simOrf
+sops/sops
 testMeans/testMeans
 translate/translate
 travTree/travTree
