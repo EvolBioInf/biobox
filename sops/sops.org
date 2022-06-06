@@ -179,7 +179,7 @@
 		  m := "sequence %d has length %d, " +
 			  "but sequence %d has length %d; " +
 			  "this doesn't look like an alignment"
-		  log.Fatalf(m, i, i+1)
+		  log.Fatalf(m, i, l1, i+1, l2)
 	  }
   }
 #+end_src
