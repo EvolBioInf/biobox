@@ -89,7 +89,7 @@
   } else {
 	  fmt.Fprintf(os.Stderr,
 		  "Please provide a region to cut " +
-			  "either via -r or -f.")
+			  "either via -r or -f.\n")
 	  os.Exit(0)
   }
 #+end_src
