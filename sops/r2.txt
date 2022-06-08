@@ -1,1 +1,1 @@
--7
+sum-of-pairs_score	-7

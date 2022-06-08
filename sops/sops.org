@@ -199,7 +199,7 @@
 		  }
 	  }
   }
-  fmt.Printf("%g\n", s)
+  fmt.Printf("sum-of-pairs_score\t%g\n", s)
 #+end_src
 #+begin_src latex
   We import \ty{fmt}.
