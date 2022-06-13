@@ -959,7 +959,7 @@
   old := *optW
   new := strings.TrimSuffix(old, ".tex")
   fmt.Fprintf(os.Stderr, "# Wrote wrapper to %s; if the suffix tree is in " +
-	  "st.tex, run\n# latex %s\n# dvips %s -o -q\n# " +
+	  "st.tex, run\n# latex %s\n# dvips %s\n# " +
 	  "ps2pdf %s.ps\n", old, new, new, new)
 #+end_src
 #+begin_src latex
