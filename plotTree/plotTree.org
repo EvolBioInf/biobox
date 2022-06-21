@@ -118,7 +118,7 @@
   var optW = flag.Float64("w", 0.0, "width of postscript plot (cm)")
   var optHH = flag.Float64("H", 0.0, "height of postscript plot (cm)")
   var optM = flag.Float64("m", 0.1, "margin as fraction of plot size")
-  var optRR = flag.Float64("R", 0.01, "raise scale label as fraction" +
+  var optRR = flag.Float64("R", 0.01, "raise scale label as fraction " +
 	  "of plot height")
   var optS = flag.Float64("s", 0.0, "scale")
 #+end_src
