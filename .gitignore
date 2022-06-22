@@ -17,6 +17,7 @@ doc/rd*.ps
 doc/al.tex
 doc/blast2dot.tex
 doc/bwt.tex
+doc/clac.tex
 doc/cres.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
@@ -76,6 +77,7 @@ doc/wrapSeq.tex
 al/al
 blast2dot/blast2dot
 bwt/bwt
+clac/clac
 cres/cres
 cutSeq/cutSeq
 dnaDist/dnaDist
@@ -131,6 +133,7 @@ watterson/watterson
 wrapSeq/wrapSeq
 
 # Miscellaneous
+clac/drawTrees.sh
 drag/*.sh
 drag/*.awk
 drawKt/ktWrapper*

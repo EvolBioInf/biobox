@@ -19,6 +19,10 @@ github.com/evolbioinf/nwk v0.0.0-20211207083629-c5df2cc39f5d h1:LctBuhajUZW2NoLV
 github.com/evolbioinf/nwk v0.0.0-20211207083629-c5df2cc39f5d/go.mod h1:AduknVpv3xviFarKiTVjKI73aA5fje7tY3k8ILXwB8I=
 github.com/evolbioinf/nwk v0.0.0-20220519153040-aac63e756017 h1:YGMZzWHnDgL1QcpSF3TRfeFSsL4KuqV+1NeIqq5BUMc=
 github.com/evolbioinf/nwk v0.0.0-20220519153040-aac63e756017/go.mod h1:AduknVpv3xviFarKiTVjKI73aA5fje7tY3k8ILXwB8I=
+github.com/evolbioinf/nwk v0.0.0-20220622064959-525c7ad4fdc9 h1:VyFJGX0t8hcW7zf2CC+dKDjvwCa/Uqiw3Mjn/J9EXIg=
+github.com/evolbioinf/nwk v0.0.0-20220622064959-525c7ad4fdc9/go.mod h1:AduknVpv3xviFarKiTVjKI73aA5fje7tY3k8ILXwB8I=
+github.com/evolbioinf/nwk v0.0.0-20220622085205-07dd42c9fcab h1:ivnujO9Wn3zf1IPbiPLLe/sKnyA7Jd7pP79i2LS/wHQ=
+github.com/evolbioinf/nwk v0.0.0-20220622085205-07dd42c9fcab/go.mod h1:AduknVpv3xviFarKiTVjKI73aA5fje7tY3k8ILXwB8I=
 github.com/evolbioinf/pal v0.0.0-20220307145336-e8a6c4e3c804 h1:z+6HYe+mlPWDLpisY1SGafhHXLYdZnqtHfTyxH/Z0GE=
 github.com/evolbioinf/pal v0.0.0-20220307145336-e8a6c4e3c804/go.mod h1:VzU3V2L2+XH52cL0nInruh0OKP6TsK8nUqXp3J0YUHI=
 github.com/evolbioinf/pal v0.0.0-20220428140747-3c2a18bb380c h1:k+3QYnvir+Nz2luMIkv+h/wqyRlmKORbSe8kT5+/sq0=
