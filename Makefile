@@ -1,4 +1,4 @@
-progs = al blast2dot bwt cres cutSeq dnaDist drag drawf drawGenes drawKt \
+progs = al blast2dot bwt clac cres cutSeq dnaDist drag drawf drawGenes drawKt \
 drawSt fasta2tab geco genTree getSeq huff hut histogram kerror keyMat midRoot maf mtf \
 mum2plot mutator naiveMatcher nj num2char numAl olga pam plotLine plotSeg plotTree pps \
 randomizeSeq ranDot ranseq rep2plot \

@@ -1,0 +1,430 @@
+#+begin_src latex
+  \section*{Introduction}
+  Bootstrapping phylogenies is a standard method in molecular evolution
+  to quantify the reliability of individual clades. The quantification
+  relies on generating a large number of resampled trees, from which we
+  count the clades. The program \ty{clac} is a clade counter. It reads
+  as input a stream of trees and prints a count of all clades
+  encountered sorted by count. For example, when given the twelve random
+  trees in Figure~\ref{fig:clac1}, \ty{clac} prints
+  \begin{verbatim}
+  #ID Count Taxa Clade
+  1   10    2    {T1, T2}
+  2   8     2    {T4, T5}
+  3   6     3    {T1, T2, T3}
+  4   4     3    {T3, T4, T5}
+  5   4     2    {T3, T4}
+  6   2     4    {T1, T2, T3, T4}
+  7   1     3    {T2, T3, T4}
+  8   1     2    {T2, T3}
+  \end{verbatim}
+
+  \begin{figure}
+    \newcommand{\factor}{0.7}
+    \begin{center}
+      \begin{tabular}{ccc}
+	\textbf{A} & \textbf{B} & \textbf{C}\\
+	\scalebox{\factor}{\includegraphics{../clac/t1.ps}} &
+	  \scalebox{\factor}{\includegraphics{../clac/t2.ps}} &
+	  \scalebox{\factor}{\includegraphics{../clac/t3.ps}}\\
+	  \textbf{D} & \textbf{E} & \textbf{F}\\
+	  \scalebox{\factor}{\includegraphics{../clac/t4.ps}} &
+	  \scalebox{\factor}{\includegraphics{../clac/t5.ps}} &
+	  \scalebox{\factor}{\includegraphics{../clac/t6.ps}}\\
+	  \textbf{G} & \textbf{H} & \textbf{I}\\
+	  \scalebox{\factor}{\includegraphics{../clac/t7.ps}} &
+	  \scalebox{\factor}{\includegraphics{../clac/t8.ps}} &
+	  \scalebox{\factor}{\includegraphics{../clac/t9.ps}}\\
+	  \textbf{J} & \textbf{K} & \textbf{L}\\
+	  \scalebox{\factor}{\includegraphics{../clac/t10.ps}} &
+	  \scalebox{\factor}{\includegraphics{../clac/t11.ps}} &
+	  \scalebox{\factor}{\includegraphics{../clac/t12.ps}}
+      \end{tabular}
+    \end{center}
+    \caption{A dozen random example trees}\label{fig:clac1}
+  \end{figure}
+
+  Alternatively, \ty{clac} can also read a file of one or more reference
+  trees and label their nodes with bootstrap percentages. For example,
+  if Figure~\ref{fig:clac1}A is the reference and all others the input,
+  the bootstrap tree is Figure~\ref{fig:clac2}.
+  \begin{figure}
+    \begin{center}
+      \scalebox{0.7}{\includegraphics{../clac/tb}}
+      \end{center}
+    \caption{Bootstrap values for the tree in Figure~\ref{fig:clac1}A
+      when compared to the trees in Figure~\ref{fig:clac1}B--L.}\label{fig:clac2}
+  \end{figure}
+
+  \section*{Implementation}
+  Our outline of \ty{clac} contains hooks for imports, types, methods,
+  functions, and the logic of the main function.
+#+end_src
+#+begin_src go <<clac.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch.~\ref{ch:clac}>>
+  )
+  //<<Types, Ch.~\ref{ch:clac}>>
+  //<<Methods, Ch.~\ref{ch:clac}>>
+  //<<Functions, Ch.~\ref{ch:clac}>>
+  func main() {
+	  //<<Main function, Ch.~\ref{ch:clac}>>
+  }
+#+end_src
+#+begin_src latex
+  In the main function we set the usage of \ty{clac}, declare its
+  options, parse the options, and parse the input files.
+#+end_src
+#+begin_src go <<Main function, Ch.~\ref{ch:clac}>>=
+  //<<Set usage, Ch.~\ref{ch:clac}>>
+  //<<Declare options, Ch.~\ref{ch:clac}>>
+  //<<Parse options, Ch.~\ref{ch:clac}>>
+  //<<Parse input files, Ch.~\ref{ch:clac}>>
+#+end_src
+#+begin_src latex
+  The usage consists of the actual usage message, an explanation of
+  \ty{clac}'s purpose, and an example command.
+#+end_src
+#+begin_src go <<Set usage, Ch.~\ref{ch:clac}>>=
+  u := "clac [-h] [option]... [trees.nwk]..."
+  p := "Count the clades in phylogenies."
+  e := "dnaDist -b 1000 foo.fasta | nj | clac"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_src latex
+  We import \ty{clio}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_src latex
+  We declare two options, the version, and an option to read reference
+  trees from a file.
+#+end_src
+#+begin_src go <<Declare options, Ch.~\ref{ch:clac}>>=
+  var optV = flag.Bool("v", false, "version")
+  var optR = flag.String("r", "", "file of reference tree(s)")
+#+end_src
+#+begin_src latex
+  We import \ty{flag}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "flag"
+#+end_src
+#+begin_src latex
+  We parse the options and first respond to \ty{-v} as this stops the
+  program. If the user supplied a file of reference trees, we read them
+  into the slice of trees we set aside.
+#+end_src
+#+begin_src go <<Parse options, Ch.~\ref{ch:clac}>>=
+  flag.Parse()
+  if *optV {
+	  util.PrintInfo("clac")
+  }
+  var refTrees []*nwk.Node
+  if *optR != "" {
+	  //<<Read reference trees, Ch.~\ref{ch:clac}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{util} and \ty{nwk}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "github.com/evolbioinf/biobox/util"
+  "github.com/evolbioinf/nwk"
+#+end_src
+#+begin_src latex
+  We open the file of reference trees, read the trees, and store them.
+#+end_src
+#+begin_src go <<Read reference trees, Ch.~\ref{ch:clac}>>=
+  tf, err := os.Open(*optR)
+  if err != nil {
+	  log.Fatalf("couldn't open %q", *optR)
+  }
+  defer tf.Close()
+  sc := nwk.NewScanner(tf)
+  for sc.Scan() {
+	  refTrees = append(refTrees, sc.Tree())
+  }		
+#+end_src
+#+begin_src latex
+  We import \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>= 
+  "log"
+#+end_src
+#+begin_src latex
+  The remaining tokens on the command line are interpreted as input
+  files. We parse them with the function \ty{scan}, which takes as
+  argument the reference trees.
+#+end_src
+#+begin_src go <<Parse input files, Ch.~\ref{ch:clac}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, scan, refTrees)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the reference trees and iterate over the
+  trees in the input file. We count the trees and the clades in the
+  trees and print the results.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:clac}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  refTrees := args[0].([]*nwk.Node)
+	  sc := nwk.NewScanner(r)
+	  clades := make(map[string]int)
+	  nt := 0
+	  for sc.Scan() {
+		  root := sc.Tree()
+		  nt++
+		  countClades(root, clades)
+	  }
+	  //<<Print results, Ch.~\ref{ch:clac}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  We count the clades defined by the internal nodes in a recursive tree
+  traversal.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:clac}>>=
+  func countClades(v *nwk.Node, c map[string]int) {
+	  if v == nil { return }
+	  if v.Parent != nil && v.Child != nil {
+		  k := v.Key("$")
+		  c[k]++
+	  }
+	  countClades(v.Child, c)
+	  countClades(v.Sib, c)
+  }
+#+end_src
+#+begin_src latex
+  When printing the results, we either print the reference trees
+  annotated with bootstrap-percentages, or all clades and their counts.
+#+end_src
+#+begin_src go <<Print results, Ch.~\ref{ch:clac}>>=
+  if len(refTrees) > 0 {
+	  //<<Print reference trees, Ch.~\ref{ch:clac}>>
+  } else {
+	  //<<Print clades, Ch.~\ref{ch:clac}>>
+  }
+#+end_src
+#+begin_src latex
+  We annotate each reference tree with percent clade counts and print
+  it.
+#+end_src
+#+begin_src go <<Print reference trees, Ch.~\ref{ch:clac}>>=
+  for _, root := range refTrees {
+	  annotateTree(root, clades, nt)
+	  fmt.Println(root)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{fmt}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "fmt"
+#+end_src
+#+begin_src latex
+  We annotate the internal nodes of a reference tree in a recursive tree
+  traversal. Each internal node is labeled with a bootstrap percentages
+  rounded to the nearest integer.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:clac}>>=
+  func annotateTree(v *nwk.Node, clades map[string]int, nc int) {
+	  if v == nil { return }
+	  if  v.Parent != nil && v.Child != nil {
+		  p := float64(clades[v.Key("$")]) /
+			  float64(nc) * 100.0
+		  p = math.Round(p)
+		  v.Label = strconv.Itoa(int(p))
+	  }
+	  annotateTree(v.Child, clades, nc)
+	  annotateTree(v.Sib, clades, nc)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{math} and \ty{strconv}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "math"
+  "strconv"
+#+end_src
+#+begin_src latex
+  We sort the clades by count and print them in a table that we typeset
+  with a tab writer. The table has four columns: clade-ID, clade count,
+  the number of taxa in the clade, and the clade itself.
+#+end_src
+#+begin_src go <<Print clades, Ch.~\ref{ch:clac}>>=
+  w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
+  fmt.Fprintf(w, "#ID\tCount\tTaxa\tClade\n")
+  //<<Sort clades, Ch.~\ref{ch:clac}>>
+  //<<Print sorted clades, Ch.~\ref{ch:clac}>>
+  w.Flush()
+#+end_src
+#+begin_src latex
+  We import \ty{tabwriter} and \ty{os}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "text/tabwriter"
+  "os"
+#+end_src
+#+begin_src latex
+  We store the clades in a slice, which we sort.
+#+end_src
+#+begin_src go <<Sort clades, Ch.~\ref{ch:clac}>>=
+  cs := make([]clade, 0)
+  var c clade
+  for k, n := range clades {
+	  c.k = k
+	  c.n = n
+	  cs = append(cs, c)
+  }
+  sort.Sort(cladeSlice(cs))
+#+end_src
+#+begin_src latex
+  We import \ty{sort}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "sort"
+#+end_src
+#+begin_src latex
+  We declare the types \ty{clade} and \ty{cladeSlice}.
+#+end_src
+#+begin_src go <<Types, Ch.~\ref{ch:clac}>>=
+  type clade struct {
+	  k string
+	  n int
+  }
+  type cladeSlice []clade
+#+end_src
+#+begin_src latex
+  We implement two of the three methods of the \ty{sort} interface,
+  \ty{Len} and \ty{Swap}. 
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:clac}>>=
+  func (c cladeSlice) Len() int {
+	  return len(c)
+  }
+  func (c cladeSlice) Swap(i, j int) {
+	  c[i], c[j] = c[j], c[i]
+  }
+#+end_src
+#+begin_src latex
+  The third method of the sort interface, \ty{Less} requires a bit more
+  thought. The primary sort key is the count, but if the counts are
+  equal, we sort alphabetically. This stabilizes our result, which might
+  otherwise vary between runs.
+#+end_src
+#+begin_src go <<Methods, Ch.~\ref{ch:clac}>>=
+  func (c cladeSlice) Less(i, j int) bool {
+	  if c[i].n != c[j].n {
+		  return c[i].n < c[j].n
+	  } else {
+		  return c[i].k < c[j].k
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Having sorted the clades, we print them.
+#+end_src
+#+begin_src go <<Print sorted clades, Ch.~\ref{ch:clac}>>=
+  x := 0
+  for i := len(cs) - 1; i >= 0; i-- {
+	  x++
+	  taxa := strings.Split(cs[i].k, "$")
+	  t := len(taxa)
+	  fmt.Fprintf(w, "%d\t%d\t%d\t{", x, cs[i].n, t)
+	  for j, s := range taxa {
+		  if j > 0 { fmt.Fprintf(w, ", ") }
+		  fmt.Fprintf(w, s)
+	  }
+	  fmt.Fprintf(w, "}\n")
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "strings"
+#+end_src
+#+begin_src latex
+  We're done writing \ty{clac}, time to test it.
+
+  \section*{Testing}
+  The testing code for \ty{clac} has hooks for imports and the testing
+  logic.
+#+end_src
+#+begin_src go <<clac_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch.~\ref{ch:clac}>>
+  )
+
+  func TestClac(t *testing.T) {
+	  //<<Testing, Ch.~\ref{ch:clac}>>
+  }
+#+end_src
+#+begin_src latex
+  We construct a number of tests and run them.
+#+end_src
+#+begin_src go <<Testing, Ch.~\ref{ch:clac}>>=
+  var tests []*exec.Cmd
+  //<<Construct tests, Ch.~\ref{ch:clac}>>
+  for i, test := range tests {
+	  //<<Run test, Ch.~\ref{ch:clac}>>
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:clac}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We construct two tests, the first without reference tree, where the input
+  are the twelve trees in Figure~\ref{fig:clac1}. The second test takes
+  Figure~\ref{fig:clac1}A as reference and Figures~\ref{fig:clac1}B--L
+  as data.
+#+end_src
+#+begin_src go <<Construct tests, Ch.~\ref{ch:clac}>>=
+  test := exec.Command("./clac", "trees.nwk")
+  tests = append(tests, test)
+  test = exec.Command("./clac", "-r", "ref.nwk", "rest.nwk")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We run a test and compare the result we get with the result we
+  want. The results we want are contained in \ty{r1.txt} and
+  \ty{r2.txt}.
+#+end_src
+#+begin_src go <<Run test, Ch.~\ref{ch:clac}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Errorf("couldn't run %q", test)
+  }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := ioutil.ReadFile(f)
+  if err != nil {
+	  t.Errorf("couldn't open %q", f)
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s", get, want)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{strconv}, \ty{ioutil}, and \ty{bytes}.
+#+end_src
+#+begin_src go <<Testing imports, Ch.~\ref{ch:clac}>>=
+  "strconv"
+  "io/ioutil"
+  "bytes"
+#+end_src
