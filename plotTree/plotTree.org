@@ -915,17 +915,19 @@
   "path"
 #+end_src
 #+begin_src latex
-  To construct the R script, we open a file and write the script to it.
+  To construct the R script, we open a file, write the script to it, and
+  close it again.
 #+end_src
 #+begin_src go <<Construct R script, Ch.~\ref{ch:pt}>>=
+  var script *os.File
   //<<Open script file, Ch.~\ref{ch:pt}>>
   //<<Write script to file, Ch.~\ref{ch:pt}>>
+  script.Close()
 #+end_src
 #+begin_src latex
   The file either has a unique name or the name supplied by the user.
 #+end_src
 #+begin_src go <<Open script file, Ch.~\ref{ch:pt}>>=
-  var script *os.File
   var err error
   if options.Script == "" {
 	  script, err = ioutil.TempFile("", "tmp_*.r")
@@ -935,7 +937,6 @@
   if err != nil {
 	  log.Fatal("can't open temprary script file")
   }
-  defer script.Close()
 #+end_src
 #+begin_src latex
   We import \ty{ioutil} and \ty{log}.
