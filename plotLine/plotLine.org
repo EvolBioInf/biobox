@@ -370,19 +370,19 @@
   }
 #+end_src
 #+begin_src latex
-  We open a file to write the script to. But before actually doing that,
-  we make sure the input data has either two or three columns.
+  We open a file a file, write the script to it, and close it again.
 #+end_src
 #+begin_src go <<Construct R script, Ch.~\ref{ch:pl}>>=
+  var script *os.File
   //<<Open script file, Ch.~\ref{ch:pl}>>
   //<<Write script to file, Ch.~\ref{ch:pl}>>
+  script.Close()
 #+end_src
 #+begin_src latex
   The script is written either to a unique file or to the file requested
   by the user.
 #+end_src
 #+begin_src go <<Open script file, Ch.~\ref{ch:pl}>>=
-  var script *os.File
   var err error
   if args.Script == "" {
 	  script, err = ioutil.TempFile("", "tmp_*.r")
@@ -392,7 +392,6 @@
   if err != nil {
 	  log.Fatalf("can't create script file")
   }
-  defer script.Close()
 #+end_src
 #+begin_src latex
   We import \ty{ioutil}.
