@@ -45,8 +45,8 @@
 #+end_src
 #+begin_src latex
   In the main function we set the usage, declare the options, and parse
-  the options. Then we set the type of the output window, depending on
-  the OS we're running on. Finally, we parse the input files.
+  the options. Then we set the type of the output window and parse the
+  input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:pl}>>=
   //<<Set usage, Ch.~\ref{ch:pl}>>
@@ -57,7 +57,7 @@
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
-  program's purpose, and an example command.
+  purpose of \ty{plotLine}, and an example command.
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:pl}>>=
   u := "plotLine [-h] [option]... [file]..."
@@ -89,7 +89,7 @@
   "flag"
 #+end_src
 #+begin_src latex
-  The options for axes define their labels, the range, and the scale.
+  The options for axes define their labels, ranges, and scales.
 #+end_src
 #+begin_src go <<Declare axes options, Ch~\ref{ch:pl}>>=
   var optX = flag.String("x", "", "x-label")
@@ -100,7 +100,7 @@
 #+end_src
 #+begin_src latex
   By default, the plot consists of points and lines. But the user can
-  opt for points or lines only instead. She can also opt to write the
+  opt for points only or lines only. She can also opt to write the
   \ty{gnuplot} script to file.
 #+end_src
 #+begin_src go <<Declare plot type options, Ch.~\ref{ch:pl}>>=
@@ -109,18 +109,18 @@
   var optS = flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
-  The user can set the graphical device and the width and height of the
-  plot it produces. Among the graphical devices supported by
-  \ty{gnuplot}, we offer only encapsulated postscript as an alternative
-  to the default window.
+  The default output destination is the screen. Alternatively, the user
+  can write the output to a file of encapsulated postscript. In that
+  case, the user can also set the plot size.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
   var optP = flag.String("p", "", "encapsulated postscript file")
-  var optSS = flag.String("S", "x,y", "size of postscript plot in inch or, if stated, cm")
+  var optSS = flag.String("S", "x,y",
+	  "size of postscript plot in inches, or, if stated, cm")
 #+end_src
 #+begin_src latex
   We parse the options and respond to \ty{-v} first, as this might
-  terminate the program. Then we collect the option values.
+  terminate \ty{plotLine}. Then we collect the option values.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:pl}>>=
   flag.Parse()
@@ -151,9 +151,8 @@
   }
 #+end_src
 #+begin_src latex
-  We collect the option values that require no, or only little, further
-  analysis, \ty{-x}, \ty{-y}, \ty{-X}, \ty{-Y}, \ty{-S}, \ty{-d},
-  \ty{-P}, \ty{-L}, \ty{-l}, \ty{-s}, and \ty{-p}.
+  We collect the option values for, \ty{-x}, \ty{-y}, \ty{-X}, \ty{-Y},
+  \ty{-S}, \ty{-d}, \ty{-P}, \ty{-L}, \ty{-l}, \ty{-s}, and \ty{-p}.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:pl}>>=
   args.Xlab = *optX
@@ -200,8 +199,8 @@
 #+begin_src latex
   The remaining tokens on the command line are taken as input
   files. These are parsed with the function \ty{ParseFiles}, which
-  subjects each file to the function \ty{scan}. \ty{scan}, in turn,
-  takes as argument the variable \ty{args} we just filled.
+  applies the function \ty{scan} to each file. \ty{scan}, in turn, takes
+  as argument the variable \ty{args} we just filled.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:pl}>>=
   files := flag.Args()
@@ -209,10 +208,10 @@
 #+end_src
 #+begin_src latex
   Inside \ty{scan}, we retrieve the variable \ty{args} by type
-  assertion, read the data, and extract the categories. If we're asked
-  to write the script, we exit afterwards. Otherwise, we construct the
-  command that runs the script and run it. Unless the user asked for the
-  script, we delete it at the end.
+  assertion, read the data, and extract the categories. Then we
+  construct the script and the command to run the script, and at long
+  last run it. Unless the user asked for the script, we delete it at the
+  end.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pl}>>=
   func scan(r io.Reader, a ...interface{}) {
@@ -439,13 +438,14 @@
 	  if i > 0 { fmt.Fprintf(script, "e\n") }
 	  for _, d := range data {
 		  if d[2] == c {
-			  fmt.Fprintf(script, "%s\t%s\n", d[0], d[1])
+			  fmt.Fprintf(script, "%s\t%s\n",
+				  d[0], d[1])
 		  }
 	  }
   }
 #+end_src
 #+begin_src latex
-  We run construct the \ty{gnuplot} command.
+  We construct the \ty{gnuplot} command.
 #+end_src
 #+begin_src go <<Construct command, Ch.~\ref{ch:pl}>>=
   cmd := exec.Command("gnuplot", script.Name())
@@ -481,7 +481,7 @@
   "os"
 #+end_src
 #+begin_src latex
-  We are done writing \ty{plotLine}, let's test it.
+  We've finished \ty{plotLine}, let's test it.
   \section*{Testing}
   Out testing outline has hooks for imports and the testing logic.
 #+end_src
@@ -499,8 +499,9 @@
 #+end_src
 #+begin_src latex
   We prepare a set of tests and then run them. In each test we write the
-  output to a temporary \ty{gnuplot} script, so that we can compare what we get to
-  what we want. When we're done testing, we remove the R script again.
+  output to a temporary \ty{gnuplot} script, so that we can compare what
+  we get to what we want. After testing, we remove the \ty{gnuplot}
+  script again.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:pl}>>=
   var tests []*exec.Cmd
@@ -573,7 +574,7 @@
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
-  We set the plot size, which onlyh works with postscript output.
+  We set the plot size, which only works with postscript output.
 #+end_src
 #+begin_src go <<Test plot size, Ch.~\ref{ch:pl}>>=
   test = exec.Command("./plotLine", "-s", g,
