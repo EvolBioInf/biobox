@@ -63,7 +63,7 @@
   u := "plotLine [-h] [option]... [file]..."
   p := "Plot lines from columns of x/y data " +
 	  "and an optional group column."
-  e := "plotLine foo.dat"
+  e := "plotLine -S 7.5cm,4.75cm foo.dat"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -116,7 +116,7 @@
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
   var optP = flag.String("p", "", "encapsulated postscript file")
   var optSS = flag.String("S", "x,y",
-	  "size of postscript plot in inches, or, if stated, cm")
+	  "size of postscript plot in inch or cm")
 #+end_src
 #+begin_src latex
   We parse the options and respond to \ty{-v} first, as this might
@@ -331,8 +331,8 @@
 #+end_src
 #+begin_src latex
   The terminal is either encapsulated postscript or a window. If it is a
-  window, that window is persistent. If the user set the size, we pass
-  that on.
+  window, that window is persistent. If the user set the size of the
+  postscript plot, we pass that on.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pl}>>=
   t := "set terminal"
