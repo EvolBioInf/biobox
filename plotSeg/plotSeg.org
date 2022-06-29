@@ -277,8 +277,12 @@
   We label the x-axis and the y-axis.
 #+end_src
 #+begin_src go <<Write axes, Ch.~\ref{ch:ps}>>=
-  fmt.Fprintf(script, "set xlabel \"%s\"\n", opts.Xlab)
-  fmt.Fprintf(script, "set ylabel \"%s\"\n", opts.Ylab)
+  if opts.Xlab != "" {
+	  fmt.Fprintf(script, "set xlabel \"%s\"\n", opts.Xlab)
+  }
+  if opts.Ylab != "" {
+	  fmt.Fprintf(script, "set ylabel \"%s\"\n", opts.Ylab)
+  }
 #+end_src
 #+begin_src latex
   We write the plot as an untitled line plot with ranges. The data is
