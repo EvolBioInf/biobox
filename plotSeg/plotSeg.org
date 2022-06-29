@@ -65,7 +65,7 @@
 #+begin_src go <<Set usage, Ch.~\ref{ch:ps}>>=
   u := "plotSeg [-h] [option]... [foo.dat]..."
   p := "Generate segment plots, also known as dot plots."
-  e := "mum2plot eco_x_y.mum | plotSeg -S 7.5cm7.5cm"
+  e := "mum2plot eco_x_y.mum | plotSeg -S 7.5cm,7.5cm"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -107,11 +107,11 @@
   var optP = flag.String("p", "", "encapsulated postscript file")
   var optSS = flag.String("S", "x,y", "size of postscript plot " +
 	  "in inch or cm")
-  var optS = flag.String("s", "", "write R script to file")
+  var optS = flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
   We parse the options and respond to a request for the version first
-  (\ty{-v}), as this terminates the program. Then we declare the
+  (\ty{-v}), as this terminates \ty{plotSeg}. Then we declare the
   variable \ty{opts} for holding the options and collect their values.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:ps}>>=
@@ -144,10 +144,10 @@
   }
 #+end_src
 #+begin_src latex
-  We collect the axis labels, axis ranges, plot size, and the graphics
-  window. This is wxt by default, but if we are running on the macOS
-  command line, we switch to qt. We also collect the names of the files
-  for postscript and R output.
+  We collect the axis labels, axis ranges, the plot size, and the
+  graphics window. This is wxt by default, but if we are running on
+  macOS, we switch to qt. We also collect the names of the files for
+  postscript and \ty{gnuplot} output.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:ps}>>=
   opts.Xlab = *optX
@@ -223,7 +223,7 @@
 	  script, err = os.Create(opts.Script)
   }
   if err != nil {
-	  log.Fatal("can't open R-script")
+	  log.Fatal("can't open gnuplot script")
   }
   gscr = script.Name()
 #+end_src
@@ -234,8 +234,8 @@
   "io/ioutil"
 #+end_src
 #+begin_src latex
-  We write the script with a template. If the user just asked for the
-  script, we quit at this point.
+  We write the script by writing to the terminal first. Then we write
+  the axes and the actual plot.
 #+end_src
 #+begin_src go <<Write script to file, Ch.~\ref{ch:ps}>>=
   //<<Write terminal, Ch.~\ref{ch:ps}>>
@@ -274,7 +274,7 @@
   }
 #+end_src
 #+begin_src latex
-  We label the x-axis and the y-axis.
+  We set the axis labels the user supplied.
 #+end_src
 #+begin_src go <<Write axes, Ch.~\ref{ch:ps}>>=
   if opts.Xlab != "" {
@@ -365,8 +365,7 @@
   }()
 #+end_src
 #+begin_src latex
-  We run the command and signal we're done before moving on to delete
-  the script.
+  We run the command and signal we're done before deleting the script.
 #+end_src
 #+begin_src go <<Run command, Ch.~\ref{ch:ps}>>=
   if len(data) > 0 {
@@ -380,7 +379,8 @@
 #+begin_src latex
   The program \ty{plotSeg} is finished, let's test it.
   \section*{Testing}
-  Our testing program contains hooks for imports and the testing logic.
+  Our program for testing \ty{plotSeg} contains hooks for imports and
+  the testing logic.
 #+end_src
 #+begin_src go <<plotSeg_test.go>>=
   package main
@@ -395,9 +395,9 @@
   }
 #+end_src
 #+begin_src latex
-  We test by writing the individual tests and running them in a
-  loop. Each test is written to the same unique \ty{gnuplot} file, which
-  we remove again after the tests.
+  We write the individual tests and run them in a loop. Each test is
+  written to the same unique \ty{gnuplot} file, which we remove again
+  after the tests.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:ps}>>=
   gf, err := ioutil.TempFile(".", "tmp_*.gp")
