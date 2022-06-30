@@ -1,9 +1,9 @@
-./plotTree -r -S r1.r newick.nwk
-./plotTree -u -S r2.r newick.nwk
-./plotTree -r -S r3.r -n newick.nwk
-./plotTree -u -S r4.r -n newick.nwk
+./plotTree -r -s results/r1.gp newick.nwk
+./plotTree -u -s results/r2.gp newick.nwk
+./plotTree -r -s results/r3.gp -n newick.nwk
+./plotTree -u -s results/r4.gp -n newick.nwk
 for a in $(seq 4)
 do
-    sed 's/x11/quartz/' results/r${a}.r > results/tmp.r
-    mv results/tmp.r results/r${a}d.r
+    sed 's/wxt/qt/' results/r${a}.gp > results/tmp.gp
+    mv results/tmp.gp results/r${a}d.gp
 done

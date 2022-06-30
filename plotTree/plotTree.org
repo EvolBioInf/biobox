@@ -3,11 +3,10 @@
   We'd often like to draw a quick phylogeny from a tree given in Newick
   format, for example the one shown in Figure~\ref{fig:phy}A. The
   program \ty{plotTree} takes as input such a tree and plots it either
-  in rooted (Figure~\ref{fig:phy}B) or unrooted (Figure~\ref{fig:phy}C)
-  layout. The user can also choose between postscript file or screen
-  output and may omit the node labels. The plot is drawn using the
-  \ty{ggplot} graphics engine, which is part of R.
-
+  in rooted layout (Figure~\ref{fig:phy}B) or unrooted layout
+  (Figure~\ref{fig:phy}C). The user can also choose between
+  postscript file or screen output and may omit the node labels. The
+  plot is rendered in \ty{gnuplot}.
 
   \begin{figure}
     \begin{center}
@@ -29,8 +28,8 @@
 
 
   \section*{Implementation}
-  The outline of \ty{plotTree} has hooks for imports, types, variables,
-  functions, and the logic of the main function.
+  The outline of \ty{plotTree} has hooks for imports, types, functions,
+  and the logic of the main function.
 #+end_src
 #+begin_src go <<plotTree.go>>=
   package main
@@ -39,23 +38,19 @@
 	  //<<Imports, Ch.~\ref{ch:pt}>>
   )
   //<<Types, Ch.~\ref{ch:pt}>>
-  //<<Variables, Ch.~\ref{ch:pt}>>
   //<<Functions, Ch.~\ref{ch:pt}>>
   func main() {
 	  //<<Main function, Ch.~\ref{ch:pt}>>
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options and parse the
-  options. The trees are drawn with R scripts, one per tree, and we
-  construct these scripts from a template. With the template in hand, we
-  parse the input files.
+  In the main function we set the usage, declare the options and parse
+  the options. Then we parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:pt}>>=
   //<<Set usage, Ch.~\ref{ch:pt}>>
   //<<Declare options, Ch.~\ref{ch:pt}>>
   //<<Parse options, Ch.~\ref{ch:pt}>>
-  //<<Construct template for R script, Ch.~\ref{ch:pt}>>
   //<<Parse input files, Ch.~\ref{ch:pt}>>
 #+end_src
 #+begin_src latex
@@ -66,9 +61,7 @@
 #+begin_src go <<Set usage, Ch.~\ref{ch:pt}>>=
   u := "plotTree [-h] [option]... [foo.nwk]..."
   p := "Plot Newick-formatted trees."
-  e := "a) plotTree foo.nwk\n" +
-	  "\t b) plotTree -S foo.r -d foo.nwk > foo.dat; " +
-	  "R -f foo.r < foo.dat > /dev/null"
+  e := "plotTree -d 6cm,5cm foo.nwk"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -79,8 +72,8 @@
 #+end_src
 #+begin_src latex
   Apart from the built-in help option (\ty{-h}), we declare a version
-  option and four program-specific options: By default, we interpret a
-  bifurcating root as belonging to a rooted tree drawn like
+  option (\ty{-v}) and four program-specific options: By default, we
+  interpret a bifurcating root as belonging to a rooted tree drawn like
   Figure~\ref{fig:phy}B, and a trifurcating root as belonging to an
   unrooted tree drawn like Figure~\ref{fig:phy}C. However, the user can
   enforce a rooted (\ty{-r}) or an unrooted (\ty{-u}) layout
@@ -98,7 +91,7 @@
   "flag"
 #+end_src
 #+begin_src latex
-  The nodes of a Newick string may or may not be labeled. By default,
+  The nodes of a Newick tree may or may not be labeled. By default,
   \ty{plotTree} draws the labels, but the user can omit them (\ty{-n}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
@@ -106,34 +99,27 @@
 #+end_src
 #+begin_src latex
   The default output is to a window, but the user can also draw the tree
-  to a postscript file instead of a window (\ty{-p}), give the
-  postscript plot a width (\ty{-w}) and a height (\ty{-H}), and set the
-  margins as a function of the plot dimensions to accommodate leaf
-  labels, which might otherwise be truncated (\ty{-m}). Another switch
-  to fine tune the graphic raises the scale label as a fraction of the
-  plot's height (\ty{-r}). The scale itself can also be set (\ty{-s}).
+  to a postscript file (\ty{-p}) and give the postscript plot specific
+  dimensions (\ty{-d}). The user can set the size of the plot on the
+  screen (\ty{-S}), and the scale of the tree (\ty{-c}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optP = flag.String("p", "", "postscript output file")
-  var optW = flag.Float64("w", 0.0, "width of postscript plot (cm)")
-  var optHH = flag.Float64("H", 0.0, "height of postscript plot (cm)")
-  var optM = flag.Float64("m", 0.1, "margin as fraction of plot size")
-  var optRR = flag.Float64("R", 0.01, "raise scale label as fraction " +
-	  "of plot height")
-  var optS = flag.Float64("s", 0.0, "scale")
+  var optP = flag.String("p", "", "encapsulated postscript file")
+  var optD = flag.String("d", "x,y", "dimensions of postscript plot " +
+	  "in inch or cm")
+  var optSS = flag.Float64("S", 0.9, "size of plot on screen")
+  var optC = flag.Float64("c", 0.0, "scale")
 #+end_src
 #+begin_src latex
-  Finally, the user may opt to just print the R script and quit and/or
-  print the raw data.
+  Finally, the user may opt to print the \ty{gnuplot} script.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optSS = flag.String("S", "", "write R script to file")
-  var optD = flag.Bool("d", false, "print raw data")
+  var optS = flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
   We parse the options and immediately respond to \ty{-v} as this might
-  stop the program. The we store the option values in the variable
-  \ty{opts}.
+  stop \ty{plotTree}. Then we create the variable \ty{opts} and store
+  the option values in it.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:pt}>>=
   flag.Parse()
@@ -159,38 +145,34 @@
   }
 #+end_src
 #+begin_src latex
-  We store the options. I like to measure plot dimensions in cm, but R
-  expects inches, so we convert the centimeters to inches.
+  We store the options.
 #+end_src
 #+begin_src go <<Store options, Ch.~\ref{ch:pt}>>=
   opts.Rooted = *optR
   opts.Unrooted = *optU
   opts.NoLabels = *optN
   opts.Ps = *optP
-  opts.Width = *optW / 2.54
-  opts.Height = *optHH / 2.54
-  opts.Margin = *optM
-  opts.RaiseScale = *optRR
-  opts.Scale = *optS
-  opts.Script = *optSS
-  opts.Data = *optD
+  opts.Dim = *optD
+  opts.Size = *optSS
+  opts.Scale = *optC
+  opts.Script = *optS
 #+end_src
 #+begin_src latex
   We declare the fields we just used.
 #+end_src
 #+begin_src go <<Opts fields, Ch.~\ref{ch:pt}>>=
-  Rooted, Unrooted, NoLabels, Data bool
-  Ps string
-  Width, Height, Margin, RaiseScale, Scale float64
+  Rooted, Unrooted, NoLabels bool
+  Ps, Dim string
+  Size, Scale float64
   Script string
 #+end_src
 #+begin_src latex
-  We also set the window, which by default is x11, but on darwin systems
-  (macOS) becomes quartz.
+  We also set the window, which by default is wxt, but on darwin systems
+  (macOS) becomes qt.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:pt}>>=
-  opts.Win = "x11"
-  if runtime.GOOS == "darwin" { opts.Win = "quartz" }
+  opts.Win = "wxt"
+  if runtime.GOOS == "darwin" { opts.Win = "qt" }
 #+end_src
 #+begin_src latex
   We add the \ty{opts} field \ty{Win}.
@@ -205,121 +187,15 @@
   "runtime"
 #+end_src
 #+begin_src latex
-  \subsection*{R Script}
-  Each tree requires its own R script, which is constructed from a
-  template. 
-#+end_src
-#+begin_src go <<Construct template for R script, Ch.~\ref{ch:pt}>>=
-  tmpl := template.New("R-script")
-  tmpl = template.Must(tmpl.Parse(tmplStr))
-#+end_src
-#+begin_src latex
-  We import \ty{template}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "text/template"
-#+end_src
-#+begin_src latex
-  The template is read from a string, \ty{tmplStr}, which in turn is
-  read from the embedded file \ty{treeTmpl.txt}.
-#+end_src
-#+begin_src go <<Variables, Ch.~\ref{ch:pt}>>=
-  //go:embed treeTmpl.txt
-  var tmplStr string
-#+end_src
-#+begin_src latex
-  We import \ty{embed}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  _ "embed"
-#+end_src
-#+begin_src latex
-  We construct the template in three steps. Construct the header,
-  construct the plot, and write the plot to the device.
-#+end_src
-#+begin_src R <<treeTmpl.txt>>=
-  //<<Construct header, Ch.~\ref{ch:pt}>>
-  //<<Construct plot, Ch.~\ref{ch:pt}>>
-  //<<Write plot to device, Ch.~\ref{ch:pt}>>
-#+end_src
-#+begin_src latex
-  In the header we import the \ty{ggplot} library and read the data as a
-  table from the standard input.
-#+end_src
-#+begin_src R <<Construct header, Ch.~\ref{ch:pt}>>=
-  library("ggplot2")
-  d <- read.table(file="stdin")
-#+end_src
-#+begin_src latex
-  The plot is constructed as a segment plot with the first two columns
-  as the starting positions, columns 3 and 4 as the end
-  positions. Column 5 contain the labels, column 6 their angles. These
-  only matter for unrooted layout, but it simplifies our script if we
-  include the angles in any case. We also add a centered plot title and
-  ranges for the y and x axes.
-#+end_src
-#+begin_src R <<Construct plot, Ch.~\ref{ch:pt}>>=
-  p <- ggplot(d, aes(V1, V2, xend=V3, yend=V4))
-  p <- p + theme_void()
-  p <- p + geom_segment()
-  p <- p + geom_text(aes(label=as.character(V5),
-			 angle=V6, hjust=V7, vjust=V8))
-  p <- p + theme(plot.title=element_text(hjust=0.5))
-  p <- p + ggtitle("{{.Title}}")
-  p <- p + xlim({{.Xmin}}, {{.Xmax}})
-  p <- p + ylim({{.Ymin}}, {{.Ymax}})
-#+end_src
-#+begin_src latex
-  We add \ty{opts} fields for the plot title, and for the minima of x
-  and y.
-#+end_src
-#+begin_src go <<Opts fields, Ch.~\ref{ch:pt}>>=
-  Title string
-  Xmin, Xmax, Ymin, Ymax float64
-#+end_src
-#+begin_src latex
-  We write to a postscript file or to a window.
-#+end_src
-#+begin_src R <<Write plot to device, Ch.~\ref{ch:pt}>>=
-  {{if .Ps}}
-  //<<Write to postscript file, Ch.~\ref{ch:pt}>>
-  {{else -}}
-  //<<Write to window, Ch.~\ref{ch:pt}>>
-  {{- end}}
-#+end_src
-#+begin_src latex
-  We set the postscript file with vertical orientation and give it a
-  width and a height. Having written to the file, we switch the device
-  off.
-#+end_src
-#+begin_src R <<Write to postscript file, Ch.~\ref{ch:pt}>>=
-  postscript(file="{{.Ps}}", horizontal=FALSE,
-	     width={{.Width}}, height={{.Height}})
-  plot(p)
-  dev.off()
-#+end_src
-#+begin_src latex
-  If we write to a window, we keep the script waiting until
-  the user closes the window. The script checks the window every tenth
-  second.
-#+end_src
-#+begin_src R <<Write to window, Ch.~\ref{ch:pt}>>=
-  {{.Win}}()
-  plot(p)
-  while(names(dev.cur()) != 'null device')
-      Sys.sleep(0.01)
-#+end_src
-#+begin_src latex
   \subsection*{Scan Input Files}
-  The remaining tokens on the command line are interpreted as input
+  The remaining tokens on the command line are interpreted as tree
   files. Each of them is parsed with the function \ty{scan}, which takes
-  the file names, a file counter, the R template, and the program
-  options as its own arguments.
+  the file names, a file counter, and the options as its own arguments.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:pt}>>=
   files := flag.Args()
   fileCounter := 0
-  clio.ParseFiles(files, scan, files, &fileCounter, tmpl, opts)
+  clio.ParseFiles(files, scan, files, &fileCounter, opts)
 #+end_src
 #+begin_src latex
   Inside \ty{scan}, we retrieve the arguments. Then we iterate over the
@@ -338,6 +214,7 @@
 		  root := convertTree(sc.Tree())
 		  //<<Draw tree, Ch.~\ref{ch:pt}>>
 	  }
+	  (*fileCounter)++
 	  //<<Increment file counter, Ch.~\ref{ch:pt}>>
   }
 #+end_src
@@ -349,14 +226,12 @@
   "github.com/evolbioinf/nwk"
 #+end_src
 #+begin_src latex
-  We retrieve the files, the file counter, the template, and the
-  options.
+  We retrieve the files, the file counter, and the options.
 #+end_src
 #+begin_src go <<Retrieve arguments, Ch.~\ref{ch:pt}>>=
   files := args[0].([]string)
   fileCounter := args[1].(*int)
-  tmpl := args[2].(*template.Template)
-  options := args[3].(*opts)
+  opts := args[2].(*opts)
 #+end_src
 #+begin_src latex
   We convert the new tree from nodes of type \ty{nwk.Node} to our
@@ -416,24 +291,17 @@
 #+end_src
 #+begin_src latex
   \subsection*{Draw Tree}
-  We draw a tree by constructing its segments. If desired, we also print
-  the segments. We then add margins and a title to the plot. Then we
-  construct the R script and the R command to run it. The segments are
-  piped into the R script and we run the R command. When we're done with
-  the R script, we delete it.
+  We draw a tree by constructing its segments and its title. Then we
+  construct the \ty{gnuplot} script, construct the command to run it,
+  actually run it, and delete the script again.
 #+end_src
 #+begin_src go <<Draw tree, Ch.~\ref{ch:pt}>>=
   //<<Construct tree segments, Ch.~\ref{ch:pt}>>
-  if options.Data {
-	  //<<Print tree segments, Ch.~\ref{ch:pt}>>
-  }
-  //<<Add margins, Ch.~\ref{ch:pt}>>
-  //<<Add title, Ch.~\ref{ch:pt}>>
-  //<<Construct R script, Ch.~\ref{ch:pt}>>
-  //<<Construct R command, Ch.~\ref{ch:pt}>>
-  //<<Pipe segments into R command, Ch.~\ref{ch:pt}>>
-  //<<Run R command, Ch.~\ref{ch:pt}>>
-  //<<Delete R script, Ch.~\ref{ch:pt}>>
+  //<<Construct plot title, Ch.~\ref{ch:pt}>>
+  //<<Construct script, Ch.~\ref{ch:pt}>>
+  //<<Construct command, Ch.~\ref{ch:pt}>>
+  //<<Run command, Ch.~\ref{ch:pt}>>
+  //<<Delete script, Ch.~\ref{ch:pt}>>
 #+end_src
 #+begin_src latex
   We decide whether the tree is to be drawn in rooted or unrooted
@@ -453,14 +321,16 @@
 #+end_src
 #+begin_src latex
   A segment consists of a start and an end position, a label of the
-  start position, an angle of that label, a horizontal adjustment, and a
-  vertical adjustment.
+  start position, an angle of that label, and an orientation. The
+  orientation is either \ty{l} for \emph{left} or \ty{r} for
+  \emph{right}.
 #+end_src
 #+begin_src go <<Types, Ch.~\ref{ch:pt}>>=
   type segment struct {
 	  x1, y1, x2, y2 float64
 	  l string
 	  a, h, v float64
+	  o string
   }
 #+end_src
 #+begin_src latex
@@ -491,10 +361,10 @@
   The default layout can be overridden by the user.
 #+end_src
 #+begin_src go <<Base layout on user options, Ch.~\ref{ch:pt}>>=
-  if options.Rooted {
+  if opts.Rooted {
 	  rooted = true
   }
-  if options.Unrooted {
+  if opts.Unrooted {
 	  rooted = false
   }
 #+end_src
@@ -507,7 +377,7 @@
   setXcoords(root)
   y := 0.0
   y = setYcoords(root, y)
-  segments = collectBranchesR(root, segments, options)
+  segments = collectBranchesR(root, segments, opts)
 #+end_src
 #+begin_src latex
   The x coordinates are set recursively by adding the branch length to
@@ -586,15 +456,14 @@
 #+end_src
 #+begin_src latex
   The root may be labeled, in which case we add an empty segment with
-  the label. The \ty{ggplot} layout algorithm centers labels. This can
-  be changed by setting \ty{hjust}. This works, but the labels are
-  jammed right up to the line, so I pad them with a blank.
+  the label. To prevent a label from touching the point labeled, I pad
+  the label with a blank.
 #+end_src
 #+begin_src go <<Treat root in rooted tree, Ch.~\ref{ch:pt}>>=
   if v.label != "" && !o.NoLabels {
 	  label := " " + v.label
 	  seg := segment{x1: v.x, y1: v.y, x2: v.x,
-		  y2: v.y, l: label, v: 0.5}
+		  y2: v.y, l: label, o: "l"}
 	  segments = append(segments, seg)
   }
 #+end_src
@@ -615,7 +484,7 @@
   p := v.parent
   s1 := segment{x1: p.x, y1: p.y, x2: p.x, y2: v.y}
   s2 := segment{x1: v.x, y1: v.y, x2: p.x,
-	  y2: v.y, l: label, v: 0.5}
+	  y2: v.y, l: label, o: "l"}
   segments = append(segments, s1)
   segments = append(segments, s2)
 #+end_src
@@ -629,7 +498,7 @@
   numLeaves(root)
   totalLeaves := root.nl
   setCoords(root, totalLeaves)
-  segments = collectBranchesU(root, segments, options)
+  segments = collectBranchesU(root, segments, opts)
 #+end_src
 #+begin_src latex
   We declare the node field \ty{nl} to hold the number of leaves in the
@@ -734,25 +603,25 @@
 #+begin_src go <<Construct segment, Ch.~\ref{ch:pt}>>=
   p := v.parent
   a := 0.0
-  hjust := 0.0
+  ori := "l"
   label := ""
   if v.child == nil {
 	  a = (v.tau + v.omega / 2.0) * 180.0 / math.Pi
   }
   //<<Adjust angle and label, Ch.~\ref{ch:pt}>>
   seg = segment{x1: v.x, y1: v.y, x2: p.x, y2: p.y,
-	  l: label, a: a, h: hjust, v: 0.5}
+	  l: label, a: a, o: ori}
 #+end_src
 #+begin_src latex
   If the label is greater 90 degrees and less than 270 degrees, we add
   180 degrees to it in order to flip it. In that case the label
   is padded with a blank on the right hand side and we set the
-  horizontal adjustment to 1.
+  orientation to \emph{right}, \ty{r}.
 #+end_src
 #+begin_src go <<Adjust angle and label, Ch.~\ref{ch:pt}>>=
   if a > 90 && a < 270 {
 	  a += 180
-	  hjust = 1.0
+	  ori = "r"
 	  if !o.NoLabels {
 		  label = v.label + " "
 	  }
@@ -818,7 +687,7 @@
   scale length is either given by the user or calculated by us.
 #+end_src
 #+begin_src go <<Draw scale line, Ch.~\ref{ch:pt}>>=
-  scaleLen := options.Scale
+  scaleLen := opts.Scale
   if scaleLen == 0.0 {
 	  //<<Determine scale length, Ch.~\ref{ch:pt}>>
   }
@@ -856,9 +725,9 @@
 #+end_src
 #+begin_src go <<Draw scale number, Ch.~\ref{ch:pt}>>=
   x := (x1+x2) / 2.0
-  y += options.RaiseScale*height
+  y += height / 30.0
   l := strconv.FormatFloat(scaleLen, 'g', 3, 64)
-  s1 = segment{x1: x, y1: y, x2: x, y2: y, l: l, h: 0.5}
+  s1 = segment{x1: x, y1: y, x2: x, y2: y, l: l, o: "c"}
   segments = append(segments, s1)
 #+end_src
 #+begin_src latex
@@ -868,35 +737,12 @@
   "strconv"
 #+end_src
 #+begin_src latex
-  We print the tree segments to the standard output stream.
-#+end_src
-#+begin_src go <<Print tree segments, Ch.~\ref{ch:pt}>>=
-  f := "%.3g %.3g %.3g %.3g %q %.3g %.3g %.3g"
-  for _, s := range segments {
-	  str := fmt.Sprintf(f,
-		  s.x1, s.y1, s.x2, s.y2, s.l, s.a, s.h, s.v)
-	  fmt.Println(str)
-  }
-#+end_src
-#+begin_src latex
-  We calculate the margin and store it in \ty{options}. To accommodate
-  the scale, we inflate the maximum y value by 20\% of the plot height.
-#+end_src
-#+begin_src go <<Add margins, Ch.~\ref{ch:pt}>>=
-  width := dim.xMax - dim.xMin
-  options.Xmin = dim.xMin - width * options.Margin
-  options.Xmax = dim.xMax + width * options.Margin
-  options.Ymin = dim.yMin - height * options.Margin
-  options.Ymax = dim.yMax + dim.yMax * 0.2 +
-	  height * options.Margin
-#+end_src
-#+begin_src latex
   The plot title is the root of the file name plus the counter. If there
   are no input files, we set the name to \emph{stdin}.
 #+end_src
-#+begin_src go <<Add title, Ch.~\ref{ch:pt}>>=
-  if options.Ps != "" {
-	  options.Title = ""
+#+begin_src go <<Construct plot title, Ch.~\ref{ch:pt}>>=
+  if opts.Ps != "" {
+	  opts.Title = ""
   } else {
 	  fn := "stdin"
 	  if len(files) > *fileCounter {
@@ -904,7 +750,7 @@
 	  }
 	  title := strings.Split(path.Base(fn), ".")[0]
 	  title += "_" + strconv.Itoa(treeCounter)
-	  options.Title = title
+	  opts.Title = title
   }
 #+end_src
 #+begin_src latex
@@ -915,10 +761,16 @@
   "path"
 #+end_src
 #+begin_src latex
+  We add the option field \ty{Title}.
+#+end_src
+#+begin_src go <<Opts fields, Ch.~\ref{ch:pt}>>=
+  Title string
+#+end_src
+#+begin_src latex
   To construct the R script, we open a file, write the script to it, and
   close it again.
 #+end_src
-#+begin_src go <<Construct R script, Ch.~\ref{ch:pt}>>=
+#+begin_src go <<Construct script, Ch.~\ref{ch:pt}>>=
   var script *os.File
   //<<Open script file, Ch.~\ref{ch:pt}>>
   //<<Write script to file, Ch.~\ref{ch:pt}>>
@@ -929,10 +781,10 @@
 #+end_src
 #+begin_src go <<Open script file, Ch.~\ref{ch:pt}>>=
   var err error
-  if options.Script == "" {
+  if opts.Script == "" {
 	  script, err = ioutil.TempFile("", "tmp_*.r")
   } else {
-	  script, err = os.Create(options.Script)
+	  script, err = os.Create(opts.Script)
   }
   if err != nil {
 	  log.Fatal("can't open temprary script file")
@@ -946,57 +798,31 @@
   "log"
 #+end_src
 #+begin_src latex
-  We write the script by executing the template we passed into \ty{scan}
-  with the options as data source. If the user just required the script,
-  we exit at this point.
+  We write the script in four steps: We write the terminal, remove the
+  axes, write the labels, write the plot, and write its segments.
 #+end_src
 #+begin_src go <<Write script to file, Ch.~\ref{ch:pt}>>=
-  err = tmpl.Execute(script, options)
-  if err != nil {
-	  log.Fatal("can't write R-script")
+  //<<Write terminal, Ch.~\ref{ch:pt}>>
+  //<<Remove axes, Ch.~\ref{ch:pt}>>
+  //<<Write labels, Ch.~\ref{ch:pt}>>
+  //<<Write plot, Ch.~\ref{ch:pt}>>
+  //<<Write segments, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  The terminal is either encapsulated postscript or a persistent
+  window. The postscript plot might have dimensions other than the default.
+#+end_src
+#+begin_src go <<Write terminal, Ch.~\ref{ch:pt}>>=
+  t := "set terminal"
+  if opts.Ps != "" {
+	  t += " eps color"
+  } else {
+	  t += " " + opts.Win + " persist"
   }
-  if options.Script != "" {
-	  os.Exit(0)
+  if opts.Dim[0] != 'x' && opts.Ps != "" {
+	  t += " size " + opts.Dim
   }
-#+end_src
-#+begin_src latex
-  Having written the R script, we run it.
-#+end_src
-#+begin_src go <<Construct R command, Ch.~\ref{ch:pt}>>=
-  cmd := exec.Command("R", "-f", script.Name())
-#+end_src
-#+begin_src latex
-  We import \ty{exec}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "os/exec"
-#+end_src
-#+begin_src latex
-  We pipe the segments into the R command via its standard input stream
-  using a goroutine. The Go routine signals via a channel it has
-  finished.
-#+end_src
-#+begin_src go <<Pipe segments into R command, Ch.~\ref{ch:pt}>>=
-  stdin, err := cmd.StdinPipe()
-  if err != nil { log.Fatalf("cannot run %q", cmd) }
-  done := make(chan struct{})
-  go func() {
-	  //<<Write segments to stdin, Ch.~\ref{ch:pt}>>
-	  done <- struct{}{}
-  }()
-#+end_src
-#+begin_src latex
-  We iterate over the segments and write them to the standard input
-  stream. Labels are printed in double quotes.
-#+end_src
-#+begin_src go <<Write segments to stdin, Ch.~\ref{ch:pt}>>=
-  f := "%.3g %.3g %.3g %.3g %q %.3g %.3g %.3g\n"
-  for _, s := range segments {
-	  str := fmt.Sprintf(f,
-		  s.x1, s.y1, s.x2, s.y2, s.l, s.a, s.h, s.v)
-	  stdin.Write([]byte(str))
-  }
-  stdin.Close()
+  fmt.Fprintf(script, "%s\n", t)
 #+end_src
 #+begin_src latex
   We import \ty{fmt}.
@@ -1005,23 +831,96 @@
   "fmt"
 #+end_src
 #+begin_src latex
-  We run the R command and check for errors. Then we wait for the
-  command to finish before we go on to delete the R script
+  We also set the postscript file.
 #+end_src
-#+begin_src go <<Run R command, Ch.~\ref{ch:pt}>>=
+#+begin_src go <<Write terminal, Ch.~\ref{ch:pt}>>=
+  if opts.Ps != "" {
+	  fmt.Fprintf(script, "set output \"%s\"\n", opts.Ps)
+  }
+#+end_src
+#+begin_src latex
+  To remove the plot axes, we remove the tics of the x- and y-axes, and
+  remove the border.
+#+end_src
+#+begin_src go <<Remove axes, Ch.~\ref{ch:pt}>>=
+  fmt.Fprintf(script, "unset xtics\n")
+  fmt.Fprintf(script, "unset ytics\n")
+  fmt.Fprintf(script, "unset border\n")
+#+end_src
+#+begin_src latex
+  We iterate over the segments and write any labels they might contain.
+#+end_src
+#+begin_src go <<Write labels, Ch.~\ref{ch:pt}>>=
+  t = "set label \"%s\" %s rotate by %d at %.3f,%.3f front\n"
+  for _, s := range segments {
+	  if s.l != "" {
+		  a := int(math.Round(s.a))
+		  fmt.Fprintf(script, t, s.l,
+			  s.o, a, s.x1, s.y1)
+	  }
+  }
+#+end_src
+#+begin_src latex
+  Our plot is a line plot that might have a title. It has a size on the
+  screen and an origin that is adjusted with respect to that size. For
+  unrooted trees we adjust horizontally and vertically, for rooted trees
+  just vertically.
+#+end_src
+#+begin_src go <<Write plot, Ch.~\ref{ch:pt}>>=
+  if opts.Title != "" {
+	  fmt.Fprintf(script, "set title \"%s\"\n",
+		  opts.Title)
+  }
+  fmt.Fprintf(script, "set size %.3f\n", opts.Size)
+  xo := 0.0
+  yo := (1.0 - opts.Size) / 2.0
+  if opts.Unrooted { xo = yo }
+  fmt.Fprintf(script, "set origin %.3f, %.3f\n", xo, yo)
+  fmt.Fprintf(script, "plot \"-\" t \"\" w l\n")
+#+end_src
+#+begin_src latex
+  Segments are pairs of points set off by a blank line.
+#+end_src
+#+begin_src go <<Write segments, Ch.~\ref{ch:pt}>>=
+  for i, s := range segments {
+	  if i > 0 {
+		  fmt.Fprintf(script, "\n")
+	  }
+	  fmt.Fprintf(script, "%.3f %.3f\n%.3f %.3f\n",
+		  s.x1, s.y1, s.x2, s.y2)
+  }
+#+end_src
+#+begin_src latex
+  Having written the script, we run it.
+#+end_src
+#+begin_src go <<Construct command, Ch.~\ref{ch:pt}>>=
+  cmd := exec.Command("gnuplot", script.Name())
+#+end_src
+#+begin_src latex
+  We import \ty{exec}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "os/exec"
+#+end_src
+#+begin_src latex
+  We run \ty{gnuplot} and check for errors.
+#+end_src
+#+begin_src go <<Run command, Ch.~\ref{ch:pt}>>=
   err = cmd.Run()
   if err != nil {
 	  log.Fatalf("can't run %q", cmd)
   }
-  <-done
 #+end_src
 #+begin_src latex
-  All the trees have been printed, so we delete the R script.
+  All the trees have been printed, so we delete the script, unless the
+  user asked for it.
 #+end_src
-#+begin_src go <<Delete R script, Ch.~\ref{ch:pt}>>=
-  err = os.Remove(script.Name())
-  if err != nil {
-	  log.Fatalf("can't remove %q\n", script.Name())
+#+begin_src go <<Delete script, Ch.~\ref{ch:pt}>>=
+  if opts.Script == "" {
+	  err = os.Remove(script.Name())
+	  if err != nil {
+		  log.Fatalf("can't remove %q\n", script.Name())
+	  }
   }
 #+end_src
 #+begin_src latex
@@ -1055,22 +954,22 @@
   }
 #+end_src
 #+begin_src latex
-  We construct a set of tests. In each test we compare the R output we
-  get with the precomputed R output we want. The R output of the test
-  runs is written to a unique temporary file that we delete after we
-  have iterated over the tests.
+  We construct a set of tests. In each test we compare the \ty{gnuplot}
+  output we get with the precomputed \ty{gnuplot} output we want. The
+  \ty{gnuplot} output of the test runs is written to a unique temporary
+  file that we delete after we have iterated over the tests.
 #+end_src
 #+begin_src go <<Testing, Ch.~\ref{ch:pt}>>=
   var tests []*exec.Cmd
-  rf, err := ioutil.TempFile(".", "tmp_*.r")
+  gf, err := ioutil.TempFile(".", "tmp_*.gp")
   if err != nil { t.Error("can't open temp file") }
-  r := rf.Name()
+  g := gf.Name()
   //<<Construct tests, Ch.~\ref{ch:pt}>>
   for i, test := range tests {
 	  //<<Run test, Ch.~\ref{ch:pt}>>
   }
-  err = os.Remove(r)
-  if err != nil { t.Errorf("can't remove %q", r) }
+  err = os.Remove(g)
+  if err != nil { t.Errorf("can't remove %q", g) }
 #+end_src
 #+begin_src latex
   We import \ty{exec}, \ty{ioutil}, and \ty{os}.
@@ -1087,13 +986,13 @@
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:pt}>>=
   f := "newick.nwk"
-  test := exec.Command("./plotTree", "-r", "-S", r, f)
+  test := exec.Command("./plotTree", "-r", "-s", g, f)
   tests = append(tests, test)
-  test = exec.Command("./plotTree", "-u", "-S", r, f)
+  test = exec.Command("./plotTree", "-u", "-s", g, f)
   tests = append(tests, test)
-  test = exec.Command("./plotTree", "-r", "-S", r, "-n", f)
+  test = exec.Command("./plotTree", "-r", "-s", g, "-n", f)
   tests = append(tests, test)
-  test = exec.Command("./plotTree", "-u", "-S", r, "-n", f)
+  test = exec.Command("./plotTree", "-u", "-s", g, "-n", f)
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
@@ -1103,8 +1002,8 @@
 #+begin_src go <<Run test, Ch.~\ref{ch:pt}>>=
   err := test.Run()
   if err != nil { t.Errorf("couldn't run %q", test) }
-  get, err := ioutil.ReadFile(r)
-  if err != nil { t.Errorf("couldn't open %q", r) }
+  get, err := ioutil.ReadFile(g)
+  if err != nil { t.Errorf("couldn't open %q", g) }
   //<<Construct file name, Ch.~\ref{ch:pt}>>
   want , err := ioutil.ReadFile(f)
   if err != nil { t.Errorf("couldn't open %q", f) }
@@ -1119,15 +1018,15 @@
   "bytes"
 #+end_src
 #+begin_src latex
-  By default, the results are stored in files called \ty{r1.r},
-  \ty{r2.r}, and so on. On darwin systems, these names are extended by ``d''.
+  By default, the results are stored in files called \ty{r1.gp},
+  \ty{r2.gp}, and so on. On darwin systems, these names are extended by ``d''.
 #+end_src
 #+begin_src go <<Construct file name, Ch.~\ref{ch:pt}>>=
   f := "results/r" + strconv.Itoa(i+1)
   if runtime.GOOS == "darwin" {
 	  f += "d"
   }
-  f += ".r"
+  f += ".gp"
 #+end_src
 #+begin_src latex
   We import \ty{strconv} and \ty{runtime}.
