@@ -143,6 +143,6 @@ plotLine/lineTmpl.txt
 plotLine/makeRes.sh
 plotSeg/segTmpl.txt
 plotSeg/makeRes.sh
-plotTree/treeTmpl.txt
+plotTree/makePlots.sh
 genTree/makeTests.sh
 sequencer/makeRes.sh
