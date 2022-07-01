@@ -111,12 +111,12 @@
 #+begin_src latex
   The default output destination is the screen. Alternatively, the user
   can write the output to a file of encapsulated postscript. In that
-  case, the user can also set the plot size.
+  case, the user can also set the plot dimensions.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
   var optP = flag.String("p", "", "encapsulated postscript file")
-  var optSS = flag.String("S", "x,y",
-	  "size of postscript plot in inch or cm")
+  var optD = flag.String("d", "x,y",
+	  "dimensions of postscript plot in inch or cm")
 #+end_src
 #+begin_src latex
   We parse the options and respond to \ty{-v} first, as this might
@@ -152,14 +152,14 @@
 #+end_src
 #+begin_src latex
   We collect the option values for, \ty{-x}, \ty{-y}, \ty{-X}, \ty{-Y},
-  \ty{-S}, \ty{-d}, \ty{-P}, \ty{-L}, \ty{-l}, \ty{-s}, and \ty{-p}.
+  \ty{-d}, \ty{-P}, \ty{-L}, \ty{-l}, \ty{-s}, and \ty{-p}.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:pl}>>=
   args.Xlab = *optX
   args.Ylab = *optY
   args.Xrange = *optXX
   args.Yrange = *optYY
-  args.Size = *optSS
+  args.Dim = *optD
   args.Points = *optPP
   args.Lines = *optLL
   args.Log = *optL
@@ -170,7 +170,7 @@
   We add the corresponding fields to the structure \ty{Args}.
 #+end_src
 #+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
-  Xlab, Ylab, Xrange, Yrange, Size string
+  Xlab, Ylab, Xrange, Yrange, Dim string
   Points, Lines bool
   Log, Script, Ps string
 #+end_src
@@ -208,22 +208,14 @@
 #+end_src
 #+begin_src latex
   Inside \ty{scan}, we retrieve the variable \ty{args} by type
-  assertion, read the data, and extract the categories. Then we
-  construct the script and the command to run the script, and at long
-  last run it. Unless the user asked for the script, we delete it at the
-  end.
+  assertion, read the data, and plot it.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pl}>>=
   func scan(r io.Reader, a ...interface{}) {
 	  args := a[0].(*Args)
 	  //<<Read data, Ch.~\ref{ch:pl}>>
 	  //<<Extract categories, Ch.~\ref{ch:pl}>>
-	  //<<Construct script, Ch.~\ref{ch:pl}>>
-	  //<<Construct command, Ch.~\ref{ch:pl}>>
-	  //<<Run command, Ch.~\ref{ch:pl}>>
-	  if args.Script == "" {
-		  //<<Delete script, Ch.~\ref{ch:pl}>>
-	  }
+	  //<<Plot data, Ch.~\ref{ch:pl}>>
   }
 #+end_src
 #+begin_src latex
@@ -290,40 +282,51 @@
   }
 #+end_src
 #+begin_src latex
-  We open a file, write the script to it, and close it again.
+  We plot the data by constructing an output stream. We write
+  \ty{gnuplot} code to this output stream inside a Go routine and close
+  it again. Outside of the Go routine we run \ty{gnuplot}, unless the
+  user opted for the script as output.
 #+end_src
-#+begin_src go <<Construct script, Ch.~\ref{ch:pl}>>=
-  var script *os.File
-  //<<Open script file, Ch.~\ref{ch:pl}>>
-  //<<Write script to file, Ch.~\ref{ch:pl}>>
-  script.Close()
+#+begin_src go <<Plot data, Ch.~\ref{ch:pl}>>=
+  //<<Construct output stream, Ch.~\ref{ch:pl}>>
+  go func() {
+	  //<<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:pl}>>
+	  //<<Close output stream, Ch.~\ref{ch:pl}>>
+  }()
+  if args.Script == "" {
+	  //<<Run \ty{gnuplot}, Ch.~\ref{ch:pl}>>
+  }
 #+end_src
 #+begin_src latex
-  The script is written either to a unique file or to the file requested
-  by the user.
+  The output stream is either the standard input stream of the
+  \ty{gnuplot} command, or a script, the name of which was supplied by
+  the user.
 #+end_src
-#+begin_src go <<Open script file, Ch.~\ref{ch:pl}>>=
+#+begin_src go <<Construct output stream, Ch.~\ref{ch:pl}>>=
+  var w io.WriteCloser
+  var gcmd *exec.Cmd
   var err error
   if args.Script == "" {
-	  script, err = ioutil.TempFile("", "tmp_*.gp")
+	  gcmd = exec.Command("gnuplot")
+	  w, err = gcmd.StdinPipe()
+	  if err != nil { log.Fatal(err) }
   } else {
-	  script, err = os.Create(args.Script)
-  }
-  if err != nil {
-	  log.Fatalf("can't create script file")
+	  w, err = os.Create(args.Script)
+	  if err != nil { log.Fatal(err) }
   }
 #+end_src
 #+begin_src latex
-  We import \ty{ioutil}.
+  We import \ty{exec} and \ty{os}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
-  "io/ioutil"
+  "os/exec"
+  "os"
 #+end_src
 #+begin_src latex
-  When writing the script, we begin with the terminal. Then we write the
-  axes, the plot(s), and finally the data.
+  When writing the \ty{gnuplot} code, we begin with the terminal. Then
+  we write the axes, the plot(s), and finally the data.
 #+end_src
-#+begin_src go <<Write script to file, Ch.~\ref{ch:pl}>>=
+#+begin_src go <<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:pl}>>=
   //<<Write terminal, Ch.~\ref{ch:pl}>>
   //<<Write axes, Ch.~\ref{ch:pl}>>
   //<<Write plot, Ch.~\ref{ch:pl}>>
@@ -341,10 +344,10 @@
   } else {
 	  t += " " + args.Win + " persist"
   }
-  if args.Size[0] != 'x' && args.Ps != "" {
-	  t += " size " + args.Size
+  if args.Dim[0] != 'x' && args.Ps != "" {
+	  t += " size " + args.Dim
   }
-  fmt.Fprintf(script, "%s\n", t)
+  fmt.Fprintf(w, "%s\n", t)
 #+end_src
 #+begin_src latex
   We import \ty{fmt}.
@@ -357,7 +360,7 @@
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pl}>>=
   if args.Ps != "" {
-	  fmt.Fprintf(script, "set output \"%s\"\n", args.Ps)
+	  fmt.Fprintf(w, "set output \"%s\"\n", args.Ps)
   }
 #+end_src
 #+begin_src latex
@@ -372,10 +375,10 @@
 #+end_src
 #+begin_src go <<Write axis labels, Ch.~\ref{ch:pl}>>=
   if args.Xlab != "" {
-	  fmt.Fprintf(script, "set xlabel \"%s\"\n", args.Xlab)
+	  fmt.Fprintf(w, "set xlabel \"%s\"\n", args.Xlab)
   }
   if args.Ylab != "" {
-	  fmt.Fprintf(script, "set ylabel \"%s\"\n", args.Ylab)
+	  fmt.Fprintf(w, "set ylabel \"%s\"\n", args.Ylab)
   }
 #+end_src
 #+begin_src latex
@@ -383,10 +386,10 @@
 #+end_src
 #+begin_src go <<Write log scale, Ch.~\ref{ch:pl}>>=
   if strings.ContainsAny(args.Log, "xX") {
-	  fmt.Fprintf(script, "set logscale x\n")
+	  fmt.Fprintf(w, "set logscale x\n")
   }
   if strings.ContainsAny(args.Log, "yY") {
-	  fmt.Fprintf(script, "set logscale y\n")
+	  fmt.Fprintf(w, "set logscale y\n")
   }
 #+end_src
 #+begin_src latex
@@ -406,7 +409,7 @@
   yr := ""
   if args.Xrange[0] != 's' { xr = args.Xrange }
   if args.Yrange[0] != 's' { yr = args.Yrange }
-  fmt.Fprintf(script, "plot[%s][%s]", xr, yr)
+  fmt.Fprintf(w, "plot[%s][%s]", xr, yr)
 #+end_src
 #+begin_src latex
   The default style is ``linespoints'', or \ty{lp}. However, the user
@@ -422,12 +425,12 @@
   instruction for each remaining category.
 #+end_src
 #+begin_src go <<Write one plot per category, Ch.~\ref{ch:pl}>>=
-  fmt.Fprintf(script, " \"-\" t \"%s\" w %s", categories[0], style)
+  fmt.Fprintf(w, " \"-\" t \"%s\" w %s", categories[0], style)
   for i := 1; i < len(categories); i++ {
-	  fmt.Fprintf(script, ", \"-\" t \"%s\" w %s",
+	  fmt.Fprintf(w, ", \"-\" t \"%s\" w %s",
 		  categories[i], style)
   }
-  fmt.Fprintf(script, "\n")
+  fmt.Fprintf(w, "\n")
 #+end_src
 #+begin_src latex
   For each category, we write the corresponding data set and terminate
@@ -435,50 +438,29 @@
 #+end_src
 #+begin_src go <<Write data, Ch.~\ref{ch:pl}>>=
   for i, c := range categories {
-	  if i > 0 { fmt.Fprintf(script, "e\n") }
+	  if i > 0 { fmt.Fprintf(w, "e\n") }
 	  for _, d := range data {
 		  if d[2] == c {
-			  fmt.Fprintf(script, "%s\t%s\n",
+			  fmt.Fprintf(w, "%s\t%s\n",
 				  d[0], d[1])
 		  }
 	  }
   }
 #+end_src
 #+begin_src latex
-  We construct the \ty{gnuplot} command.
+  We close the output stream.
 #+end_src
-#+begin_src go <<Construct command, Ch.~\ref{ch:pl}>>=
-  cmd := exec.Command("gnuplot", script.Name())
-#+end_src
-#+begin_src latex
-  We import \ty{exec}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
-  "os/exec"
+#+begin_src go <<Close output stream, Ch.~\ref{ch:pl}>>=
+  w.Close()
 #+end_src
 #+begin_src latex
-  We run the command.
+  We run \ty{gnuplot} and check for errors.
 #+end_src
-#+begin_src go <<Run command, Ch.~\ref{ch:pl}>>=
-  err = cmd.Run()
+#+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:pl}>>=
+  err = gcmd.Run()
   if err != nil {
-	  log.Fatalf("can't run %q", cmd)
+	  log.Fatal(err)
   }
-#+end_src
-#+begin_src latex
-  We're done with the script and delete it.
-#+end_src
-#+begin_src go <<Delete script, Ch.~\ref{ch:pl}>>=
-  err = os.Remove(script.Name())
-  if err != nil {
-	  log.Fatalf("can't remove %q", script.Name())
-  }
-#+end_src
-#+begin_src latex
-  We import \ty{os}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
-  "os"
 #+end_src
 #+begin_src latex
   We've finished \ty{plotLine}, let's test it.
@@ -578,7 +560,7 @@
 #+end_src
 #+begin_src go <<Test plot size, Ch.~\ref{ch:pl}>>=
   test = exec.Command("./plotLine", "-s", g,
-	  "-p", "test.ps", "-S", "5,5", "test3.dat")
+	  "-p", "test.ps", "-d", "5,5", "test3.dat")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
