@@ -1,4 +1,4 @@
-set terminal quartz persist
+set terminal qt persist
 plot[][] "-" t "g1" w p, "-" t "g2" w p
 1	1
 2	2

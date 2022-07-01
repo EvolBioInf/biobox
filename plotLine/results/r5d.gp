@@ -1,4 +1,4 @@
-set terminal quartz persist
+set terminal qt persist
 set xlabel "x"
 plot[][] "-" t "g1" w lp, "-" t "g2" w lp
 1	1
