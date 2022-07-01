@@ -2,11 +2,11 @@
   \section*{Introduction}
   We'd often like to draw a quick phylogeny from a tree given in Newick
   format, for example the one shown in Figure~\ref{fig:phy}A. The
-  program \ty{plotTree} takes as input such a tree and plots it either
-  in rooted layout (Figure~\ref{fig:phy}B) or unrooted layout
-  (Figure~\ref{fig:phy}C). The user can also choose between
-  postscript file or screen output and may omit the node labels. The
-  plot is rendered in \ty{gnuplot}.
+  program \ty{plotTree} converts such a tree string either into a rooted
+  phylogeny (Figure~\ref{fig:phy}B) or an unrooted phylogeny
+  (Figure~\ref{fig:phy}C). The user can also opt for an encapsulated
+  postscript file and may omit the node labels. The phylogeny is
+  rendered in \ty{gnuplot}.
 
   \begin{figure}
     \begin{center}
@@ -72,7 +72,7 @@
 #+end_src
 #+begin_src latex
   Apart from the built-in help option (\ty{-h}), we declare a version
-  option (\ty{-v}) and four program-specific options: By default, we
+  option (\ty{-v}) and a set of program-specific options: By default, we
   interpret a bifurcating root as belonging to a rooted tree drawn like
   Figure~\ref{fig:phy}B, and a trifurcating root as belonging to an
   unrooted tree drawn like Figure~\ref{fig:phy}C. However, the user can
@@ -98,13 +98,13 @@
   var optN = flag.Bool("n", false, "no node labels (default input)")
 #+end_src
 #+begin_src latex
-  The default output is to a window, but the user can also draw the tree
-  to a postscript file (\ty{-p}) and give the postscript plot specific
-  dimensions (\ty{-d}). The user can set the size of the plot on the
-  screen (\ty{-S}), and the scale of the tree (\ty{-c}).
+  The default output is drawn to the screen, but the user can also draw
+  the tree to a postscript file (\ty{-p}) and give that postscript plot
+  specific dimensions (\ty{-d}). The user can set the relative size of
+  the plot (\ty{-S}), and the scale of the tree (\ty{-c}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optP = flag.String("p", "", "encapsulated postscript file")
+  var optP = flag.String("p", "", "encapsulated postscript file and exit")
   var optD = flag.String("d", "x,y", "dimensions of postscript plot " +
 	  "in inch or cm")
   var optSS = flag.Float64("S", 0.9, "size of plot on screen")
@@ -190,7 +190,7 @@
   \subsection*{Scan Input Files}
   The remaining tokens on the command line are interpreted as tree
   files. Each of them is parsed with the function \ty{scan}, which takes
-  the file names, a file counter, and the options as its own arguments.
+  the file names, a file counter, and the options as arguments.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:pt}>>=
   files := flag.Args()
@@ -214,7 +214,6 @@
 		  root := convertTree(sc.Tree())
 		  //<<Draw tree, Ch.~\ref{ch:pt}>>
 	  }
-	  (*fileCounter)++
 	  //<<Increment file counter, Ch.~\ref{ch:pt}>>
   }
 #+end_src
@@ -292,16 +291,21 @@
 #+begin_src latex
   \subsection*{Draw Tree}
   We draw a tree by constructing its segments and its title. Then we
-  construct the \ty{gnuplot} script, construct the command to run it,
-  actually run it, and delete the script again.
+  construct the output stream. We write to the output stream in a Go
+  routine, in which we also close the output stream again. Unless the
+  user opted for the script, we run \ty{gnuplot}.
 #+end_src
 #+begin_src go <<Draw tree, Ch.~\ref{ch:pt}>>=
   //<<Construct tree segments, Ch.~\ref{ch:pt}>>
   //<<Construct plot title, Ch.~\ref{ch:pt}>>
-  //<<Construct script, Ch.~\ref{ch:pt}>>
-  //<<Construct command, Ch.~\ref{ch:pt}>>
-  //<<Run command, Ch.~\ref{ch:pt}>>
-  //<<Delete script, Ch.~\ref{ch:pt}>>
+  //<<Construct output stream, Ch.~\ref{ch:pt}>>
+  go func() {
+	  //<<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:pt}>>
+	  //<<Close output stream, Ch.~\ref{ch:pt}>>
+  }()
+  if opts.Script == "" {
+	  //<<Run \ty{gnuplot}, Ch.~\ref{ch:pt}>>
+  }
 #+end_src
 #+begin_src latex
   We decide whether the tree is to be drawn in rooted or unrooted
@@ -456,7 +460,7 @@
 #+end_src
 #+begin_src latex
   The root may be labeled, in which case we add an empty segment with
-  the label. To prevent a label from touching the point labeled, I pad
+  the label. To prevent a label from touching the point labeled, we pad
   the label with a blank.
 #+end_src
 #+begin_src go <<Treat root in rooted tree, Ch.~\ref{ch:pt}>>=
@@ -581,7 +585,8 @@
   them in the slice of segments.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
-  func collectBranchesU(v *node, segments []segment, o *opts) []segment {
+  func collectBranchesU(v *node, segments []segment,
+	  o *opts) []segment {
 	  if v == nil { return segments }
 	  var seg segment
 	  if v.parent != nil {
@@ -613,10 +618,10 @@
 	  l: label, a: a, o: ori}
 #+end_src
 #+begin_src latex
-  If the label is greater 90 degrees and less than 270 degrees, we add
-  180 degrees to it in order to flip it. In that case the label
-  is padded with a blank on the right hand side and we set the
-  orientation to \emph{right}, \ty{r}.
+  If the label is greater than 90 degrees and less than 270 degrees, we
+  add 180 degrees to it in order to flip it. In that case the label is
+  padded with a blank on the right hand side and we set the orientation
+  to \emph{right}, \ty{r}.
 #+end_src
 #+begin_src go <<Adjust angle and label, Ch.~\ref{ch:pt}>>=
   if a > 90 && a < 270 {
@@ -720,8 +725,8 @@
   x2 := x1 - scaleLen
 #+end_src
 #+begin_src latex
-  The label of the scale is placed in its middle. We use a small
-  fraction of the plot height to raise it above the line.
+  The label of the scale is placed in its middle. We raise it above the
+  line by 1/20-th of the plot height.
 #+end_src
 #+begin_src go <<Draw scale number, Ch.~\ref{ch:pt}>>=
   x := (x1+x2) / 2.0
@@ -767,41 +772,36 @@
   Title string
 #+end_src
 #+begin_src latex
-  To construct the R script, we open a file, write the script to it, and
-  close it again.
+  The output stream is either the standard input stream of the
+  \ty{gnuplot} command or the script file requested by the user.
 #+end_src
-#+begin_src go <<Construct script, Ch.~\ref{ch:pt}>>=
-  var script *os.File
-  //<<Open script file, Ch.~\ref{ch:pt}>>
-  //<<Write script to file, Ch.~\ref{ch:pt}>>
-  script.Close()
-#+end_src
-#+begin_src latex
-  The file either has a unique name or the name supplied by the user.
-#+end_src
-#+begin_src go <<Open script file, Ch.~\ref{ch:pt}>>=
+#+begin_src go <<Construct output stream, Ch.~\ref{ch:pt}>>=
+  var wr io.WriteCloser
+  var gcmd *exec.Cmd
   var err error
   if opts.Script == "" {
-	  script, err = ioutil.TempFile("", "tmp_*.r")
+	  gcmd = exec.Command("gnuplot")
+	  wr, err = gcmd.StdinPipe()
+	  if err != nil { log.Fatal(err) }
   } else {
-	  script, err = os.Create(opts.Script)
-  }
-  if err != nil {
-	  log.Fatal("can't open temprary script file")
+	  wr, err = os.Create(opts.Script)
+	  if err != nil { log.Fatal(err) }
   }
 #+end_src
 #+begin_src latex
-  We import \ty{ioutil} and \ty{log}.
+  We import \ty{exec}, \ty{os}, and \ty{log}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "io/ioutil"
+  "os/exec"
+  "os"
   "log"
 #+end_src
 #+begin_src latex
-  We write the script in four steps: We write the terminal, remove the
-  axes, write the labels, write the plot, and write its segments.
+  We write the \ty{gnuplot} code in four steps: We write the terminal,
+  remove the axes, write the labels, write the plot, and write its
+  segments.
 #+end_src
-#+begin_src go <<Write script to file, Ch.~\ref{ch:pt}>>=
+#+begin_src go <<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:pt}>>=
   //<<Write terminal, Ch.~\ref{ch:pt}>>
   //<<Remove axes, Ch.~\ref{ch:pt}>>
   //<<Write labels, Ch.~\ref{ch:pt}>>
@@ -822,7 +822,7 @@
   if opts.Dim[0] != 'x' && opts.Ps != "" {
 	  t += " size " + opts.Dim
   }
-  fmt.Fprintf(script, "%s\n", t)
+  fmt.Fprintf(wr, "%s\n", t)
 #+end_src
 #+begin_src latex
   We import \ty{fmt}.
@@ -835,7 +835,7 @@
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pt}>>=
   if opts.Ps != "" {
-	  fmt.Fprintf(script, "set output \"%s\"\n", opts.Ps)
+	  fmt.Fprintf(wr, "set output \"%s\"\n", opts.Ps)
   }
 #+end_src
 #+begin_src latex
@@ -843,9 +843,9 @@
   remove the border.
 #+end_src
 #+begin_src go <<Remove axes, Ch.~\ref{ch:pt}>>=
-  fmt.Fprintf(script, "unset xtics\n")
-  fmt.Fprintf(script, "unset ytics\n")
-  fmt.Fprintf(script, "unset border\n")
+  fmt.Fprintf(wr, "unset xtics\n")
+  fmt.Fprintf(wr, "unset ytics\n")
+  fmt.Fprintf(wr, "unset border\n")
 #+end_src
 #+begin_src latex
   We iterate over the segments and write any labels they might contain.
@@ -855,28 +855,28 @@
   for _, s := range segments {
 	  if s.l != "" {
 		  a := int(math.Round(s.a))
-		  fmt.Fprintf(script, t, s.l,
+		  fmt.Fprintf(wr, t, s.l,
 			  s.o, a, s.x1, s.y1)
 	  }
   }
 #+end_src
 #+begin_src latex
-  Our plot is a line plot that might have a title. It has a size on the
-  screen and an origin that is adjusted with respect to that size. For
-  unrooted trees we adjust horizontally and vertically, for rooted trees
-  just vertically.
+  Our plot is a line plot in black that might have a title. It has a
+  size on the screen and an origin that is adjusted with respect to that
+  size. For unrooted trees we adjust horizontally and vertically, for
+  rooted trees just vertically.
 #+end_src
 #+begin_src go <<Write plot, Ch.~\ref{ch:pt}>>=
   if opts.Title != "" {
-	  fmt.Fprintf(script, "set title \"%s\"\n",
+	  fmt.Fprintf(wr, "set title \"%s\"\n",
 		  opts.Title)
   }
-  fmt.Fprintf(script, "set size %.3f\n", opts.Size)
+  fmt.Fprintf(wr, "set size %.3f\n", opts.Size)
   xo := 0.0
   yo := (1.0 - opts.Size) / 2.0
   if opts.Unrooted { xo = yo }
-  fmt.Fprintf(script, "set origin %.3f, %.3f\n", xo, yo)
-  fmt.Fprintf(script, "plot \"-\" t \"\" w l lw 3\n")
+  fmt.Fprintf(wr, "set origin %.3f, %.3f\n", xo, yo)
+  fmt.Fprintf(wr, "plot \"-\" t \"\" w l lw 3 lc \"black\"\n")
 #+end_src
 #+begin_src latex
   Segments are pairs of points set off by a blank line.
@@ -884,50 +884,27 @@
 #+begin_src go <<Write segments, Ch.~\ref{ch:pt}>>=
   for i, s := range segments {
 	  if i > 0 {
-		  fmt.Fprintf(script, "\n")
+		  fmt.Fprintf(wr, "\n")
 	  }
-	  fmt.Fprintf(script, "%.3f %.3f\n%.3f %.3f\n",
+	  fmt.Fprintf(wr, "%.3f %.3f\n%.3f %.3f\n",
 		  s.x1, s.y1, s.x2, s.y2)
   }
 #+end_src
 #+begin_src latex
-  Having written the script, we run it.
+  Having written all \ty{gnuplot} instructions to the output stream, we
+  close it again.
 #+end_src
-#+begin_src go <<Construct command, Ch.~\ref{ch:pt}>>=
-  cmd := exec.Command("gnuplot", script.Name())
-#+end_src
-#+begin_src latex
-  We import \ty{exec}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "os/exec"
+#+begin_src go <<Close output stream, Ch.~\ref{ch:pt}>>=
+  wr.Close()
 #+end_src
 #+begin_src latex
-  We run \ty{gnuplot} and check for errors.
+  We run the \ty{gnuplot} command and check for errors.
 #+end_src
-#+begin_src go <<Run command, Ch.~\ref{ch:pt}>>=
-  err = cmd.Run()
+#+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:pt}>>=
+  err = gcmd.Run()
   if err != nil {
-	  log.Fatalf("can't run %q", cmd)
+	  log.Fatal(err)
   }
-#+end_src
-#+begin_src latex
-  All the trees have been printed, so we delete the script, unless the
-  user asked for it.
-#+end_src
-#+begin_src go <<Delete script, Ch.~\ref{ch:pt}>>=
-  if opts.Script == "" {
-	  err = os.Remove(script.Name())
-	  if err != nil {
-		  log.Fatalf("can't remove %q\n", script.Name())
-	  }
-  }
-#+end_src
-#+begin_src latex
-  We import \ty{os}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "os"
 #+end_src
 #+begin_src latex
   There is still the file counter to increment.
@@ -1019,7 +996,8 @@
 #+end_src
 #+begin_src latex
   By default, the results are stored in files called \ty{r1.gp},
-  \ty{r2.gp}, and so on. On darwin systems, these names are extended by ``d''.
+  \ty{r2.gp}, and so on, inside the directory \ty{results}. On darwin
+  systems, these names are extended by ``d''.
 #+end_src
 #+begin_src go <<Construct file name, Ch.~\ref{ch:pt}>>=
   f := "results/r" + strconv.Itoa(i+1)
