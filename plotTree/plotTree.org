@@ -612,15 +612,17 @@
 #+begin_src latex
   If the label is greater than 90 degrees and less than 270 degrees, we
   add 180 degrees to it in order to flip it. In that case the label is
-  padded with a blank on the right hand side and we set the orientation
-  to \emph{right}, \ty{r}.
+  padded with on or two blanks on the right hand side, depending on the
+  OS. In that case we also set the orientation to \emph{right}, \ty{r}.
 #+end_src
 #+begin_src go <<Adjust angle and label, Ch.~\ref{ch:pt}>>=
   if a > 90 && a < 270 {
 	  a += 180
 	  ori = "r"
 	  if !o.NoLabels {
-		  label = v.label + " "
+		  pad := " "
+		  if runtime.GOOS == "darwin" { pad += " " }
+		  label = v.label + pad
 	  }
   } else if !o.NoLabels {
 	  label = " " + v.label
