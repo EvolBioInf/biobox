@@ -291,21 +291,13 @@
 #+begin_src latex
   \subsection*{Draw Tree}
   We draw a tree by constructing its segments and its title. Then we
-  construct the output stream. We write to the output stream in a Go
-  routine, in which we also close the output stream again. Unless the
-  user opted for the script, we run \ty{gnuplot}.
+  construct an output stream and write the segments to it.
 #+end_src
 #+begin_src go <<Draw tree, Ch.~\ref{ch:pt}>>=
   //<<Construct tree segments, Ch.~\ref{ch:pt}>>
   //<<Construct plot title, Ch.~\ref{ch:pt}>>
   //<<Construct output stream, Ch.~\ref{ch:pt}>>
-  go func() {
-	  //<<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:pt}>>
-	  //<<Close output stream, Ch.~\ref{ch:pt}>>
-  }()
-  if opts.Script == "" {
-	  //<<Run \ty{gnuplot}, Ch.~\ref{ch:pt}>>
-  }
+  //<<Write segments to output stream, Ch.~\ref{ch:pt}>>
 #+end_src
 #+begin_src latex
   We decide whether the tree is to be drawn in rooted or unrooted
@@ -795,6 +787,23 @@
   "os/exec"
   "os"
   "log"
+#+end_src
+#+begin_src latex
+  We write the segments to an the output stream in a Go routine, where
+  we also close the output stream again. Unless the user opted for the
+  script, we run \ty{gnuplot}.
+#+end_src
+#+begin_src go <<Write segments to output stream, Ch.~\ref{ch:pt}>>=
+  done := make(chan struct{})
+  go func() {
+	  //<<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:pt}>>
+	  //<<Close output stream, Ch.~\ref{ch:pt}>>
+	  done <- struct{}{}
+  }()
+  if opts.Script == "" {
+	  //<<Run \ty{gnuplot}, Ch.~\ref{ch:pt}>>
+  }
+  <-done
 #+end_src
 #+begin_src latex
   We write the \ty{gnuplot} code in four steps: We write the terminal,

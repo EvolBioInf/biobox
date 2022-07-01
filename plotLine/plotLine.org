@@ -289,13 +289,16 @@
 #+end_src
 #+begin_src go <<Plot data, Ch.~\ref{ch:pl}>>=
   //<<Construct output stream, Ch.~\ref{ch:pl}>>
+  done := make(chan struct{})
   go func() {
 	  //<<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:pl}>>
 	  //<<Close output stream, Ch.~\ref{ch:pl}>>
+	  done <- struct{}{}
   }()
   if args.Script == "" {
 	  //<<Run \ty{gnuplot}, Ch.~\ref{ch:pl}>>
   }
+  <-done
 #+end_src
 #+begin_src latex
   The output stream is either the standard input stream of the
