@@ -1,5 +1,5 @@
 #+begin_src latex
-  x\section*{Introduction}
+  \section*{Introduction}
   Segment plots, also known as dot plots, display a potentially large
   number of exact matches between two sequences. Each exact match is a
   segment, which is denoted by a quartet of numbers $(x_1, y_1, x_2,
@@ -24,7 +24,7 @@
 	\end{tabular}
 	}
 	&
-	\scalebox{0.95}{\includegraphics{plotSeg}}
+	\includegraphics{plotSeg}
       \end{tabular}
     \end{center}
     \caption{Example data (\textbf{A}) plotted with \ty{plotSeg}
@@ -60,12 +60,12 @@
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
-  program's purpose, and an example command.
+  purpose of \ty{plotSeg}, and an example command.
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:ps}>>=
   u := "plotSeg [-h] [option]... [foo.dat]..."
   p := "Generate segment plots, also known as dot plots."
-  e := "mum2plot eco_x_y.mum | plotSeg -S 7.5cm,7.5cm"
+  e := "mum2plot eco_x_y.mum | plotSeg -d 7.5cm,7.5cm"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -76,7 +76,7 @@
 #+end_src
 #+begin_src latex
   Apart from the obligatory version option, we declare options for the
-  axes, and the graphics device.
+  axes and the graphics device.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:ps}>>=
   var optV = flag.Bool("v", false, "version")
@@ -99,14 +99,14 @@
   var optYY = flag.String("Y", "s:e", "y-range")
 #+end_src
 #+begin_src latex
-  Instead of showing the plot in a window, the user can opt for an
-  encapsulated postscript file and set its size. The user can also ask
-  for the \ty{gnuplot} script of the plot.
+  Instead of showing the plot in a window, the user can write it as
+  encapsulated postscript and set its size. The user can also ask for
+  the \ty{gnuplot} script of the plot.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:ps}>>=
   var optP = flag.String("p", "", "encapsulated postscript file")
-  var optSS = flag.String("S", "x,y", "size of postscript plot " +
-	  "in inch or cm")
+  var optD = flag.String("d", "x,y", "dimensions of postscript " +
+	  "plot in inch or cm")
   var optS = flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
@@ -154,7 +154,7 @@
   opts.Ylab = *optY
   opts.Xrange = *optXX
   opts.Yrange = *optYY
-  opts.Size = *optSS
+  opts.Dim = *optD
   opts.Win = "wxt"
   if runtime.GOOS == "darwin" { opts.Win = "qt" }
   opts.Ps = *optP
@@ -170,94 +170,121 @@
   We add the fields we just used to \ty{Options}.
 #+end_src
 #+begin_src go <<\ty{Options} fields, Ch.~\ref{ch:ps}>>=
-  Xlab, Ylab, Xrange, Yrange, Size string
+  Xlab, Ylab, Xrange, Yrange, Dim string
   Width, Height float64
   Win, Ps, Script string
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are taken as input
-  files. Each of them serves as input to a \ty{gnuplot} command that
-  runs the same \ty{gnuplot} script. So we construct the script and the
-  command and pass the command as an argument to the function
-  \ty{scan}. This function is run for each input file. When we're done
-  with the script, we delete it, unless the user asked for it.
+  files. The function \ty{ParseFiles} applies the function \ty{scan} to
+  each input file. \ty{scan} takes as argument the options.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:ps}>>=
   files := flag.Args()
-  gscr := ""
-  var gcmd *exec.Cmd
-  //<<Construct script, Ch.~\ref{ch:ps}>>
-  //<<Construct command, Ch.~\ref{ch:ps}>>
-  clio.ParseFiles(files, scan, gcmd)
-  if opts.Script == "" {
-	  err = os.Remove(gscr)
-	  if err != nil { log.Fatalf("can't delete %q", gscr) }
+  clio.ParseFiles(files, scan, opts)
+#+end_src
+#+begin_src latex
+  Inside \ty{scan}, we retrieve the options, read the segments, and
+  construct the output stream. We use a Go routine to write the
+  \ty{gnuplot} code to that output stream, which we also close inside
+  that routine. After the Go routine, we run \ty{gnuplot}, unless the
+  user opted for the script instead.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:ps}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  opts := args[0].(*Options)
+	  //<<Read segments, Ch.~\ref{ch:ps}>>
+	  //<<Construct output stream, Ch.~\ref{ch:ps}>>
+	  go func() {
+		  //<<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:ps}>>
+		  //<<Close output stream, Ch.~\ref{ch:ps}>>
+	  }()
+	  if opts.Script == "" {
+		  //<<Run \ty{gnuplot}, Ch.~\ref{ch:ps}>>
+	  }
   }
 #+end_src
 #+begin_src latex
-  We import \ty{exec} and \ty{os}, and \ty{log}.
+  We import \ty{io}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "io"
+#+end_src
+#+begin_src latex
+  We read the segments, skip comments, and check each data line has four
+  columns. If not, something has gone wrong and we bail.
+#+end_src
+#+begin_src go <<Read segments, Ch.~\ref{ch:ps}>>=
+  sc := bufio.NewScanner(r)
+  var segments [][]string
+  for sc.Scan() {
+	  row := sc.Text()
+	  if row[0] == '#' { continue }
+	  fields := strings.Fields(row)
+	  l := len(fields)
+	  if l != 4 {
+		  log.Fatalf("get %d columns, want 4\n", l)
+	  }
+	  segments = append(segments, fields)
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{bufio}, \ty{strings}, and \ty{log}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
+  "bufio"
+  "strings"
+  "log"
+#+end_src
+#+begin_src latex
+  The output stream is either the standard input stream of the
+  \ty{gnuplot} command, or a script of \ty{gnuplot} code.
+#+end_src
+#+begin_src go <<Construct output stream, Ch.~\ref{ch:ps}>>=
+  var w io.WriteCloser
+  var gcmd *exec.Cmd
+  var err error
+  if opts.Script == "" {
+	  gcmd = exec.Command("gnuplot")
+	  w, err = gcmd.StdinPipe()
+	  if err != nil { log.Fatal(err) }
+  } else {
+	  w, err = os.Create(opts.Script)
+	  if err != nil { log.Fatal(err) }
+  }
+#+end_src
+#+begin_src latex
+  We import \ty{exec} and \ty{os}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
   "os/exec"
   "os"
-  "log"
 #+end_src
 #+begin_src latex
-  We open a file, write the script to it, and close it again.
+  The \ty{gnuplot} code describes the terminal, the plot, and the
+  segments.
 #+end_src
-#+begin_src go <<Construct script, Ch.~\ref{ch:ps}>>=
-  var script *os.File
-  //<<Open script file, Ch.~\ref{ch:ps}>>
-  //<<Write script to file, Ch.~\ref{ch:ps}>>
-  script.Close()
-#+end_src
-#+begin_src latex
-  If the user requested the script, we write to that, otherwise we
-  write to a unique file generated by the system.
-#+end_src
-#+begin_src go <<Open script file, Ch.~\ref{ch:ps}>>=
-  var err error
-  if opts.Script == "" {
-	  script, err = ioutil.TempFile("", "tmp_*.gp")
-  } else {
-	  script, err = os.Create(opts.Script)
-  }
-  if err != nil {
-	  log.Fatal("can't open gnuplot script")
-  }
-  gscr = script.Name()
-#+end_src
-#+begin_src latex
-  We import \ty{ioutil}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
-  "io/ioutil"
-#+end_src
-#+begin_src latex
-  We write the script by writing to the terminal first. Then we write
-  the axes and the actual plot.
-#+end_src
-#+begin_src go <<Write script to file, Ch.~\ref{ch:ps}>>=
+#+begin_src go <<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:ps}>>=
   //<<Write terminal, Ch.~\ref{ch:ps}>>
-  //<<Write axes, Ch.~\ref{ch:ps}>>
   //<<Write plot, Ch.~\ref{ch:ps}>>
+  //<<Write segments, Ch.~\ref{ch:ps}>>
 #+end_src
 #+begin_src latex
-  The terminal is either encapsulates postscript or a window. If it is a
-  window, that window is persistent. If the user set the size of the
-  postscript plot, we pass that on.
+  The terminal is either monochrome encapsulate postscript or a
+  window. If it is a window, that window is persistent. If the user set
+  the size of the postscript plot, we pass that on.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:ps}>>=
   t := "set terminal"
   if opts.Ps != "" {
-	  t += " eps color"
+	  t += " eps monochrome"
   } else {
 	  t += " " + opts.Win + " persist"
   }
-  if opts.Size[0] != 'x' && opts.Ps != "" {
-	  t += " size " + opts.Size
+  if opts.Dim[0] != 'x' && opts.Ps != "" {
+	  t += " size " + opts.Dim
   }
-  fmt.Fprintf(script, "%s\n", t)
+  fmt.Fprintf(w, "%s\n", t)
 #+end_src
 #+begin_src latex
   We import \ty{fmt}.
@@ -270,111 +297,46 @@
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:ps}>>=
   if opts.Ps != "" {
-	  fmt.Fprintf(script, "set output \"%s\"\n", opts.Ps)
+	  fmt.Fprintf(w, "set output \"%s\"\n", opts.Ps)
   }
 #+end_src
 #+begin_src latex
-  We set the axis labels the user supplied.
-#+end_src
-#+begin_src go <<Write axes, Ch.~\ref{ch:ps}>>=
-  if opts.Xlab != "" {
-	  fmt.Fprintf(script, "set xlabel \"%s\"\n", opts.Xlab)
-  }
-  if opts.Ylab != "" {
-	  fmt.Fprintf(script, "set ylabel \"%s\"\n", opts.Ylab)
-  }
-#+end_src
-#+begin_src latex
-  We write the plot as an untitled line plot with ranges. The data is
-  read from standard in.
+  We write the plot as an untitled black line plot with ranges.
 #+end_src
 #+begin_src go <<Write plot, Ch.~\ref{ch:ps}>>=
   xr := ""
   yr := ""
   if opts.Xrange[0] != 's' { xr = opts.Xrange }
   if opts.Yrange[0] != 's' { yr = opts.Yrange }
-  fmt.Fprintf(script, "plot[%s][%s] \"< cat\" t '' w l\n", xr, yr)
+  fmt.Fprintf(w, "plot[%s][%s] \"-\" t '' w l lc \"black\"\n",
+	  xr, yr)
 #+end_src
 #+begin_src latex
-  The script is written, so we run it.
+  The segments are written as pairs of points separated by a blank
+  line. This is interpreted by \ty{gnuplot} as a line disconnected from
+  the next line, a \emph{segment}.
 #+end_src
-#+begin_src go <<Construct command, Ch.~\ref{ch:ps}>>=
-  gcmd = exec.Command("gnuplot", gscr)
-#+end_src
-#+begin_src latex
-  Inside \ty{scan}, we retrieve the command we just constructed by type
-  assertion, get the data, pipe the data into the command, and run it.
-#+end_src
-#+begin_src go <<Functions, Ch.~\ref{ch:ps}>>=
-  func scan(r io.Reader, args ...interface{}) {
-	  gcmd := args[0].(*exec.Cmd)
-	  //<<Read data, Ch.~\ref{ch:ps}>>
-	  //<<Pipe data into command, Ch.~\ref{ch:ps}>>
-	  //<<Run command, Ch.~\ref{ch:ps}>>
+#+begin_src go <<Write segments, Ch.~\ref{ch:ps}>>=
+  for _, s := range segments {
+	  fmt.Fprintln(w, s[0], s[1])
+	  fmt.Fprintln(w, s[2], s[3])
+	  fmt.Fprintln(w)
   }
 #+end_src
 #+begin_src latex
-  We import \ty{io}.
+  We close the output stream.
 #+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
-  "io"
+#+begin_src go <<Close output stream, Ch.~\ref{ch:ps}>>=
+  w.Close()
 #+end_src
 #+begin_src latex
-  We read the data, skip comments, and check each data line has four
-  columns. If not, something has gone wrong and we bail.
+  We run \ty{gnuplot} and check for errors.
 #+end_src
-#+begin_src go <<Read data, Ch.~\ref{ch:ps}>>=
-  sc := bufio.NewScanner(r)
-  var data [][]string
-  for sc.Scan() {
-	  row := sc.Text()
-	  if row[0] == '#' { continue }
-	  fields := strings.Fields(row)
-	  l := len(fields)
-	  if l != 4 {
-		  log.Fatalf("get %d columns, want 4\n", l)
-	  }
-	  data = append(data, fields)
+#+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:ps}>>=
+  err = gcmd.Run()
+  if err != nil {
+	  log.Fatal(err)
   }
-#+end_src
-#+begin_src latex
-  We import \ty{bufio} and \ty{strings}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
-  "bufio"
-  "strings"
-#+end_src
-#+begin_src latex
-  Piping the data into the command is wrapped in a goroutine. The
-  routine signals it is finished via a channel. The data is written as
-  two points separated by a blank. This is interpreted by \ty{gnuplot}
-  as a line that is disconnected from the next line.
-#+end_src
-#+begin_src go <<Pipe data into command, Ch.~\ref{ch:ps}>>=
-  stdin, err := gcmd.StdinPipe()
-  if err != nil { log.Fatal("can't open stdin") }
-  done := make(chan struct{})
-  go func() {
-	  for _, d := range data {
-		  fmt.Fprintln(stdin, d[0], d[1])
-		  fmt.Fprintln(stdin, d[2], d[3])
-		  fmt.Fprintln(stdin)
-	  }
-	  stdin.Close()
-	  done <- struct{}{}
-  }()
-#+end_src
-#+begin_src latex
-  We run the command and signal we're done before deleting the script.
-#+end_src
-#+begin_src go <<Run command, Ch.~\ref{ch:ps}>>=
-  if len(data) > 0 {
-	  err = gcmd.Run()
-	  if err != nil {
-		  log.Fatalf("can't run %q", gcmd)
-	  }
-  }
-  <-done
 #+end_src
 #+begin_src latex
   The program \ty{plotSeg} is finished, let's test it.
@@ -458,10 +420,10 @@
   tests = append(tests, te)
 #+end_src
 #+begin_src latex
-  We set the plot size.
+  We set the plot dimensions.
 #+end_src
 #+begin_src go <<Test plot size, Ch.~\ref{ch:ps}>>=
-  te = exec.Command("./plotSeg", "-s", g, "-S", "5,6", f)
+  te = exec.Command("./plotSeg", "-s", g, "-d", "5,6", f)
   tests = append(tests, te)
 #+end_src
 #+begin_src latex

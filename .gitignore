@@ -141,7 +141,6 @@ drawKt/kt.tex
 ranDot/*.sh
 plotLine/lineTmpl.txt
 plotLine/makeRes.sh
-plotSeg/segTmpl.txt
 plotSeg/makeRes.sh
 plotTree/makePlots.sh
 genTree/makeTests.sh
