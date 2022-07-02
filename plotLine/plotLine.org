@@ -89,7 +89,8 @@
   "flag"
 #+end_src
 #+begin_src latex
-  The options for axes define their labels, ranges, and scales.
+  The options for axes define their labels, ranges, scales, and whether
+  or not one or both of them are unset.
 #+end_src
 #+begin_src go <<Declare axes options, Ch~\ref{ch:pl}>>=
   var optX = flag.String("x", "", "x-label")
@@ -97,15 +98,16 @@
   var optXX = flag.String("X", "s:e", "x-range")
   var optYY = flag.String("Y", "s:e", "y-range")
   var optL = flag.String("l", "", "log-scale (x|y|xy)")
+  var optU = flag.String("u", "", "unset axis (x|y|xy)")
 #+end_src
 #+begin_src latex
-  By default, the plot consists of points and lines. But the user can
-  opt for points only or lines only. She can also opt to write the
-  \ty{gnuplot} script to file.
+  By default, the plot consists of lines. But the user can opt for lines
+  and points or lines only. She can also opt to write the \ty{gnuplot}
+  script to file.
 #+end_src
 #+begin_src go <<Declare plot type options, Ch.~\ref{ch:pl}>>=
   var optPP = flag.Bool("P", false, "points only")
-  var optLL = flag.Bool("L", false, "lines only")
+  var optLL = flag.Bool("L", false, "lines and points")
   var optS = flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
@@ -152,16 +154,17 @@
 #+end_src
 #+begin_src latex
   We collect the option values for, \ty{-x}, \ty{-y}, \ty{-X}, \ty{-Y},
-  \ty{-d}, \ty{-P}, \ty{-L}, \ty{-l}, \ty{-s}, and \ty{-p}.
+  \ty{-u}, \ty{-d}, \ty{-P}, \ty{-L}, \ty{-l}, \ty{-s}, and \ty{-p}.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:pl}>>=
   args.Xlab = *optX
   args.Ylab = *optY
   args.Xrange = *optXX
   args.Yrange = *optYY
+  args.Unset = *optU
   args.Dim = *optD
   args.Points = *optPP
-  args.Lines = *optLL
+  args.LinesPoints = *optLL
   args.Log = *optL
   args.Script = *optS
   args.Ps = *optP
@@ -170,8 +173,8 @@
   We add the corresponding fields to the structure \ty{Args}.
 #+end_src
 #+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
-  Xlab, Ylab, Xrange, Yrange, Dim string
-  Points, Lines bool
+  Xlab, Ylab, Xrange, Yrange, Unset, Dim string
+  Points, LinesPoints bool
   Log, Script, Ps string
 #+end_src
 #+begin_src latex
@@ -367,11 +370,13 @@
   }
 #+end_src
 #+begin_src latex
-  For the axes we write the labels and the log scale.
+  For the axes we write the labels, the log scale, and note the axes
+  that have been unset.
 #+end_src
 #+begin_src go <<Write axes, Ch.~\ref{ch:pl}>>=
   //<<Write axis labels, Ch.~\ref{ch:pl}>>
   //<<Write log scale, Ch.~\ref{ch:pl}>>
+  //<<Unset axes, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
   We label the x-axis and the y-axis.
@@ -396,6 +401,17 @@
   }
 #+end_src
 #+begin_src latex
+  We unset the required axes.
+#+end_src
+#+begin_src go <<Unset axes, Ch.~\ref{ch:pl}>>=
+  if strings.ContainsAny(args.Unset, "xX") {
+	  fmt.Fprintf(w, "unset xtics\n")
+  }
+  if strings.ContainsAny(args.Unset, "yY") {
+	  fmt.Fprintf(w, "unset ytics\n")
+  }
+#+end_src
+#+begin_src latex
   The plot consists of a plot command, a style, and a separate plot
   for each category.
 #+end_src
@@ -415,13 +431,17 @@
   fmt.Fprintf(w, "plot[%s][%s]", xr, yr)
 #+end_src
 #+begin_src latex
-  The default style is ``linespoints'', or \ty{lp}. However, the user
-  might have opted either for ``points'', or for ``lines''.
+  The default style is ``lines'', or \ty{l}. However, the user might
+  have opted either for ``linespoints'' (\ty{lp}), or for ``points''
+  (\ty{p}). The line is black if there is only one category.
 #+end_src
 #+begin_src go <<Construct style, Ch.~\ref{ch:pl}>>=
-  style := "lp"
+  style := "l"
   if args.Points { style = "p" }
-  if args.Lines { style = "l" }
+  if args.LinesPoints { style = "lp" }
+  if len(categories) == 1 {
+	  style += " lc \"black\""
+  }
 #+end_src
 #+begin_src latex
   We write the instruction for the first plot and then append an
@@ -509,7 +529,8 @@
 #+end_src
 #+begin_src latex
   We create six sets of tests, lines \& points, axis labels, plot size,
-  log-scaling, ranges, and combinations of log-scaling and ranges.
+  log-scaling, ranges, and combinations of log-scaling and ranges. We
+  also unset axes' tic marks.
 #+end_src
 #+begin_src go <<Prepare tests, Ch.~\ref{ch:pl}>>=
   //<<Test lines and dots, Ch.~\ref{ch:pl}>>
@@ -518,6 +539,7 @@
   //<<Test log-scaling, Ch.~\ref{ch:pl}>>
   //<<Test ranges, Ch.~\ref{ch:pl}>>
   //<<Test combinations of log-scaling and ranges, Ch.~\ref{ch:pl}>>
+  //<<Test unsetting axes, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
   We have two sets of input data, \ty{test3.dat} with the three columns
@@ -609,6 +631,17 @@
   tests = append(tests, test)
   test = exec.Command("./plotLine", "-s", g,
 	  "-X", "0.1:10", "-Y", "0.2:100", "-l", "xy", "test3.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We unset the x-axis, the y-axis, and both.
+#+end_src
+#+begin_src go <<Test unsetting axes, Ch.~\ref{ch:pl}>>=
+  test = exec.Command("./plotLine", "-u", "x", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-u", "y", "test3.dat")
+  tests = append(tests, test)
+  test = exec.Command("./plotLine", "-u", "xy", "test3.dat")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex

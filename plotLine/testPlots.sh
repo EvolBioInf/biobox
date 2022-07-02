@@ -16,3 +16,6 @@
 ./plotLine -Y 0.2:100 -l x test3.dat
 ./plotLine -X 0.1:10 -l xy test3.dat
 ./plotLine -X 0.1:10 -Y 0.2:100 -l xy test3.dat
+./plotLine -u x test3.dat
+./plotLine -u y test3.dat
+./plotLine -u xy test3.dat

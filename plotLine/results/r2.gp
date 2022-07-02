@@ -1,5 +1,5 @@
 set terminal wxt persist
-plot[][] "-" t "g1" w lp, "-" t "g2" w lp
+plot[][] "-" t "g1" w l, "-" t "g2" w l
 1	1
 2	2
 4	4
