@@ -288,18 +288,13 @@
   We print the segments as four tab-delimited columns that we align
   using a tab writer. But recall that each segment may appear twice, so
   we remove duplicates before we print.
-
-  In the actual printing we retain the classical matrix notation, where
-  the origin is in the top left corner, as opposed to graphs, where the
-  origin is in the bottom left corner. We do this by setting the y
-  coordinates negative.
 #+end_src
 #+begin_src go <<Print segments, Ch.~\ref{ch:r2p}>>=
   //<<Set up tab writer, Ch.~\ref{ch:r2p}>>
   //<<Remove duplicated segments, Ch.~\ref{ch:r2p}>>
   for _, s := range segments {
-	  fmt.Fprintf(w, "%d\t%d\t%d\t%d\n", s.x1, -s.y1,
-		  s.x2, -s.y2)
+	  fmt.Fprintf(w, "%d\t%d\t%d\t%d\n", s.x1, s.y1,
+		  s.x2, s.y2)
   }
   w.Flush()
   fmt.Printf("%s", buffer)
