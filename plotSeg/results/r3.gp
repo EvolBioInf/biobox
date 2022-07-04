@@ -2,7 +2,7 @@ set terminal wxt persist
 set format x ''
 unset xtics
 set x2tics mirror
-set x2range[*:*]
+set xrange[*:*]
 set yrange [*:*] reverse
 set x2label ''
 set ylabel rotate by -90 'y'
