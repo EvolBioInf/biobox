@@ -332,26 +332,19 @@
   fmt.Fprintf(w, "set format x ''\n")
   fmt.Fprintf(w, "unset xtics\n")
   fmt.Fprintf(w, "set x2tics mirror\n")
-  fmt.Fprintf(w, "set xrange[%s]\n", opts.Xrange)
+  fmt.Fprintf(w, "set x2range[%s]\n", opts.Xrange)
   fmt.Fprintf(w, "set yrange [%s] reverse\n", opts.Yrange)
   fmt.Fprintf(w, "set x2label '%s'\n", opts.Xlab)
   fmt.Fprintf(w, "set ylabel rotate by -90 '%s'\n", opts.Ylab)
 #+end_src
 #+begin_src latex
-  We write the plot as an untitled black line plot with ranges. We
-  switch the tic marks from the x axis at the bottom to the top and we
-  reverse the y axis. We label the top x axis and rotate the y axis to
-  read from top to bottom. Just before drawing the actual plot, we enter
-  the \ty{gnuplot} code submitted by the user.
+  Just before drawing the actual plot, we enter the \ty{gnuplot} code
+  submitted by the user. Then we write the plot as an untitled black
+  line plot.
 #+end_src
 #+begin_src go <<Write plot, Ch.~\ref{ch:ps}>>=
-  xr := ""
-  yr := ""
-  if opts.Xrange[0] != 's' { xr = opts.Xrange }
-  if opts.Yrange[0] != 's' { yr = opts.Yrange }
   if opts.Gp != "" { fmt.Fprintf(w, "%s\n", opts.Gp) }
-  fmt.Fprintf(w, "plot[%s][%s] \"-\" t '' w l lc \"black\"\n",
-	  xr, yr)
+  fmt.Fprintf(w, "plot \"-\" t '' w l lc \"black\"\n")
 #+end_src
 #+begin_src latex
   The segments are written as pairs of points separated by a blank
