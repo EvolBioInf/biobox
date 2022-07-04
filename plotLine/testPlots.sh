@@ -19,3 +19,4 @@
 ./plotLine -u x test3.dat
 ./plotLine -u y test3.dat
 ./plotLine -u xy test3.dat
+./plotLine -g "set title \"External Title\"" test3.dat

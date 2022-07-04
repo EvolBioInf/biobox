@@ -74,13 +74,15 @@
 #+end_src
 #+begin_src latex
   Apart from the version, we declare options concerning the axes, the
-  plot type, and the graphics device.
+  plot type, and the graphics device. We also declare a catch-all
+  ``general option''.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pl}>>=
   var optV = flag.Bool("v", false, "version")
   //<<Declare axes options, Ch~\ref{ch:pl}>>
   //<<Declare plot type options, Ch.~\ref{ch:pl}>>
   //<<Declare device options, Ch.~\ref{ch:pl}>>
+  //<<Declare general options, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -121,6 +123,14 @@
 	  "dimensions of postscript plot in inch or cm")
 #+end_src
 #+begin_src latex
+  At its core, \ty{gnuplot} is a graphing programming language. To make
+  the most of the resulting versatility, power users can enter arbitrary
+  \ty{gnuplot} code.
+#+end_src
+#+begin_src go <<Declare general options, Ch.~\ref{ch:pl}>>=
+  var optG = flag.String("g", "", "gnuplot code")
+#+end_src
+#+begin_src latex
   We parse the options and respond to \ty{-v} first, as this might
   terminate \ty{plotLine}. Then we collect the option values.
 #+end_src
@@ -154,7 +164,8 @@
 #+end_src
 #+begin_src latex
   We collect the option values for, \ty{-x}, \ty{-y}, \ty{-X}, \ty{-Y},
-  \ty{-u}, \ty{-d}, \ty{-P}, \ty{-L}, \ty{-l}, \ty{-s}, and \ty{-p}.
+  \ty{-u}, \ty{-d}, \ty{-P}, \ty{-L}, \ty{-l}, \ty{-s}, \ty{-p}, and
+  \ty{-g}.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:pl}>>=
   args.Xlab = *optX
@@ -168,6 +179,7 @@
   args.Log = *optL
   args.Script = *optS
   args.Ps = *optP
+  args.Gp = *optG
 #+end_src
 #+begin_src latex
   We add the corresponding fields to the structure \ty{Args}.
@@ -175,7 +187,7 @@
 #+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
   Xlab, Ylab, Xrange, Yrange, Unset, Dim string
   Points, LinesPoints bool
-  Log, Script, Ps string
+  Log, Script, Ps, Gp string
 #+end_src
 #+begin_src latex
   The default output window is wxt. If we're running on the macOS
@@ -428,6 +440,10 @@
   yr := ""
   if args.Xrange[0] != 's' { xr = args.Xrange }
   if args.Yrange[0] != 's' { yr = args.Yrange }
+  if args.Gp != "" {
+	  m := "#Start external\n%s\n#End external\n"
+	  fmt.Fprintf(w, m, args.Gp)
+  }
   fmt.Fprintf(w, "plot[%s][%s]", xr, yr)
 #+end_src
 #+begin_src latex
@@ -530,7 +546,7 @@
 #+begin_src latex
   We create six sets of tests, lines \& points, axis labels, plot size,
   log-scaling, ranges, and combinations of log-scaling and ranges. We
-  also unset axes' tic marks.
+  also unset axes' tic marks and setting external code.
 #+end_src
 #+begin_src go <<Prepare tests, Ch.~\ref{ch:pl}>>=
   //<<Test lines and dots, Ch.~\ref{ch:pl}>>
@@ -540,6 +556,7 @@
   //<<Test ranges, Ch.~\ref{ch:pl}>>
   //<<Test combinations of log-scaling and ranges, Ch.~\ref{ch:pl}>>
   //<<Test unsetting axes, Ch.~\ref{ch:pl}>>
+  //<<Test external code, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
   We have two sets of input data, \ty{test3.dat} with the three columns
@@ -637,11 +654,23 @@
   We unset the x-axis, the y-axis, and both.
 #+end_src
 #+begin_src go <<Test unsetting axes, Ch.~\ref{ch:pl}>>=
-  test = exec.Command("./plotLine", "-u", "x", "test3.dat")
+  test = exec.Command("./plotLine", "-s", g,
+	  "-u", "x", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-u", "y", "test3.dat")
+  test = exec.Command("./plotLine", "-s", g,
+	  "-u", "y", "test3.dat")
   tests = append(tests, test)
-  test = exec.Command("./plotLine", "-u", "xy", "test3.dat")
+  test = exec.Command("./plotLine", "-s", g,
+	  "-u", "xy", "test3.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We set a title using external code.
+#+end_src
+#+begin_src go <<Test external code, Ch.~\ref{ch:pl}>>=
+  test = exec.Command("./plotLine", "-s", g,
+	  "-g", "set title \"External Title\"",
+	  "test3.dat")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
@@ -660,8 +689,8 @@
   want, err := ioutil.ReadFile(f)
   if err != nil { log.Fatalf("can't open %q", f) }
   if !bytes.Equal(get, want) {
-	  t.Errorf("get:\n%s\nwant:\n%s\n",
-		  string(get), string(want))
+	  t.Errorf("%s:\nget:\n%s\nwant:\n%s\n",
+		  test, string(get), string(want))
   }
 #+end_src
 #+begin_src latex
