@@ -97,8 +97,8 @@
 #+begin_src go <<Declare axes options, Ch~\ref{ch:pl}>>=
   var optX = flag.String("x", "", "x-label")
   var optY = flag.String("y", "", "y-label")
-  var optXX = flag.String("X", "s:e", "x-range")
-  var optYY = flag.String("Y", "s:e", "y-range")
+  var optXX = flag.String("X", "*:*", "x-range")
+  var optYY = flag.String("Y", "*:*", "y-range")
   var optL = flag.String("l", "", "log-scale (x|y|xy)")
   var optU = flag.String("u", "", "unset axis (x|y|xy)")
 #+end_src
@@ -433,18 +433,15 @@
   //<<Write one plot per category, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
-  The plot command may include an x-range and/or a y-range.
+  Right before the plot command we print the external \ty{gnuplot} code,
+  which we mark by comments.
 #+end_src
 #+begin_src go <<Write plot command, Ch.~\ref{ch:pl}>>=
-  xr := ""
-  yr := ""
-  if args.Xrange[0] != 's' { xr = args.Xrange }
-  if args.Yrange[0] != 's' { yr = args.Yrange }
   if args.Gp != "" {
 	  m := "#Start external\n%s\n#End external\n"
 	  fmt.Fprintf(w, m, args.Gp)
   }
-  fmt.Fprintf(w, "plot[%s][%s]", xr, yr)
+  fmt.Fprintf(w, "plot[%s][%s]", args.Xrange, args.Yrange)
 #+end_src
 #+begin_src latex
   The default style is ``lines'', or \ty{l}. However, the user might

@@ -1,5 +1,5 @@
 set terminal wxt persist
-plot[][] "-" t "" w l lc "black"
+plot[*:*][*:*] "-" t "" w l lc "black"
 1	1
 2	2
 4	4
