@@ -82,7 +82,7 @@
   //<<Declare axes options, Ch~\ref{ch:pl}>>
   //<<Declare plot type options, Ch.~\ref{ch:pl}>>
   //<<Declare device options, Ch.~\ref{ch:pl}>>
-  //<<Declare general options, Ch.~\ref{ch:pl}>>
+  //<<Declare general option, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -119,7 +119,7 @@
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
   var optP = flag.String("p", "", "encapsulated postscript file")
-  var optD = flag.String("d", "x,y",
+  var optD = flag.String("d", "x[cm],y[cm]",
 	  "dimensions of postscript plot in inch or cm")
 #+end_src
 #+begin_src latex
@@ -127,7 +127,7 @@
   the most of the resulting versatility, power users can enter arbitrary
   \ty{gnuplot} code.
 #+end_src
-#+begin_src go <<Declare general options, Ch.~\ref{ch:pl}>>=
+#+begin_src go <<Declare general option, Ch.~\ref{ch:pl}>>=
   var optG = flag.String("g", "", "gnuplot code")
 #+end_src
 #+begin_src latex

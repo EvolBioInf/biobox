@@ -105,7 +105,7 @@
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
   var optP = flag.String("p", "", "encapsulated postscript file and exit")
-  var optD = flag.String("d", "x,y", "dimensions of postscript plot " +
+  var optD = flag.String("d", "x[cm],y[cm]", "dimensions of postscript plot " +
 	  "in inch or cm")
   var optSS = flag.Float64("S", 0.9, "size of plot on screen")
   var optC = flag.Float64("c", 0.0, "scale")
