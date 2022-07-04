@@ -1,6 +1,6 @@
 set terminal qt persist
 set format x ''
-set x2tics
+unset xtics; set x2tics mirror
 set yrange [*:*] reverse
 set x2label ''
 set ylabel rotate by -90 ''

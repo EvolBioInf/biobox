@@ -333,7 +333,7 @@
   if opts.Xrange[0] != 's' { xr = opts.Xrange }
   if opts.Yrange[0] != 's' { yr = opts.Yrange }
   fmt.Fprintf(w, "set format x ''\n")
-  fmt.Fprintf(w, "set x2tics\n")
+  fmt.Fprintf(w, "unset xtics; set x2tics mirror\n")
   fmt.Fprintf(w, "set yrange [*:*] reverse\n")
   fmt.Fprintf(w, "set x2label '%s'\n", opts.Xlab)
   fmt.Fprintf(w, "set ylabel rotate by -90 '%s'\n", opts.Ylab)
