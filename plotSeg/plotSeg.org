@@ -98,8 +98,8 @@
 #+begin_src go <<Declare axis options, Ch.~\ref{ch:ps}>>=
   var optX = flag.String("x", "", "x-label")
   var optY = flag.String("y", "", "y-label")
-  var optXX = flag.String("X", "s:e", "x-range")
-  var optYY = flag.String("Y", "s:e", "y-range")
+  var optXX = flag.String("X", "*:*", "x-range")
+  var optYY = flag.String("Y", "*:*", "y-range")
 #+end_src
 #+begin_src latex
   Instead of showing the plot in a window, the user can write it as
@@ -281,11 +281,12 @@
 #+end_src
 
 #+begin_src latex
-  The \ty{gnuplot} code describes the terminal, the plot, and the
-  segments.
+  The \ty{gnuplot} code describes the terminal, the axes, the plot, and
+  the segments.
 #+end_src
 #+begin_src go <<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:ps}>>=
   //<<Write terminal, Ch.~\ref{ch:ps}>>
+  //<<Write axes, Ch.~\ref{ch:ps}>>
   //<<Write plot, Ch.~\ref{ch:ps}>>
   //<<Write segments, Ch.~\ref{ch:ps}>>
 #+end_src
@@ -321,6 +322,22 @@
   }
 #+end_src
 #+begin_src latex
+  We set the x2 axis as the primary x axis. This involves removing the
+  tics from the x axis and switching on the x2 axis and mirroring its
+  tic marks. We also set the x2 range and the y range. The y range is
+  inverted. Then we label the x axis and the y axis. The label on the y
+  axis is rotated by -90 degrees to track the direction of the sequence.
+#+end_src
+#+begin_src go <<Write axes, Ch.~\ref{ch:ps}>>=
+  fmt.Fprintf(w, "set format x ''\n")
+  fmt.Fprintf(w, "unset xtics\n")
+  fmt.Fprintf(w, "set x2tics mirror\n")
+  fmt.Fprintf(w, "set xrange[%s]\n", opts.Xrange)
+  fmt.Fprintf(w, "set yrange [%s] reverse\n", opts.Yrange)
+  fmt.Fprintf(w, "set x2label '%s'\n", opts.Xlab)
+  fmt.Fprintf(w, "set ylabel rotate by -90 '%s'\n", opts.Ylab)
+#+end_src
+#+begin_src latex
   We write the plot as an untitled black line plot with ranges. We
   switch the tic marks from the x axis at the bottom to the top and we
   reverse the y axis. We label the top x axis and rotate the y axis to
@@ -332,11 +349,6 @@
   yr := ""
   if opts.Xrange[0] != 's' { xr = opts.Xrange }
   if opts.Yrange[0] != 's' { yr = opts.Yrange }
-  fmt.Fprintf(w, "set format x ''\n")
-  fmt.Fprintf(w, "unset xtics; set x2tics mirror\n")
-  fmt.Fprintf(w, "set yrange [*:*] reverse\n")
-  fmt.Fprintf(w, "set x2label '%s'\n", opts.Xlab)
-  fmt.Fprintf(w, "set ylabel rotate by -90 '%s'\n", opts.Ylab)
   if opts.Gp != "" { fmt.Fprintf(w, "%s\n", opts.Gp) }
   fmt.Fprintf(w, "plot[%s][%s] \"-\" t '' w l lc \"black\"\n",
 	  xr, yr)

@@ -1,10 +1,12 @@
 set terminal qt persist
 set format x ''
-unset xtics; set x2tics mirror
+unset xtics
+set x2tics mirror
+set xrange[100:500]
 set yrange [*:*] reverse
 set x2label ''
 set ylabel rotate by -90 ''
-plot[100:500][] "-" t '' w l lc "black"
+plot[100:500][*:*] "-" t '' w l lc "black"
 1 1
 57 57
 
