@@ -1,4 +1,9 @@
 set terminal wxt persist
+set format x ''
+set x2tics
+set yrange [*:*] reverse
+set x2label 'x'
+set ylabel rotate by -90 ''
 plot[][] "-" t '' w l lc "black"
 1 1
 57 57

@@ -24,7 +24,7 @@
 	\end{tabular}
 	}
 	&
-	\includegraphics{plotSeg}
+	\scalebox{0.8}{\includegraphics{plotSeg}}
       \end{tabular}
     \end{center}
     \caption{Example data (\textbf{A}) plotted with \ty{plotSeg}
@@ -76,12 +76,14 @@
 #+end_src
 #+begin_src latex
   Apart from the obligatory version option, we declare options for the
-  axes and the graphics device.
+  axes and the graphics device. We also declare a catch-all ``general
+  option''. 
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:ps}>>=
   var optV = flag.Bool("v", false, "version")
   //<<Declare axis options, Ch.~\ref{ch:ps}>>
   //<<Declare device options, Ch.~\ref{ch:ps}>>
+  //<<Declare general option, Ch.~\ref{ch:ps}>>
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -91,6 +93,7 @@
 #+end_src
 #+begin_src latex
   The user can label the axes and set their ranges.
+  \ty{gnuplot} code.
 #+end_src
 #+begin_src go <<Declare axis options, Ch.~\ref{ch:ps}>>=
   var optX = flag.String("x", "", "x-label")
@@ -105,9 +108,16 @@
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:ps}>>=
   var optP = flag.String("p", "", "encapsulated postscript file")
-  var optD = flag.String("d", "x,y", "dimensions of postscript " +
+  var optD = flag.String("d", "x[cm],y[cm]", "dimensions of postscript plot " +
 	  "plot in inch or cm")
   var optS = flag.String("s", "", "write gnuplot script to file")
+#+end_src
+#+begin_src latex
+  The ``general option'' is a switch for submitting arbitrary
+  \ty{gnuplot} code.
+#+end_src
+#+begin_src go <<Declare general option, Ch.~\ref{ch:ps}>>=
+  var optG = flag.String("g", "", "gnuplot code")
 #+end_src
 #+begin_src latex
   We parse the options and respond to a request for the version first
@@ -159,6 +169,7 @@
   if runtime.GOOS == "darwin" { opts.Win = "qt" }
   opts.Ps = *optP
   opts.Script = *optS
+  opts.Gp = *optG
 #+end_src
 #+begin_src latex
   We import \ty{runtime}.
@@ -172,7 +183,7 @@
 #+begin_src go <<\ty{Options} fields, Ch.~\ref{ch:ps}>>=
   Xlab, Ylab, Xrange, Yrange, Dim string
   Width, Height float64
-  Win, Ps, Script string
+  Win, Ps, Script, Gp string
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are taken as input
@@ -310,13 +321,23 @@
   }
 #+end_src
 #+begin_src latex
-  We write the plot as an untitled black line plot with ranges.
+  We write the plot as an untitled black line plot with ranges. We
+  switch the tic marks from the x axis at the bottom to the top and we
+  reverse the y axis. We label the top x axis and rotate the y axis to
+  read from top to bottom. Just before drawing the actual plot, we enter
+  the \ty{gnuplot} code submitted by the user.
 #+end_src
 #+begin_src go <<Write plot, Ch.~\ref{ch:ps}>>=
   xr := ""
   yr := ""
   if opts.Xrange[0] != 's' { xr = opts.Xrange }
   if opts.Yrange[0] != 's' { yr = opts.Yrange }
+  fmt.Fprintf(w, "set format x ''\n")
+  fmt.Fprintf(w, "set x2tics\n")
+  fmt.Fprintf(w, "set yrange [*:*] reverse\n")
+  fmt.Fprintf(w, "set x2label '%s'\n", opts.Xlab)
+  fmt.Fprintf(w, "set ylabel rotate by -90 '%s'\n", opts.Ylab)
+  if opts.Gp != "" { fmt.Fprintf(w, "%s\n", opts.Gp) }
   fmt.Fprintf(w, "plot[%s][%s] \"-\" t '' w l lc \"black\"\n",
 	  xr, yr)
 #+end_src
@@ -392,12 +413,14 @@
   "os"
 #+end_src
 #+begin_src latex
-  We test setting axis labels, ranges, and plot size.
+  We test setting axis labels, ranges, plot size, and submitting
+  \ty{gnuplot} code.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:ps}>>=
   //<<Test axis labels, Ch.~\ref{ch:ps}>>
   //<<Test axis ranges, Ch.~\ref{ch:ps}>>
   //<<Test plot size, Ch.~\ref{ch:ps}>>
+  //<<Test \ty{gnuplot} code, Ch.~\ref{ch:ps}>>
 #+end_src
 #+begin_src latex
   We begin by running \ty{plotSeg} on the example data in \ty{test.dat}
@@ -434,6 +457,13 @@
 #+begin_src go <<Test plot size, Ch.~\ref{ch:ps}>>=
   te = exec.Command("./plotSeg", "-s", g, "-d", "5,6", f)
   tests = append(tests, te)
+#+end_src
+#+begin_src latex
+  We set a title via \ty{gnuplot} code.
+#+end_src
+#+begin_src go <<Test \ty{gnuplot} code, Ch.~\ref{ch:ps}>>=
+  te = exec.Command("./plotSeg", "-s", g, "-g",
+	  "\"External Title\"")
 #+end_src
 #+begin_src latex
   For each test we compare what we get with what we want, which is
