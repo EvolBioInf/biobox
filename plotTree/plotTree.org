@@ -104,10 +104,10 @@
   the plot (\ty{-S}), and the scale of the tree (\ty{-c}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optP = flag.String("p", "", "encapsulated postscript file and exit")
+  var optP = flag.String("p", "", "encapsulated postscript file")
   var optD = flag.String("d", "x[cm],y[cm]", "dimensions of postscript plot " +
 	  "in inch or cm")
-  var optSS = flag.Float64("S", 0.9, "size of plot on screen")
+  var optSS = flag.Float64("S", 0.85, "size of plot on screen")
   var optC = flag.Float64("c", 0.0, "scale")
 #+end_src
 #+begin_src latex
@@ -487,12 +487,15 @@
 #+begin_src latex
   The layout of the unrooted tree is based on the number of leaves in
   the subtree of each internal node. So we compute this, before setting
-  the node coordinates with \ty{setCoords} and collecting the branches
-  with \ty{collectBranchesU}.
+  the node coordinates with \ty{setCoords}. For this we initialize the
+  omega and tau parameters of the root to -1. Then we collect the
+  branches with \ty{collectBranchesU}.
 #+end_src
 #+begin_src go <<Layout unrooted tree, Ch.~\ref{ch:pt}>>=
   numLeaves(root)
   totalLeaves := root.nl
+  root.omega = -1.0
+  root.tau = -1.0
   setCoords(root, totalLeaves)
   segments = collectBranchesU(root, segments, opts)
 #+end_src
@@ -573,18 +576,15 @@
   }
 #+end_src
 #+begin_src latex
-  We recursively collect the branches of the unrooted tree and store
-  them in the slice of segments.
+  Each node with a parent corresponds to a segment.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
   func collectBranchesU(v *node, segments []segment,
 	  o *opts) []segment {
 	  if v == nil { return segments }
-	  var seg segment
 	  if v.parent != nil {
 		  //<<Construct segment, Ch.~\ref{ch:pt}>>
 	  }
-	  segments = append(segments, seg)
 	  segments = collectBranchesU(v.child, segments, o)
 	  segments = collectBranchesU(v.sib, segments, o)
 	  return segments
@@ -595,7 +595,8 @@
   and if the child is a leaf, that label should have the same direction
   as the branch~\cite{bac05:dra}. However, we'd like to avoid labels
   that are upside down and we also have to pad the label with a blank; so
-  we adjust the angles and labels.
+  we adjust the angles and labels. Once we've constructed the segment,
+  we store it in the slice of segments.
 #+end_src
 #+begin_src go <<Construct segment, Ch.~\ref{ch:pt}>>=
   p := v.parent
@@ -606,8 +607,9 @@
 	  a = (v.tau + v.omega / 2.0) * 180.0 / math.Pi
   }
   //<<Adjust angle and label, Ch.~\ref{ch:pt}>>
-  seg = segment{x1: v.x, y1: v.y, x2: p.x, y2: p.y,
+  seg := segment{x1: v.x, y1: v.y, x2: p.x, y2: p.y,
 	  l: label, a: a, o: ori}
+  segments = append(segments, seg)
 #+end_src
 #+begin_src latex
   If the label is greater than 90 degrees and less than 270 degrees, we
@@ -885,7 +887,7 @@
   fmt.Fprintf(wr, "set size %.3f\n", opts.Size)
   xo := 0.0
   yo := (1.0 - opts.Size) / 2.0
-  if opts.Unrooted { xo = yo }
+  if !rooted { xo = yo }
   fmt.Fprintf(wr, "set origin %.3f, %.3f\n", xo, yo)
   fmt.Fprintf(wr, "plot \"-\" t \"\" w l lw 3 lc \"black\"\n")
 #+end_src
