@@ -61,7 +61,7 @@
 #+begin_src go <<Set usage, Ch.~\ref{ch:pt}>>=
   u := "plotTree [-h] [option]... [foo.nwk]..."
   p := "Plot Newick-formatted trees."
-  e := "plotTree -d 6cm,5cm foo.nwk"
+  e := "plotTree foo.nwk"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -100,14 +100,17 @@
 #+begin_src latex
   The default output is drawn to the screen, but the user can also draw
   the tree to a postscript file (\ty{-p}) and give that postscript plot
-  specific dimensions (\ty{-d}). The user can set the relative size of
-  the plot (\ty{-S}), and the scale of the tree (\ty{-c}).
+  specific dimensions (\ty{-d}). The user can set the plot margins as a
+  fraction of the plot size (\ty{-m}), and the scale of the tree
+  (\ty{-c}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
   var optP = flag.String("p", "", "encapsulated postscript file")
-  var optD = flag.String("d", "x[cm],y[cm]", "dimensions of postscript plot " +
-	  "in inch or cm")
-  var optSS = flag.Float64("S", 0.85, "size of plot on screen")
+  defScrDim := "640,384"
+  defPsDim := "5,3.5"
+  var optD = flag.String("d", defScrDim, "plot dimensions; " +
+	  "pixels for screen or " + defPsDim + " inches for ps")
+  var optM = flag.Float64("m", 0.1, "margin")
   var optC = flag.Float64("c", 0.0, "scale")
 #+end_src
 #+begin_src latex
@@ -145,7 +148,7 @@
   }
 #+end_src
 #+begin_src latex
-  We store the options.
+  We store the the options.
 #+end_src
 #+begin_src go <<Store options, Ch.~\ref{ch:pt}>>=
   opts.Rooted = *optR
@@ -153,7 +156,7 @@
   opts.NoLabels = *optN
   opts.Ps = *optP
   opts.Dim = *optD
-  opts.Size = *optSS
+  opts.Margin = *optM
   opts.Scale = *optC
   opts.Script = *optS
 #+end_src
@@ -163,9 +166,20 @@
 #+begin_src go <<Opts fields, Ch.~\ref{ch:pt}>>=
   Rooted, Unrooted, NoLabels bool
   Ps, Dim string
-  Size, Scale float64
+  Margin, Scale float64
   Script string
 #+end_src
+#+begin_src latex
+  If the user chose postscript and didn't set a size, we set the default
+  postscript size.
+#+end_src
+#+begin_src go <<Store options, Ch.~\ref{ch:pt}>>=
+  if opts.Ps != "" && opts.Dim == defScrDim {
+	  opts.Dim = defPsDim
+  }
+#+end_src
+
+
 #+begin_src latex
   We also set the window, which by default is wxt, but on darwin systems
   (macOS) becomes qt.
@@ -689,6 +703,7 @@
 #+end_src
 #+begin_src go <<Draw scale line, Ch.~\ref{ch:pt}>>=
   scaleLen := opts.Scale
+  width := 0.0
   if scaleLen == 0.0 {
 	  //<<Determine scale length, Ch.~\ref{ch:pt}>>
   }
@@ -706,18 +721,18 @@
   user can set a length, but this should be a good starting point.
 #+end_src
 #+begin_src go <<Determine scale length, Ch.~\ref{ch:pt}>>=
-  width := dim.xMax - dim.xMin
+  width = dim.xMax - dim.xMin
   y := math.Round(math.Log10(width))
   scaleLen = math.Pow(10, y) / 10.0
 #+end_src
 #+begin_src latex
-  We place it 1/10-th of the plot height, $h$, above the top branch, so
-  it starts at $(x_{\rm m},y_{\rm m}+h/10)$.
+  We place it by the margin, $m$, above the plot height, $h$, so
+  it starts at $(x_{\rm m},y_{\rm m}+h\times m)$.
 #+end_src
 #+begin_src go <<Determine scale coordinates, Ch.~\ref{ch:pt}>>=
   x1 := dim.xMax
   height := dim.yMax - dim.yMin
-  y := dim.yMax + height / 10.0
+  y := dim.yMax + height * opts.Margin
   x2 := x1 - scaleLen
 #+end_src
 #+begin_src latex
@@ -811,8 +826,8 @@
 #+end_src
 #+begin_src latex
   We write the \ty{gnuplot} code in four steps: We write the terminal,
-  remove the axes, write the labels, write the plot, and write its
-  segments.
+  remove the axes, write the labels, write the plot, its segments, and
+  its margins.
 #+end_src
 #+begin_src go <<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:pt}>>=
   //<<Write terminal, Ch.~\ref{ch:pt}>>
@@ -820,6 +835,7 @@
   //<<Write labels, Ch.~\ref{ch:pt}>>
   //<<Write plot, Ch.~\ref{ch:pt}>>
   //<<Write segments, Ch.~\ref{ch:pt}>>
+  //<<Write margins, Ch.~\ref{ch:pt}>>
 #+end_src
 #+begin_src latex
   The terminal is either encapsulated postscript or a persistent
@@ -828,13 +844,11 @@
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pt}>>=
   t := "set terminal"
   if opts.Ps != "" {
-	  t += " eps monochrome"
+	  t += " postscript eps monochrome"
   } else {
 	  t += " " + opts.Win + " persist"
   }
-  if opts.Dim[0] != 'x' && opts.Ps != "" {
-	  t += " size " + opts.Dim
-  }
+  t += " size " + opts.Dim
   fmt.Fprintf(wr, "%s\n", t)
 #+end_src
 #+begin_src latex
@@ -874,22 +888,24 @@
   }
 #+end_src
 #+begin_src latex
-  Our plot is a line plot in black that might have a title. It has a
-  size on the screen and an origin that is adjusted with respect to that
-  size. For unrooted trees we adjust horizontally and vertically, for
-  rooted trees just vertically.
+  Our plot is a line plot in black that might have a title.
 #+end_src
 #+begin_src go <<Write plot, Ch.~\ref{ch:pt}>>=
   if opts.Title != "" {
 	  fmt.Fprintf(wr, "set title \"%s\"\n",
 		  opts.Title)
   }
-  fmt.Fprintf(wr, "set size %.3f\n", opts.Size)
-  xo := 0.0
-  yo := (1.0 - opts.Size) / 2.0
-  if !rooted { xo = yo }
-  fmt.Fprintf(wr, "set origin %.3f, %.3f\n", xo, yo)
-  fmt.Fprintf(wr, "plot \"-\" t \"\" w l lw 3 lc \"black\"\n")
+  fmt.Fprintf(wr, "plot \"-\" t \"\" w l lc \"black\"")
+#+end_src
+#+begin_src latex
+  For postscript output we set the line width to 3 before we terminate
+  the plot command with a newline.
+#+end_src
+#+begin_src go <<Write plot, Ch.~\ref{ch:pt}>>=
+  if opts.Ps != "" {
+	  fmt.Fprintf(wr, " lw 3")
+  }
+  fmt.Fprintf(wr, "\n")
 #+end_src
 #+begin_src latex
   Segments are pairs of points set off by a blank line.
@@ -902,6 +918,31 @@
 	  fmt.Fprintf(wr, "%.3f %.3f\n%.3f %.3f\n",
 		  s.x1, s.y1, s.x2, s.y2)
   }
+#+end_src
+#+begin_src latex
+  We write the margins for the leaf labels. All trees have labels on the
+  right hand side, so we place an extra dot there. In addition, unrooted
+  trees require margins on the other three sides.
+#+end_src
+#+begin_src go <<Write margins, Ch.~\ref{ch:pt}>>=
+  xOffset := width * opts.Margin
+  x := dim.xMax + xOffset
+  fmt.Fprintf(wr, "\n%.3f 0\n", x)
+  if !rooted {
+	  //<<Add margins to unrooted tree, Ch.~\ref{ch:pt}>>
+  }
+#+end_src
+#+begin_src latex
+  We add margins to the top, bottom, and left.
+#+end_src
+#+begin_src go <<Add margins to unrooted tree, Ch.~\ref{ch:pt}>>=
+  yOffset := height * opts.Margin
+  y := height + yOffset
+  fmt.Fprintf(wr, "\n0 %.3f\n", y)
+  y = dim.yMin - yOffset
+  fmt.Fprintf(wr, "\n0 %.3f\n", y)
+  x = dim.xMin - xOffset
+  fmt.Fprintf(wr, "\n%.3f 0\n", x)
 #+end_src
 #+begin_src latex
   Having written all \ty{gnuplot} instructions to the output stream, we
