@@ -1,4 +1,4 @@
-set terminal qt persist
+set terminal qt persist size 300,300
 set format x ''
 unset xtics
 set x2tics mirror

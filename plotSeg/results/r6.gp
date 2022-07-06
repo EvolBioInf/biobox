@@ -1,4 +1,4 @@
-set terminal wxt persist
+set terminal wxt persist size 640,384
 set format x ''
 unset xtics
 set x2tics mirror

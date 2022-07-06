@@ -108,8 +108,10 @@
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:ps}>>=
   var optP = flag.String("p", "", "encapsulated postscript file")
-  var optD = flag.String("d", "x[cm],y[cm]", "dimensions of postscript plot " +
-	  "plot in inch or cm")
+  defScrDim := "640,384"
+  defPsDim := "5,3.5"
+  var optD = flag.String("d", defScrDim, "plot dimensions; " +
+	    "pixels for screen or " + defPsDim + " inches for ps")
   var optS = flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
@@ -184,6 +186,15 @@
   Xlab, Ylab, Xrange, Yrange, Dim string
   Width, Height float64
   Win, Ps, Script, Gp string
+#+end_src
+#+begin_src latex
+  If the user requested postscript output but didn't set a size, we set
+  the default postscript size.
+#+end_src
+#+begin_src go <<Collect option values, Ch.~\ref{ch:ps}>>=
+  if opts.Ps != "" && opts.Dim == defScrDim {
+	  opts.Dim = defPsDim
+  }
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are taken as input
@@ -298,13 +309,11 @@
 #+begin_src go <<Write terminal, Ch.~\ref{ch:ps}>>=
   t := "set terminal"
   if opts.Ps != "" {
-	  t += " eps monochrome"
+	  t += " postscript eps monochrome"
   } else {
 	  t += " " + opts.Win + " persist"
   }
-  if opts.Dim[0] != 'x' && opts.Ps != "" {
-	  t += " size " + opts.Dim
-  }
+  t += " size " + opts.Dim
   fmt.Fprintf(w, "%s\n", t)
 #+end_src
 #+begin_src latex
@@ -460,7 +469,7 @@
   We set the plot dimensions.
 #+end_src
 #+begin_src go <<Test plot size, Ch.~\ref{ch:ps}>>=
-  te = exec.Command("./plotSeg", "-s", g, "-d", "5,6", f)
+  te = exec.Command("./plotSeg", "-s", g, "-d", "300,300", f)
   tests = append(tests, te)
 #+end_src
 #+begin_src latex
