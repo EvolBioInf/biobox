@@ -65,7 +65,7 @@
 #+begin_src go <<Set usage, Ch.~\ref{ch:ps}>>=
   u := "plotSeg [-h] [option]... [foo.dat]..."
   p := "Generate segment plots, also known as dot plots."
-  e := "mum2plot eco_x_y.mum | plotSeg -d 7.5cm,7.5cm"
+  e := "mum2plot eco_x_y.mum | plotSeg"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
