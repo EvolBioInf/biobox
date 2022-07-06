@@ -1,4 +1,4 @@
-set terminal wxt persist
+set terminal wxt persist size 640,384
 #Start external
 set title "External Title"
 #End external

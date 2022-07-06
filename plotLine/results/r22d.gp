@@ -1,4 +1,4 @@
-set terminal qt persist
+set terminal qt persist size 640,384
 #Start external
 set title "External Title"
 #End external

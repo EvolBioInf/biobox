@@ -1,4 +1,4 @@
-set terminal qt persist
+set terminal qt persist size 640,384
 set xlabel "x"
 plot[*:*][*:*] "-" t "g1" w l, "-" t "g2" w l
 1	1

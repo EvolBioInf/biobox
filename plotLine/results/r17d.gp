@@ -1,4 +1,4 @@
-set terminal qt persist
+set terminal qt persist size 640,384
 set logscale x
 set logscale y
 plot[0.1:10][*:*] "-" t "g1" w l, "-" t "g2" w l

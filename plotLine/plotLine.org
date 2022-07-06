@@ -63,7 +63,7 @@
   u := "plotLine [-h] [option]... [file]..."
   p := "Plot lines from columns of x/y data " +
 	  "and an optional group column."
-  e := "plotLine -S 7.5cm,4.75cm foo.dat"
+  e := "plotLine foo.dat"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_src latex
@@ -119,8 +119,10 @@
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
   var optP = flag.String("p", "", "encapsulated postscript file")
-  var optD = flag.String("d", "x[cm],y[cm]",
-	  "dimensions of postscript plot in inch or cm")
+  defScrDim := "640,384"
+  defPsDim := "5,3.5"
+  var optD = flag.String("d", defScrDim, "plot dimensions; " +
+	  "pixels for screen or " + defPsDim + " inches for ps")
 #+end_src
 #+begin_src latex
   At its core, \ty{gnuplot} is a graphing programming language. To make
@@ -188,6 +190,15 @@
   Xlab, Ylab, Xrange, Yrange, Unset, Dim string
   Points, LinesPoints bool
   Log, Script, Ps, Gp string
+#+end_src
+#+begin_src latex
+  If the user requested postscript output and didn't set a size, we set
+  the default postscript size.
+#+end_src
+#+begin_src go  <<Collect option values, Ch.~\ref{ch:pl}>>=
+  if args.Ps != "" && args.Dim == defScrDim {
+	  args.Dim = defPsDim
+  }
 #+end_src
 #+begin_src latex
   The default output window is wxt. If we're running on the macOS
@@ -362,9 +373,7 @@
   } else {
 	  t += " " + args.Win + " persist"
   }
-  if args.Dim[0] != 'x' && args.Ps != "" {
-	  t += " size " + args.Dim
-  }
+  t += " size " + args.Dim
   fmt.Fprintf(w, "%s\n", t)
 #+end_src
 #+begin_src latex

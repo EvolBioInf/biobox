@@ -1,4 +1,4 @@
-set terminal wxt persist
+set terminal wxt persist size 640,384
 plot[*:*][*:*] "-" t "g1" w p, "-" t "g2" w p
 1	1
 2	2
