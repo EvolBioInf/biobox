@@ -1,4 +1,5 @@
 set terminal qt persist size 640,384
+set object 1 rectangle from screen 0,0 to screen 1,1 fillcolor rgb 'white' behind
 #Start external
 set title "External Title"
 #End external

@@ -1,12 +1,11 @@
-set terminal qt persist
+set terminal qt persist size 640,384
+set object 1 rectangle from screen 0,0 to screen 1,1 fillcolor rgb 'white' behind
 unset xtics
 unset ytics
 unset border
 set label "0.1" c rotate by 0 at 0.950,4.600 front
 set title "newick_1"
-set size 0.900
-set origin 0.000, 0.050
-plot "-" t "" w l lw 3 lc "black"
+plot "-" t "" w l lc "black"
 0.000 2.750
 0.000 1.500
 
@@ -60,3 +59,5 @@ plot "-" t "" w l lw 3 lc "black"
 
 0.950 4.600
 0.950 4.600
+
+1.100 0
