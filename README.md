@@ -9,24 +9,22 @@ Tools for Bioinformatics
 - [Install Go](https://go.dev/doc/install) under your new Linux system 
 - Install additional packages  
   `$ sudo apt update`
-  `$ sudo apt install r-base-core r-cran-ggplot2 libgsl-dev noweb libdivsufsort-dev`
+  `$ sudo apt install gnuplot graphviz libgsl-dev noweb
+  libdivsufsort-dev texlive`
 - Make package  
   `$ make`  
   The directory `bin` should now contain the programs listed in `progs.txt`
 - Optional: Documentation  
-  `$ sudo apt install graphviz texlive-latex-extra texlive-science texlive-pstricks texlive-fonts-extra`  
+  `$ sudo apt install texlive-latex-extra texlive-science texlive-pstricks texlive-fonts-extra`  
   `$ make doc`  
   The documentation should now be in `doc/bioboxDoc.pdf`
 ## macOS
-- X-Code  
+- Install X-Code  
   `$ xcode-select --install`
-- [Homebrew](https://brew.sh)
-- Brew packages  
-  `$ brew tap brewsci/bio`
-  `$ brew install xquartz r tcl-tk gsl noweb texlive graphciz bewsci/bio/libdivsufsort`__
-- Install the R-package `ggplot2` inside R  
-  `> install.packages("ggplot2")` 
-- [xQuartz](https://www.xquartz.org)
+- Install [Homebrew](https://brew.sh)
+- Install packages  
+  `$ brew tap brewsci/bio`__
+  `$ brew install bewsci/bio/libdivsufsort gnuplot graphviz gsl noweb tcl-tk texlive xquartz`__
 - Make package  
   `$ make`  
   The directory `bin` should now contain the programs listed in `progs.txt`
