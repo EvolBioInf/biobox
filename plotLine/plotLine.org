@@ -464,12 +464,13 @@
 #+begin_src latex
   The default style is ``lines'', or \ty{l}. However, the user might
   have opted either for ``linespoints'' (\ty{lp}), or for ``points''
-  (\ty{p}). The line is black if there is only one category.
+  (\ty{p}). The line is black if there is only one category and we
+  always use dots, which correspond to line type 7, as points.
 #+end_src
 #+begin_src go <<Construct style, Ch.~\ref{ch:pl}>>=
   style := "l"
-  if args.Points { style = "p" }
-  if args.LinesPoints { style = "lp" }
+  if args.Points { style = "p pt 7" }
+  if args.LinesPoints { style = "lp pt 7" }
   if len(categories) == 1 {
 	  style += " lc \"black\""
   }
