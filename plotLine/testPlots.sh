@@ -5,7 +5,7 @@
 ./plotLine -x "x" test3.dat
 ./plotLine -y "y" test3.dat
 ./plotLine -x "x" -y "y" test3.dat
-./plotLine -d 5,5 test3.dat
+./plotLine -d 340,340 test3.dat
 ./plotLine -l x test3.dat
 ./plotLine -l y test3.dat
 ./plotLine -l xy test3.dat

@@ -383,13 +383,15 @@
   "fmt"
 #+end_src
 #+begin_src latex
-  \ty{gnuplot} version 5.4 patch level 3 generates plots with red
+  \ty{gnuplot} version 5.4 patch level 3 generates screen plots with red
   background---at least on macOS. We make sure our plots are white.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pl}>>=
-  c := "set object 1 rectangle from screen 0,0 " +
-	  "to screen 1,1 fillcolor rgb 'white' behind"
-  fmt.Fprintf(w, "%s\n", c)
+  if args.Ps == "" {
+	  c := "set object 1 rectangle from screen 0,0 " +
+		  "to screen 1,1 fillcolor rgb 'white' behind"
+	  fmt.Fprintf(w, "%s\n", c)
+  }
 #+end_src
 #+begin_src latex
    If the terminal is postscript, we also set the output file.
@@ -618,7 +620,7 @@
 #+end_src
 #+begin_src go <<Test plot size, Ch.~\ref{ch:pl}>>=
   test = exec.Command("./plotLine", "-s", g,
-	  "-p", "test.ps", "-d", "5,5", "test3.dat")
+	  "-p", "test.ps", "-d", "340,340", "test3.dat")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
