@@ -110,7 +110,7 @@
   defPsDim := "5,3.5"
   var optD = flag.String("d", defScrDim, "plot dimensions; " +
 	  "pixels for screen or " + defPsDim + " inches for ps")
-  var optM = flag.Float64("m", 0.1, "margin")
+  var optM = flag.Float64("m", 0.2, "margin")
   var optC = flag.Float64("c", 0.0, "scale")
 #+end_src
 #+begin_src latex
