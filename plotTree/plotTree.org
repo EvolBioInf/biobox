@@ -703,7 +703,7 @@
 #+end_src
 #+begin_src go <<Draw scale line, Ch.~\ref{ch:pt}>>=
   scaleLen := opts.Scale
-  width := 0.0
+  width := dim.xMax - dim.xMin
   if scaleLen == 0.0 {
 	  //<<Determine scale length, Ch.~\ref{ch:pt}>>
   }
@@ -721,7 +721,6 @@
   user can set a length, but this should be a good starting point.
 #+end_src
 #+begin_src go <<Determine scale length, Ch.~\ref{ch:pt}>>=
-  width = dim.xMax - dim.xMin
   y := math.Round(math.Log10(width))
   scaleLen = math.Pow(10, y) / 10.0
 #+end_src
@@ -732,7 +731,7 @@
 #+begin_src go <<Determine scale coordinates, Ch.~\ref{ch:pt}>>=
   x1 := dim.xMax
   height := dim.yMax - dim.yMin
-  y := dim.yMax + height * opts.Margin
+  y := dim.yMax + height / 10.0
   x2 := x1 - scaleLen
 #+end_src
 #+begin_src latex
