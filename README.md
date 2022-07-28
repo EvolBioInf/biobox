@@ -8,7 +8,7 @@ Tools for Bioinformatics
 - Install gWSL from the Microsoft Store and start it to run Linux graphics applications
 - [Install Go](https://go.dev/doc/install) under your new Linux system 
 - Install additional packages  
-  `$ sudo apt update`
+  `$ sudo apt update`__
   `$ sudo apt install gnuplot graphviz libgsl-dev noweb
   libdivsufsort-dev texlive`
 - Make package  
