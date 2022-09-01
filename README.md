@@ -3,14 +3,12 @@
 Tools for Bioinformatics
 ## Author
 [Bernhard Haubold](http://guanine.evolbio.mpg.de/), `haubold@evolbio.mpg.de`
-## Windows-Ubuntu
+## Windows/Ubuntu
 - [Install Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install)
-- Install gWSL from the Microsoft Store and start it to run Linux graphics applications
-- [Install Go](https://go.dev/doc/install) under your new Linux system 
 - Install additional packages  
   `$ sudo apt update`  
-  `$ sudo apt install gnuplot graphviz libgsl-dev noweb
-  libdivsufsort-dev texlive`
+  `$ sudo apt upgrade`  
+  `$ sudo apt install gnuplot golang graphviz libgsl-dev make noweb libdivsufsort-dev texlive`
 - Make package  
   `$ make`  
   The directory `bin` should now contain the programs listed in `progs.txt`
@@ -23,8 +21,8 @@ Tools for Bioinformatics
   `$ xcode-select --install`
 - Install [Homebrew](https://brew.sh)
 - Install packages  
-  `$ brew tap brewsci/bio`__
-  `$ brew install bewsci/bio/libdivsufsort gnuplot graphviz gsl noweb tcl-tk texlive xquartz`__
+  `$ brew tap brewsci/bio`  
+  `$ brew install bewsci/bio/libdivsufsort gnuplot graphviz gsl noweb tcl-tk texlive xquartz`
 - Make package  
   `$ make`  
   The directory `bin` should now contain the programs listed in `progs.txt`
