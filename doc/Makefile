@@ -18,10 +18,10 @@ bioboxDoc.pdf: $(src) rd1.ps rd2.ps
 	latex bioboxDoc
 	latex bioboxDoc
 	dvips bioboxDoc -o -q
-	ps2pdf bioboxDoc.ps
+	ps2pdf -dALLOWPSTRANSPARENCY bioboxDoc.ps
 rd1.ps: ../ranDot/rd1.dot
 	neato -T ps ../ranDot/rd1.dot > rd1.ps
 rd2.ps: ../ranDot/rd2.dot
 	neato -T ps ../ranDot/rd2.dot > rd2.ps
 clean:
-	rm -f $(src) *.pdf *.aux *.bbl *.blg *.dvi *.log *.to rd1.ps rd2.ps
+	rm -f $(src) *.pdf *.aux *.bbl *.blg *.dvi *.log *.to *.toc rd1.ps rd2.ps

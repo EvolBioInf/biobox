@@ -12,6 +12,7 @@ doc/bioboxDoc.pdf
 doc/bioboxDoc.toc
 doc/bioboxDoc.ps
 doc/rd*.ps
+doc/*~
 
 # LaTeX files of individual programs
 doc/al.tex
