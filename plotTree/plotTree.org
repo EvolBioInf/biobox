@@ -888,7 +888,7 @@
   We iterate over the segments and write any labels they might contain.
 #+end_src
 #+begin_src go <<Write labels, Ch.~\ref{ch:pt}>>=
-  t = "set label \"%s\" %s rotate by %d at %.3f,%.3f front\n"
+  t = "set label \"%s\" %s rotate by %d at %.4g,%.4g front\n"
   for _, s := range segments {
 	  if s.l != "" {
 		  a := int(math.Round(s.a))
@@ -925,7 +925,7 @@
 	  if i > 0 {
 		  fmt.Fprintf(wr, "\n")
 	  }
-	  fmt.Fprintf(wr, "%.3f %.3f\n%.3f %.3f\n",
+	  fmt.Fprintf(wr, "%.4g %.4g\n%.4g %.4g\n",
 		  s.x1, s.y1, s.x2, s.y2)
   }
 #+end_src
@@ -937,7 +937,7 @@
 #+begin_src go <<Write margins, Ch.~\ref{ch:pt}>>=
   xOffset := width * opts.Margin
   x := dim.xMax + xOffset
-  fmt.Fprintf(wr, "\n%.3f 0\n", x)
+  fmt.Fprintf(wr, "\n%.4g 0\n", x)
   if !rooted {
 	  //<<Add margins to unrooted tree, Ch.~\ref{ch:pt}>>
   }
@@ -948,11 +948,11 @@
 #+begin_src go <<Add margins to unrooted tree, Ch.~\ref{ch:pt}>>=
   yOffset := height * opts.Margin
   y := height + yOffset
-  fmt.Fprintf(wr, "\n0 %.3f\n", y)
+  fmt.Fprintf(wr, "\n0 %.4g\n", y)
   y = dim.yMin - yOffset
-  fmt.Fprintf(wr, "\n0 %.3f\n", y)
+  fmt.Fprintf(wr, "\n0 %.4g\n", y)
   x = dim.xMin - xOffset
-  fmt.Fprintf(wr, "\n%.3f 0\n", x)
+  fmt.Fprintf(wr, "\n%.4g 0\n", x)
 #+end_src
 #+begin_src latex
   Having written all \ty{gnuplot} instructions to the output stream, we
