@@ -191,7 +191,7 @@
   }
   out := tabwriter.NewWriter(os.Stdout, 2, 1, 2, ' ' ,0)
   if !opts.l {
-	  fmt.Fprintf(out, "#qa\tsa\tqs\tqe\tsa\tse\tscore\n")
+	  fmt.Fprintf(out, "#qa\tsa\tqs\tqe\tss\tse\tscore\n")
   } else {
 	  fmt.Fprintf(out, "#qa\tn\tword\n")
   }
