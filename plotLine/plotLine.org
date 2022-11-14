@@ -369,7 +369,7 @@
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pl}>>=
   t := "set terminal"
   if args.Ps != "" {
-	  t += " eps color"
+	  t += " postscript eps color"
   } else {
 	  t += " " + args.Win + " persist"
   }
