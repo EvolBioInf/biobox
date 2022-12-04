@@ -333,14 +333,14 @@ type leafSlice []*nwk.Node
 #+begin_src latex
   We label a leaf for character \ty{c} using a constant-length prefix
   followed by the variable-length code. The prefix consists of either a
-  zero or a one, an underscore, the character encoded, and a slash. In
+  zero or a one, a hyphen, the character encoded, and a slash. In
   other words, the label follows the pattern
   \begin{verbatim}
-  [0|1]_c/code
+  [0|1]-c/code
   \end{verbatim}
 #+end_src
 #+begin_src go <<Store leaf label, Ch.~\ref{ch:hut}>>=
-  n.Label = fmt.Sprintf("\"%s_%c/%s\"", n.Label, labels[n.Id], code)
+  n.Label = fmt.Sprintf("\"%s-%c/%s\"", n.Label, labels[n.Id], code)
 #+end_src
 #+begin_src latex
   We import \ty{fmt}.
