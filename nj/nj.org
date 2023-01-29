@@ -100,12 +100,17 @@
 #+end_src
 #+begin_src latex
   Apart from the version (\ty{-v}), we declare an option for printing
-  the intermediate distance matrices, \ty{-m}.
+  the intermediate distance matrices, \ty{-m}. Also, the
+  neighbor-joining algorithm allows negative branch lengths. These make
+  little biological sense and are usually set to zero. However, users
+  might be interested in the result of ``pure'' neighbor joining, hence
+  we also declare an option for allowing negative branch lengths.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:nj}>>=
   var optV = flag.Bool("v", false, "version")
   var optM = flag.Bool("m", false, "print intermediate " +
 	  "matrices")
+  var optN = flag.Bool("n", false, "allow negative branch lengths")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -132,19 +137,20 @@
 #+begin_src latex
   The remaining tokens on the command line are taken as the names of
   input files. These are parsed using the function \ty{scan}, which in
-  turn takes the \ty{-m} option as argument.
+  turn takes the options \ty{-m} and \ty{-n} as arguments.
 #+end_src
 #+begin_src go <<Parse input files, Ch.~\ref{ch:nj}>>=
   files := flag.Args()
-  clio.ParseFiles(files, scan, *optM)
+  clio.ParseFiles(files, scan, *optM, *optN)
 #+end_src
 #+begin_src latex
-  Inside \ty{scan}, we retrieve \ty{-m} and iterate over the distance
-  matrices in the input.
+  Inside \ty{scan}, we retrieve \ty{-m} and \ty{-n}, and iterate over
+  the distance matrices in the input.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:nj}>>=
   func scan(r io.Reader, args ...interface{}) {
 	  printMat := args[0].(bool)
+	  negBr := args[1].(bool)
 	  sc := dist.NewScanner(r)
 	  for sc.Scan() {
 		  dm := sc.DistanceMatrix()
@@ -374,12 +380,17 @@
 #+begin_src latex
   There are now three taxa left. We connect them to generate the final
   tree. In that tree, we have labeled the internal nodes to help make
-  sense of the printed matrices. So in a last step, we remove these
-  labels again, as phylogenies only have leaf labels.
+  sense of the printed matrices. So we remove these labels again, as
+  phylogenies only have leaf labels. Finally, we set negative branch
+  lengths to zero, unless the user allowed negative branch lengths.
 #+end_src
 #+begin_src go <<Finish tree, Ch.~\ref{ch:nj}>>=
-  <<Cluster last three nodes, Ch.~\ref{ch:nj}>>
-  <<Reset internal node labels, Ch.~\ref{ch:nj}>>
+  //<<Cluster last three nodes, Ch.~\ref{ch:nj}>>
+  //<<Reset internal node labels, Ch.~\ref{ch:nj}>>
+  if !negBr {
+	  //<<Set negative branch lengths to zero, Ch.~\ref{ch:nj}>>
+  }
+
 #+end_src
 #+begin_src go <<Cluster last three nodes, Ch.~\ref{ch:nj}>>=
   c1 := t[0]
@@ -422,6 +433,27 @@
 	  resetLabels(v.Sib)
 	  if v.Child != nil {
 		  v.Label = ""
+	  }
+  }
+#+end_src
+#+begin_src latex
+  We set the negative branch lengths by calling the function
+  \ty{correctBranchLenghts}.
+#+end_src
+#+begin_src go <<Set negative branch lengths to zero, Ch.~\ref{ch:nj}>>=
+  correctBranchLengths(root)
+#+end_src
+#+begin_src latex
+  The function \ty{correctBranchLenghts} recursively visits each node
+  and sets negative branch lengths to zero.
+#+end_src
+#+begin_src go <<Functions, Ch.~\ref{ch:nj}>>=
+  func correctBranchLengths(v *nwk.Node) {
+	  if v == nil { return }
+	  correctBranchLengths(v.Child)
+	  correctBranchLengths(v.Sib)
+	  if v.Length < 0 {
+		  v.Length = 0.0
 	  }
   }
 #+end_src
