@@ -22,7 +22,7 @@ Tools for Bioinformatics
 - Install [Homebrew](https://brew.sh)
 - Install packages  
   `$ brew tap brewsci/bio`  
-  `$ brew install bewsci/bio/libdivsufsort gnuplot graphviz gsl noweb tcl-tk texlive xquartz`
+  `$ brew install brewsci/bio/libdivsufsort gnuplot graphviz gsl noweb tcl-tk texlive xquartz`
 - Make package  
   `$ make`  
   The directory `bin` should now contain the programs listed in `progs.txt`
