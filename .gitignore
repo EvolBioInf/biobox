@@ -1,6 +1,5 @@
 progs.txt
 */*.go
-!util/util.go
 !newick/newick.go
 bin/*
 doc/bioboxDoc.aux

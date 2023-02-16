@@ -1017,3 +1017,41 @@ if err != nil {
 	  t.Errorf("couldn't remove %q\n", fn)
   }
 #+end_src
+#+begin_export latex
+\section{Function \ty{CheckGnuplot}}
+!\ty{CheckGnuplot} checks the error returned by a \ty{gnuplot} run.
+#+end_export
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func CheckGnuplot(err error) {
+	  if err != nil {
+		  m := "Error when plotting with gnuplot; "
+		  m += "you might like to try a different terminal. "
+		  m += "To get the list of available terminals, "
+		  m += "start gnuplot and enter \"set term\"."
+		  log.Fatal(m)
+	  }
+  }
+#+end_src
+#+begin_export latex
+\section{\ty{PrepareErrorMessages}}
+In \ty{CheckGnuplot} and elsewhere, we handle errors via the \ty{log}
+package. By default, this prefixes the error message with time and
+date. Instead, we'd like error messages prefixed with the name of the
+program and with date and time suppressed.
+
+!\ty{PrepareErrorMessages} takes as argument the program name and sets
+!this as the prefix for error messages from the \ty{log} package.
+#+end_export
+#+begin_src go <<Functions, Pa. \ref{pa:util}>>=
+  func PrepareErrorMessages(name string) {
+	  m := fmt.Sprintf("%s - ", name)
+	  log.SetPrefix(m)
+	  log.SetFlags(0)
+  }
+#+end_src
+#+begin_export latex
+We import \ty{fmt}.
+#+end_export
+#+begin_src go <<Imports, Pa. \ref{pa:util}>>=
+  "fmt"
+#+end_src

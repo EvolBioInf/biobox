@@ -72,9 +72,9 @@
 #+end_src
 #+begin_src latex
   Apart from the built-in help option (\ty{-h}), we declare a version
-  option (\ty{-v}) and a set of program-specific options: By default, we
-  interpret a bifurcating root as belonging to a rooted tree drawn like
-  Figure~\ref{fig:phy}B, and a trifurcating root as belonging to an
+  option (\ty{-v}), and a set of program-specific options: By default,
+  we interpret a bifurcating root as belonging to a rooted tree drawn
+  like Figure~\ref{fig:phy}B, and a trifurcating root as belonging to an
   unrooted tree drawn like Figure~\ref{fig:phy}C. However, the user can
   enforce a rooted (\ty{-r}) or an unrooted (\ty{-u}) layout
   irrespective of the degree of the root.
@@ -98,13 +98,14 @@
   var optN = flag.Bool("n", false, "no node labels (default input)")
 #+end_src
 #+begin_src latex
-  The default output is drawn to the screen, but the user can also draw
-  the tree to a postscript file (\ty{-p}) and give that postscript plot
-  specific dimensions (\ty{-d}). The user can set the plot margins as a
-  fraction of the plot size (\ty{-m}), and the scale of the tree
-  (\ty{-c}).
+  The default output is drawn to the screen, for which the user can set
+  the terminal. Alternatively, the user can draw the tree to a
+  postscript file (\ty{-p}) and give that postscript plot specific
+  dimensions (\ty{-d}). The user can set the plot margins as a fraction
+  of the plot size (\ty{-m}), and the scale of the tree (\ty{-c}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
+  var optT = flag.String("t", "", "terminal (default wxt, qt on darwin)")
   var optP = flag.String("p", "", "encapsulated postscript file")
   defScrDim := "640,384"
   defPsDim := "5,3.5"
@@ -178,15 +179,18 @@
 	  opts.Dim = defPsDim
   }
 #+end_src
-
-
 #+begin_src latex
-  We also set the window, which by default is wxt, but on darwin systems
-  (macOS) becomes qt.
+  If the user didn't set a terminal, we set it to wxt unless we are
+  running on the darwin system (macOS), in which case we switch to qt.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:pt}>>=
-  opts.Win = "wxt"
-  if runtime.GOOS == "darwin" { opts.Win = "qt" }
+  opts.Win = *optT
+  if opts.Win == "" {
+	  opts.Win = "wxt"
+	  if runtime.GOOS == "darwin" {
+		  opts.Win = "qt"
+	  }
+  }
 #+end_src
 #+begin_src latex
   We add the \ty{opts} field \ty{Win}.
@@ -962,13 +966,11 @@
   wr.Close()
 #+end_src
 #+begin_src latex
-  We run the \ty{gnuplot} command and check for errors.
+  We run the \ty{gnuplot} command and check the error it returns.
 #+end_src
 #+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:pt}>>=
   err = gcmd.Run()
-  if err != nil {
-	  log.Fatal(err)
-  }
+  util.CheckGnuplot(err)
 #+end_src
 #+begin_src latex
   There is still the file counter to increment.

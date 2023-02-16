@@ -113,11 +113,12 @@
   var optS = flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
-  The default output destination is the screen. Alternatively, the user
-  can write the output to a file of encapsulated postscript. In that
-  case, the user can also set the plot dimensions.
+  The default output destination is the screen and the user can set the
+  terminal. Alternatively, the user can write the output to a file of
+  encapsulated postscript. The user can also set the plot dimensions.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
+  var optT = flag.String("t", "", "terminal (default wxt, qt on darwin)")
   var optP = flag.String("p", "", "encapsulated postscript file")
   defScrDim := "640,384"
   defPsDim := "5,3.5"
@@ -205,9 +206,12 @@
   command line, we switch to qt.
 #+end_src
 #+begin_src go <<Set type of output window, Ch.~\ref{ch:pl}>>=
-  args.Win = "wxt"
-  if runtime.GOOS == "darwin" {
-	  args.Win = "qt"
+  args.Win = *optT
+  if args.Win == "" {
+	  args.Win = "wxt"
+	  if runtime.GOOS == "darwin" {
+		  args.Win = "qt"
+	  }
   }
 #+end_src
 #+begin_src latex 
@@ -515,9 +519,7 @@
 #+end_src
 #+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:pl}>>=
   err = gcmd.Run()
-  if err != nil {
-	  log.Fatal(err)
-  }
+  util.CheckGnuplot(err)
 #+end_src
 #+begin_src latex
   We've finished \ty{plotLine}, let's test it.

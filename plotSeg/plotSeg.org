@@ -102,11 +102,13 @@
   var optYY = flag.String("Y", "*:*", "y-range")
 #+end_src
 #+begin_src latex
-  Instead of showing the plot in a window, the user can write it as
+  The user can chose the terminal for displaying the plot. Moreover,
+  instead of showing the plot in a window, the user can write it as
   encapsulated postscript and set its size. The user can also ask for
   the \ty{gnuplot} script of the plot.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:ps}>>=
+  var optT = flag.String("t", "", "terminal (default wxt, qt on darwin)")
   var optP = flag.String("p", "", "encapsulated postscript file")
   defScrDim := "640,384"
   defPsDim := "5,3.5"
@@ -156,10 +158,8 @@
   }
 #+end_src
 #+begin_src latex
-  We collect the axis labels, axis ranges, the plot size, and the
-  graphics window. This is wxt by default, but if we are running on
-  macOS, we switch to qt. We also collect the names of the files for
-  postscript and \ty{gnuplot} output.
+  We collect the axis labels, axis ranges, the plot size, and the names
+  of the files for postscript and \ty{gnuplot} output.
 #+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:ps}>>=
   opts.Xlab = *optX
@@ -167,11 +167,23 @@
   opts.Xrange = *optXX
   opts.Yrange = *optYY
   opts.Dim = *optD
-  opts.Win = "wxt"
-  if runtime.GOOS == "darwin" { opts.Win = "qt" }
   opts.Ps = *optP
   opts.Script = *optS
   opts.Gp = *optG
+#+end_src
+#+begin_export latex
+The one option we haven't collected yet is the terminal. This is wxt
+by default, but if we are running on darwin under macOS, the default
+is qt.
+#+end_export
+#+begin_src go <<Collect option values, Ch.~\ref{ch:ps}>>=
+  opts.Win = *optT
+  if opts.Win == "" {
+	  opts.Win = "wxt"
+	  if runtime.GOOS == "darwin" {
+		  opts.Win = "qt"
+	  }
+  }
 #+end_src
 #+begin_src latex
   We import \ty{runtime}.
@@ -385,13 +397,11 @@
   w.Close()
 #+end_src
 #+begin_src latex
-  We run \ty{gnuplot} and check for errors.
+  We run \ty{gnuplot} and check its error.
 #+end_src
 #+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:ps}>>=
   err = gcmd.Run()
-  if err != nil {
-	  log.Fatal(err)
-  }
+  util.CheckGnuplot(err)
 #+end_src
 #+begin_src latex
   The program \ty{plotSeg} is finished, let's test it.
