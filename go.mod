@@ -3,7 +3,6 @@ module github.com/evolbioinf/biobox
 go 1.17
 
 require (
-	github.com/evolbioinf/biobox/util v0.0.0-20220323160020-bfe486ab8891
 	github.com/evolbioinf/clio v0.0.0-20210309091639-82cb91a31b0c
 	github.com/evolbioinf/dist v0.0.0-20221021155517-bd737e57ff45
 	github.com/evolbioinf/esa v0.0.0-20220119170951-53a316f07a9b
@@ -12,3 +11,4 @@ require (
 	github.com/evolbioinf/nwk v0.0.0-20230129095444-f1548e0e0397
 	github.com/evolbioinf/pal v0.0.0-20220704163646-8994e5ba84d9
 )
+replace github.com/evolbioinf/biobox/util => ../util
