@@ -34,14 +34,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, declare the options, parse the
-  options, and parse the input sequences.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the input sequences.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:seq}>>=
+  util.PrepLog("sequencer")
   //<<Set usage, Ch.~\ref{ch:seq}>>
   //<<Declare options, Ch.~\ref{ch:seq}>>
   //<<Parse options, Ch.~\ref{ch:seq}>>
   //<<Parse input files, Ch.~\ref{ch:seq}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -138,12 +145,6 @@
   if *optV {
 	  util.PrintInfo("sequencer")
   }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:seq}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   We seed the random number generator either from the seed provided by

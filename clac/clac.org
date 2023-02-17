@@ -74,14 +74,22 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage of \ty{clac}, declare its
-  options, parse the options, and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage of
+  \ty{clac}, declare its options, parse the options, and parse the input
+  files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:clac}>>=
+  util.PrepLog("clac")
   //<<Set usage, Ch.~\ref{ch:clac}>>
   //<<Declare options, Ch.~\ref{ch:clac}>>
   //<<Parse options, Ch.~\ref{ch:clac}>>
   //<<Parse input files, Ch.~\ref{ch:clac}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of
@@ -129,10 +137,9 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{util} and \ty{nwk}.
+  We import \ty{nwk}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:clac}>>=
-  "github.com/evolbioinf/biobox/util"
   "github.com/evolbioinf/nwk"
 #+end_src
 #+begin_src latex

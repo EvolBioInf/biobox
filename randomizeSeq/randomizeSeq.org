@@ -20,13 +20,20 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, and parse the options and the
-  input.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  and parse the options and the input.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:rs}>>=
+  util.PrepLog("randomizeSeq")
   //<<Set usage, Ch.~\ref{ch:rs}>>
   //<<Parse options, Ch.~\ref{ch:rs}>>
   //<<Parse input, Ch.~\ref{ch:rs}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:rs}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage has three parts, the actual usage statement, a description,
@@ -54,11 +61,10 @@
   }
 #+end_src
 #+begin_src latex
-  We import \texttt{flag} and \texttt{util},
+  We import \texttt{flag}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:rs}>>=
   "flag"
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   and declare the options. Apart from version (\texttt{-v}), the user

@@ -64,16 +64,24 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, declare and parse the options, read the
-  two input files, carry out the tests, and print the results.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  declare and parse the options, read the two input files, carry out the
+  tests, and print the results.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:tm}>>=
+  util.PrepLog("testMeans")
   //<<Set usage, Ch.~\ref{ch:tm}>>
   //<<Declare options, Ch.~\ref{ch:tm}>>
   //<<Parse options, Ch.~\ref{ch:tm}>>
   //<<Read input files, Ch.~\ref{ch:tm}>>
   //<<Carry out tests, Ch.~\ref{ch:tm}>>
   //<<Print results, Ch.~\ref{ch:tm}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage message has three parts, the usage proper, an explanation of
@@ -132,11 +140,10 @@
   //<<Get names of input files, Ch.~\ref{ch:tm}>>
 #+end_src
 #+begin_src latex
-  We import \texttt{rand} and \texttt{util}.
+  We import \texttt{rand}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:tm}>>=
   "math/rand"
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   If the user supplied a seed for the random number generator, we use

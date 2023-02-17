@@ -40,14 +40,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, declare the options, parse the
-  options, and parse the input files.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, ch.~\ref{ch:ma}>>=
+  util.PrepLog("maf")
   //<<Set usage, Ch.~\ref{ch:ma}>>
   //<<Declare options, Ch.~\ref{ch:ma}>>
   //<<Parse options, Ch.~\ref{ch:ma}>>
   //<<Parse input files, Ch.~\ref{ch:ma}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:ma}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -100,10 +107,9 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{util}, \ty{tabwriter}, \ty{os}, and \ty{fmt}.
+  We import \ty{tabwriter}, \ty{os}, and \ty{fmt}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:ma}>>=
-  "github.com/evolbioinf/biobox/util"
   "text/tabwriter"
   "os"
   "fmt"

@@ -89,14 +89,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:gc}>>=
+  util.PrepLog("geco")
   //<<Set usage, Ch.~\ref{ch:gc}>>
   //<<Declare options, Ch.~\ref{ch:gc}>>
   //<<Parse options, Ch.~\ref{ch:gc}>>
   //<<Parse input files, Ch.~\ref{ch:gc}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go  <<Imports, Ch.~\ref{ch:gc}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -143,12 +150,6 @@
   if *optN > 0 {
 	  //<<Seed random number generator, Ch.~\ref{ch:gc}>>
   }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go  <<Imports, Ch.~\ref{ch:gc}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The random number generator is either initialized with the seed the

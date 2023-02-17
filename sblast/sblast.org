@@ -60,14 +60,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:sb}>>=
+  util.PrepLog("sblast")
   //<<Set usage, Ch.~\ref{ch:sb}>>
   //<<Declare options, Ch.~\ref{ch:sb}>>
   //<<Parse options, Ch.~\ref{ch:sb}>>
   //<<Parse input files, Ch.~\ref{ch:sb}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -141,12 +148,6 @@
 	  util.PrintInfo("sblast")
   }
   //<<Collect option values, Ch.~\ref{ch:sb}>>
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   There are seven options we later pass to the BLAST algorithm. To

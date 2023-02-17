@@ -62,14 +62,22 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage of \ty{huff}, declare its
-  options, parse the options, and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage of
+  \ty{huff}, declare its options, parse the options, and parse the input
+  files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:huf}>>=
+  util.PrepLog("huff")
   //<<Set usage, Ch.~\ref{ch:huf}>>
   //<<Declare options, Ch.~\ref{ch:huf}>>
   //<<Parse options, Ch.~\ref{ch:huf}>>
   //<<Parse input files, Ch.~\ref{ch:huf}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:huf}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -109,12 +117,6 @@
   if *optV {
 	  util.PrintInfo("huff")
   }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:huf}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   We interpret the remaining tokens on the command line as file

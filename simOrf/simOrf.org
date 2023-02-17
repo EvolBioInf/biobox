@@ -22,14 +22,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, and simulate the ORFs.
+  In the main function we prepare the \ty{log} package}, set the usage,
+    declare the options, parse the options, and simulate the ORFs.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:so}>>=
+  util.PrepLog("simOrf")
   //<<Set usage, Ch.~\ref{ch:so}>>
   //<<Declare options, Ch.~\ref{ch:so}>>
   //<<Parse options, Ch.~\ref{ch:so}>>
   //<<Simulate ORFs, Ch.~\ref{ch:so}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src go <<Set usage, Ch.~\ref{ch:so}>>=
   u := "simOrf [-h] [option]..."
@@ -75,12 +82,6 @@
   if *optV {
 	  util.PrintInfo("simOrf")
   }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:so}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The seed for the random number generator is either given by the user

@@ -115,14 +115,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare and parse the options,
-  and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare and parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:shu}>>=
+  util.PrepLog("shustring")
   //<<Set usage, Ch.~\ref{ch:shu}>>
   //<<Declare options, Ch.~\ref{ch:shu}>>
   //<<Parse options, Ch.~\ref{ch:shu}>>
   //<<Parse input files, Ch.~\ref{ch:shu}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:shu}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts, the usage message itself, a
@@ -180,12 +187,11 @@
   }
 #+end_src
 #+begin_src latex
-  We import \texttt{regexp}, \texttt{log}, and \texttt{util}.
+  We import \texttt{regexp} and \texttt{log}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:shu}>>=
   "regexp"
   "log"
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The arguments not parsed yet are interpreted as the names of the input

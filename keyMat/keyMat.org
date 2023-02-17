@@ -17,14 +17,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, declare and parse the options,
-  and run the search.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  declare and parse the options, and run the search.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:km}>>=
+  util.PrepLog("keyMat")
   //<<Set usage, Ch.~\ref{ch:km}>>
   //<<Declare options, Ch.~\ref{ch:km}>>
   //<<Parse options, Ch.~\ref{ch:km}>>
   //<<Run search, Ch.~\ref{ch:km}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage statement, an explanation of
@@ -73,12 +80,6 @@
   }
   //<<Collec patterns, Ch.~\ref{ch:km}>>
   //<<Check patterns, Ch.~\ref{ch:km}>>
-#+end_src
-#+begin_src latex
-  We import \texttt{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The patterns are collected from the command line or a file. Since the

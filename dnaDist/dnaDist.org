@@ -75,14 +75,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, declare the options and parse
-  them, and parse the input files.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  declare the options and parse them, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:dna}>>=
+  util.PrepLog("dnaDist")
   //<<Set usage, Ch.~\ref{ch:dna}>>
   //<<Declare options, Ch.~\ref{ch:dna}>>
   //<<Parse options, Ch.~\ref{ch:dna}>>
   //<<Parse input files, Ch.~\ref{ch:dna}>>
+#+end_src
+#+begin_src latex
+    We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dna}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of a message, an explanation of the program's
@@ -141,12 +148,6 @@
 if *optV {
 	util.PrintInfo("dnaDist")
 }
-#+end_src
-#+begin_src latex
-    We import \texttt{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:dna}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   As to the number of bootstrap replicates, two cases require attention:

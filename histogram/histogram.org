@@ -71,14 +71,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:his}>>=
+  util.PrepLog("histogram")
   //<<Set usage, Ch.~\ref{ch:his}>>
   //<<Declare options, Ch.~\ref{ch:his}>>
   //<<Parse options, Ch.~\ref{ch:his}>>
   //<<Parse input files, Ch.~\ref{ch:his}>>
+#+end_src
+#+begin_src latex
+  We import  \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -131,12 +138,6 @@
   if *optV {
 	  util.PrintInfo("histogram")
   }
-#+end_src
-#+begin_src latex
-  We import  \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:his}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   If the user set a range, we store its values.

@@ -22,13 +22,20 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, parse the user options, and
-  generate the sequences.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  parse the user options, and generate the sequences.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:ran}>>=
+  util.PrepLog("ranseq")
   //<<Set usage, Ch.~\ref{ch:ran}>>
   //<<Parse options, Ch.~\ref{ch:ran}>>
   //<<Generate sequences, Ch.~\ref{ch:ran}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:ran}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   When setting the usage, we state the usage proper and give description
@@ -57,11 +64,10 @@
   }
 #+end_src
 #+begin_src latex
-  We import \texttt{flag} and \texttt{util}.
+  We import \texttt{flag}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:ran}>>=
   "flag"
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   We also declare the options. Apart from \texttt{-v}, there is the

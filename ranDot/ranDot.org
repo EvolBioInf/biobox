@@ -43,15 +43,22 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare and parse the options,
-  construct the graph, and print it.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare and parse the options, construct the graph, and print it.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:rd}>>=
+  util.PrepLog("ranDot")
   //<<Set usage, Ch.~\ref{ch:rd}>>
   //<<Declare options, Ch.~\ref{ch:rd}>>
   //<<Parse options, Ch.~\ref{ch:rd}>>
   //<<Construct graph, Ch.~\ref{ch:rd}>>
   //<<Print graph, Ch.~\ref{ch:rd}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rd}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -116,12 +123,6 @@
   if *optV {
 	  util.PrintInfo("ranDot")
   }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:rd}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   If the user didn't set a seed, we take the number of nanoseconds since

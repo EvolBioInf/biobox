@@ -23,13 +23,20 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, the usage is set, and the options and input
-  files are parsed.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  and parse the options and input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:cut}>>=
+  util.PrepLog("cutSeq")
   //<<Set usage, Ch.~\ref{ch:cut}>>
   //<<Parse options, Ch.~\ref{ch:cut}>>
   //<<Parse input, Ch.~\ref{ch:cut}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts: The usage proper, the program's
@@ -58,11 +65,10 @@
   }
 #+end_src
 #+begin_src latex
-  We import \texttt{flag} and \texttt{util}.
+  We import \texttt{flag}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:cut}>>=
   "flag"
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   Apart from the version flag, \texttt{-v}, we also declare a flag for

@@ -21,13 +21,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the \texttt{main} function we first set the usage, then parse the
-  options set by the user, and finally the input.
+  In the \texttt{main} function we first prepare the \ty{log} package,
+  then set the usage, parse the options set by the user, and finally the
+  input.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:cr}>>=
+  util.PrepLog("cres")
   //<<Set usage, Ch.~\ref{ch:cr}>>
   //<<Parse options, Ch.~\ref{ch:cr}>>
   //<<Parse input, Ch.~\ref{ch:cr}>>
+#+end_src
+#+begin_src latex
+  We import the package \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:cr}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   In addition to the usage, we describe the purpose and give an example
@@ -69,13 +77,6 @@
   if *optV {
 	  util.PrintInfo("cres")
   }
-#+end_src
-#+begin_src latex
-  We import the package \texttt{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:cr}>>=
-  "github.com/evolbioinf/biobox/util"
-  "os"
 #+end_src
 #+begin_src latex
   The values of \texttt{version} and \texttt{date} are injected at
@@ -209,9 +210,10 @@
   w.Flush()
 #+end_src
 #+begin_src latex
-  Import the \texttt{tabwriter} package.
+  Import the \ty{os} and \texttt{tabwriter}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:cr}>>=
+  "os"
   "text/tabwriter"
 #+end_src
 #+begin_src latex

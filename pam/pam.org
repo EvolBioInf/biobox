@@ -152,14 +152,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we state the usage, declare and parse the
-  options, and parse the input file.
+  In the main function, we prepare the \ty{log} package, state the
+  usage, declare and parse the options, and parse the input file.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:pam}>>=
+  util.PrepLog("pam")
   //<<Set usage, Ch.~\ref{ch:pam}>>
   //<<Declare options, Ch.~\ref{ch:pam}>>
   //<<Parse options, Ch.~\ref{ch:pam}>>
   //<<Parse input file, Ch.~\ref{ch:pam}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts: The usage message, an explanation
@@ -216,12 +223,6 @@
 	  //<<Open frequencies file, Ch.~\ref{ch:pam}>>
 	  //<<Read frequencies, Ch.~\ref{ch:pam}>>
   }
-#+end_src
-#+begin_src latex
-  We import \texttt{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pam}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   If the frequencies file cannot be opened, we abort.

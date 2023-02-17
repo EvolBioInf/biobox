@@ -19,13 +19,20 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, scan the options, and scan
-  the input.
+  In the main function we prepare the \ty{log} package, set the usage,
+  scan the options, and scan the input.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:rev}>>=
+  util.PrepLog("revComp")
   //<<Set usage, Ch.~\ref{ch:rev}>>
   //<<Parse options, Ch.~\ref{ch:rev}>>
   //<<Parse input, Ch.~\ref{ch:rev}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:rev}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the usage proper, a description of
@@ -53,11 +60,10 @@
   }
 #+end_src
 #+begin_src latex
-  We import \texttt{flag} and \texttt{util}.
+  We import \texttt{util}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:rev}>>=
   "flag"
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   We declare the options for version, \texttt{-v}, and for printing just the

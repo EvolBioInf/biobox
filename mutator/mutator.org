@@ -25,14 +25,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare and parse the options,
-  and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare and parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:mut}>>=
+  util.PrepLog("mutator")
   //<<Set usage, Ch.~\ref{ch:mut}>>
   //<<Declare options, Ch.~\ref{ch:mut}>>
   //<<Parse options, Ch.~\ref{ch:mut}>>
   //<<Parse input files, Ch.~\ref{ch:mut}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three strings, the usage message proper, an
@@ -87,12 +94,6 @@
   //<<Extract Positions, Ch.~\ref{ch:mut}>>
   //<<Set alphabet, Ch.~\ref{ch:mut}>>
   //<<Set up random number generator, Ch.~\ref{ch:mut}>>
-#+end_src
-#+begin_src latex
-  We import \texttt{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:mut}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   A string of positions is split into individual strings, which are

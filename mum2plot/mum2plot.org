@@ -73,14 +73,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:m2p}>>=
+  util.PrepLog("mum2plot")
   //<<Set usage, Ch.~\ref{ch:m2p}>>
   //<<Declare options, Ch.~\ref{ch:m2p}>>
   //<<Parse options, Ch.~\ref{ch:m2p}>>
   //<<Parse input files, Ch.~\ref{ch:m2p}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts. The actual usage message, an
@@ -118,12 +125,6 @@
   if *optV {
 	  util.PrintInfo("mum2plot")
   }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:m2p}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are taken as file names. Each

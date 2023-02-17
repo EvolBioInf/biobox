@@ -44,16 +44,23 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, declare the options, parse the
-  options, and parse the input files containing the sequencing
-  reads. Then we calculate the assembly.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the input files
+  containing the sequencing reads. Then we calculate the assembly.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:sas}>>=
+  util.PrepLog("sass")
   //<<Set usage, Ch.~\ref{ch:sas}>>
   //<<Declare options, Ch.~\ref{ch:sas}>>
   //<<Parse options, Ch.~\ref{ch:sas}>>
   //<<Read sequencing reads, Ch.~\ref{ch:sas}>>
   //<<Calculate assembly, Ch.~\ref{ch:sas}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -132,12 +139,6 @@
 	  util.PrintInfo("sass")
   }
   //<<Get score matrix, Ch.~\ref{ch:sas}>>
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:sas}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   A score matrix is either constructed from the match and mismatch

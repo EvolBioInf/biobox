@@ -797,6 +797,29 @@ st2 := a.start2
 #+begin_src go <<Includes, Ch.~\ref{ch:uti}>>=
   #include <gsl/gsl_cdf.h>
 #+end_src
+#+begin_export latex
+\section{\ty{PrepLog}}
+In \ty{CheckGnuplot} and elsewhere, we handle errors via the \ty{log}
+package. By default, this prefixes the error message with time and
+date. Instead, we'd like error messages prefixed with the name of the
+program and with date and time suppressed.
+
+!\ty{PrepLog} takes as argument the program name and sets
+!this as the prefix for error messages from the \ty{log} package.
+#+end_export
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func PrepLog(name string) {
+	  m := fmt.Sprintf("%s: ", name)
+	  log.SetPrefix(m)
+	  log.SetFlags(0)
+  }
+#+end_src
+#+begin_export latex
+We import \ty{fmt}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:uti}>>=
+  "fmt"
+#+end_src
 #+begin_src latex
   \section{Testing}
   The testing outline contains hooks for imports, types, and the testing
@@ -1031,27 +1054,4 @@ if err != nil {
 		  log.Fatal(m)
 	  }
   }
-#+end_src
-#+begin_export latex
-\section{\ty{PrepareErrorMessages}}
-In \ty{CheckGnuplot} and elsewhere, we handle errors via the \ty{log}
-package. By default, this prefixes the error message with time and
-date. Instead, we'd like error messages prefixed with the name of the
-program and with date and time suppressed.
-
-!\ty{PrepareErrorMessages} takes as argument the program name and sets
-!this as the prefix for error messages from the \ty{log} package.
-#+end_export
-#+begin_src go <<Functions, Pa. \ref{pa:util}>>=
-  func PrepareErrorMessages(name string) {
-	  m := fmt.Sprintf("%s - ", name)
-	  log.SetPrefix(m)
-	  log.SetFlags(0)
-  }
-#+end_src
-#+begin_export latex
-We import \ty{fmt}.
-#+end_export
-#+begin_src go <<Imports, Pa. \ref{pa:util}>>=
-  "fmt"
 #+end_src

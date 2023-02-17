@@ -23,14 +23,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare and parse the options,
-  and carry out the simulation.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare and parse the options, and carry out the simulation.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:sn}>>=
+  util.PrepLog("simNorm")
   //<<Set usage, Ch.~\ref{ch:sn}>>
   //<<Declare options, Ch.~\ref{ch:sn}>>
   //<<Parse options, Ch.~\ref{ch:sn}>>
   //<<Carry out simulation, Ch.~\ref{ch:sn}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:sn}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts, the usage message itself, an
@@ -90,10 +97,9 @@
   rand.Seed(seed)
 #+end_src
 #+begin_src latex
-  We import \texttt{util}, \texttt{time}, and \texttt{rand}.
+  We import \texttt{time} and \texttt{rand}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:sn}>>=
-  "github.com/evolbioinf/biobox/util"
   "time"
   "math/rand"
 #+end_src

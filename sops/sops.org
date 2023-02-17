@@ -42,14 +42,22 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, and parse the multiple sequence alignments.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the multiple
+  sequence alignments.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:sops}>>=
+  util.PrepLog("sops")
   //<<Set usage, Ch.~\ref{ch:sops}>>
   //<<Declare options, Ch.~\ref{ch:sops}>>
   //<<Parse options, Ch.~\ref{ch:sops}>>
   //<<Parse MSAs, Ch.~\ref{ch:sops}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:sops}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage statement, an explanation of
@@ -95,12 +103,6 @@
 	  util.PrintInfo("sops")
   }
   //<<Get score matrix, Ch.~\ref{ch:sops}>>
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:sops}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The score matrix is either constructed from the match and mismatch

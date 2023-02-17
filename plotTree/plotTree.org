@@ -44,14 +44,22 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options and parse
-  the options. Then we parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options and parse the options. Then we parse the input
+  files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:pt}>>=
+  util.PrepLog("plotTree")
   //<<Set usage, Ch.~\ref{ch:pt}>>
   //<<Declare options, Ch.~\ref{ch:pt}>>
   //<<Parse options, Ch.~\ref{ch:pt}>>
   //<<Parse input files, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   \subsection*{User Interaction}
@@ -132,12 +140,6 @@
   }
   opts := new(opts)
   //<<Store options, Ch.~\ref{ch:pt}>>
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   We declare the \ty{opts} type as a struct with a hook for the fields

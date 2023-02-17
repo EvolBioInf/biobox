@@ -19,13 +19,20 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, parse the user options, and
-  iterate over the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  parse the user options, and iterate over the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:wra}>>=
+  util.PrepLog("wrapSeq")
   //<<Set usage, Ch.~\ref{ch:wra}>>
   //<<Parse options, Ch.~\ref{ch:wra}>>
   //<<Parse input, Ch.~\ref{ch:wra}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:wra}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage statement, an explanation of
@@ -59,11 +66,10 @@
   var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
-  and import \texttt{flag} and \texttt{util}.
+  and import \texttt{flag}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:wra}>>=
   "flag"
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The command line arguments remaining after \texttt{flag.Parse} was

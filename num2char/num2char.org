@@ -35,14 +35,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:n2c}>>=
+  util.PrepLog("num2char")
   //<<Set usage, Ch.~\ref{ch:n2c}>>
   //<<Declare options, Ch.~\ref{ch:n2c}>>
   //<<Parse options, Ch.~\ref{ch:n2c}>>
   //<<Parse input files, Ch.~\ref{ch:n2c}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:n2c}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -91,12 +98,6 @@
   if *optD {
 	  //<<Construct decoding dictionary, Ch.~\ref{ch:n2c}>>
   }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:n2c}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   In the encoding dictionary we map string representations of the

@@ -63,15 +63,22 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare and parse the options,
-  get the patterns, and draw their tree.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare and parse the options, get the patterns, and draw their tree.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:dkt}>>=
+  util.PrepLog("drawKt")
   //<<Set usage, Ch.~\ref{ch:dkt}>>
   //<<Declare options, Ch.~\ref{ch:dkt}>>
   //<<Parse options, Ch.~\ref{ch:dkt}>>
   //<<Get patterns, Ch.~\ref{ch:dkt}>>
   //<<Draw tree, Ch.~\ref{ch:dkt}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts, the actual usage message, an
@@ -114,12 +121,6 @@
   if *optV {
 	  util.PrintInfo("drawKt")
   }
-#+end_src
-#+begin_src latex
-  We import \texttt{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:dkt}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   Patterns are read either from the command line or from the standard

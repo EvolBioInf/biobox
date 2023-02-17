@@ -39,14 +39,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, declare the options, parse the
-  options, and compute the trees.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and compute the trees.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:gt}>>=
+  util.PrepLog("genTree")
   //<<Set usage, Ch.~\ref{ch:gt}>>
   //<<Declare options, Ch.~\ref{ch:gt}>>
   //<<Parse options, Ch.~\ref{ch:gt}>>
   //<<Calculate trees, Ch.~\ref{ch:gt}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:gt}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts. The actual usage message, an
@@ -111,10 +118,9 @@
   ran := rand.New(rand.NewSource(seed))
 #+end_src
 #+begin_src latex
-  We import \ty{util}, \ty{time}, and \ty{rand}.
+  We import \ty{time} and \ty{rand}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:gt}>>=
-  "github.com/evolbioinf/biobox/util"
   "time"
   "math/rand"
 #+end_src

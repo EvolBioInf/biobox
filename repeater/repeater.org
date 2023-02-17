@@ -241,14 +241,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare and parse the options,
-  and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare and parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:rep}>>=
+  util.PrepLog("repeater")
   //<<Set usage, Ch.~\ref{ch:rep}>>
   //<<Declare options, Ch.~\ref{ch:rep}>>
   //<<Parse options, Ch.~\ref{ch:rep}>>
   //<<Parse input files, Ch.~\ref{ch:rep}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
     The usage consists of three parts, the usage message proper, an
@@ -297,12 +304,6 @@
   if *optV {
 	  util.PrintInfo("repeater")
   }
-#+end_src
-#+begin_src latex
-  We import \texttt{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:rep}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The remaining arguments on the command line are interpreted as input

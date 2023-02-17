@@ -100,11 +100,12 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, parse the options, and compute
-  the number of alignments or print the data structure underlying the
-  computation.
+  In the main function we prepare the \ty{log} package, set the usage,
+  parse the options, and compute the number of alignments or print the
+  data structure underlying the computation.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:num}>>=
+  util.PrepLog("numAl")
   //<<Set usage, Ch.~\ref{ch:num}>>
   //<<Parse options, Ch.~\ref{ch:num}>>
   if !*optP {
@@ -112,6 +113,12 @@
   } else {
 	  //<<Print data structure, Ch.~\ref{ch:num}>>
   }
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:num}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the usage message itself, a statement of the
@@ -164,10 +171,9 @@
   //<<Convert lengths, Ch.~\ref{ch:num}>>
 #+end_src
 #+begin_src latex
-  We import \texttt{util}, \texttt{fmt}, and \texttt{os}.
+  We import \texttt{fmt} and \texttt{os}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:num}>>=
-  "github.com/evolbioinf/biobox/util"
   "fmt"
   "os"
 #+end_src

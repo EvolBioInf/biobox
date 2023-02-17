@@ -57,14 +57,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:mr}>>=
+  util.PrepLog("midRoot")
   //<<Set usage, Ch.~\ref{ch:mr}>>
   //<<Declare options, Ch.~\ref{ch:mr}>>
   //<<Parse options, Ch.~\ref{ch:mr}>>
   //<<Parse input files, Ch.~\ref{ch:mr}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:mr}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -104,12 +111,6 @@
   if *optV {
 	  util.PrintInfo("midRoot")
   }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:mr}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are taken as the names of

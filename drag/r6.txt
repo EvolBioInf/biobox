@@ -1,2 +1,2 @@
-Generations to universal ancestor:  3
-Generations to no partial ancestor: 8
+Generations_to_first_universal_ancestor	2
+Generations_to_no_partial_ancestor	7

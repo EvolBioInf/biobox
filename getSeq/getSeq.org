@@ -19,15 +19,22 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set a usage message and parse the options set
-  by the user. We then compile the regular expression and use it to
-  get the matching sequences.
+  In the main function we prepare the \ty{log} package, set a usage
+  message and parse the options set by the user. We then compile the
+  regular expression and use it to get the matching sequences.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:get}>>=
+  util.PrepLog("getSeq")
   //<<Set usage, Ch.~\ref{ch:get}>>
   //<<Parse options, Ch.~\ref{ch:get}>>
   //<<Compile regex, Ch.~\ref{ch:get}>>
   //<<Get matching sequences, Ch.~\ref{ch:get}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:get}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage message consists of the usage proper, an explanation of the
@@ -75,12 +82,11 @@
   }
 #+end_src
 #+begin_src latex
-  We import \texttt{fmt}, \texttt{os}, and \texttt{util},
+  We import \texttt{fmt} and \texttt{os}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:get}>>=
   "fmt"
   "os"
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   and compile the regular expression.

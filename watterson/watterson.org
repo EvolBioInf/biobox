@@ -36,12 +36,20 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, parse the options, and compute $S$.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  parse the options, and compute $S$.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:wat}>>=
+  util.PrepLog("watterson")
   //<<Set usage, Ch.~\ref{ch:wat}>>
   //<<Parse options, Ch.~\ref{ch:wat}>>
   //<<Compute $S$, Ch.~\ref{ch:wat}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:wat}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts: The usage message itself, an
@@ -94,11 +102,10 @@
   }
 #+end_src
 #+begin_src latex
-  We import \texttt{flag}, \texttt{util}, \texttt{fmt}, and \texttt{os}.
+  We import \texttt{flag}, \texttt{fmt}, and \texttt{os}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:wat}>>=
   "flag"
-  "github.com/evolbioinf/biobox/util"
   "fmt"
   "os"
 #+end_src

@@ -21,13 +21,20 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function, we set the usage, parse the options, and scan
-  the input files.
+  In the main function, we prepare the \ty{log} package, set the usage,
+  parse the options, and scan the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:nm}>>=
+  util.PrepLog("naiveMatcher")
   //<<Set usage, Ch.~\ref{ch:nm}>>
   //<<Parse options, Ch.~\ref{ch:nm}>>
   //<<Scan input files, Ch.~\ref{ch:nm}>>
+#+end_src
+#+begin_src latex
+  We import \texttt{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:nm}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of a usage message, an explanation of the program's
@@ -70,12 +77,6 @@
   }
   //<<Get pattern or pattern file, Ch.~\ref{ch:nm}>>
   //<<Get input files, Ch.~\ref{ch:nm}>>
-#+end_src
-#+begin_src latex
-  We import \texttt{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:nm}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The pattern is the first entry in the argument slice, unless a pattern

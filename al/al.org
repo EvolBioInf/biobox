@@ -43,13 +43,20 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, parse the options, and compute
-  one or more alignments.
+  In the main function we prepare the \ty{log} package, set the usage,
+  parse the options, and compute one or more alignments.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:al}>>=
+  util.PrepLog("al")
   //<<Set usage, Ch.~\ref{ch:al}>>
   //<<Parse options, Ch.~\ref{ch:al}>>
   //<<Compute alignments, Ch.~\ref{ch:al}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the usage proper, an explanation of the
@@ -124,12 +131,6 @@
   //<<Check matrix printing, Ch.~\ref{ch:al}>>
   //<<Get query and subject files, Ch.~\ref{ch:al}>>
   //<<Get score matrix, Ch.~\ref{ch:al}>>
-#+end_src
-#+begin_src latex
-  We import \texttt{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:al}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The four matrix elements are called \ty{d} for \emph{diagonal}, \ty{v} for

@@ -35,14 +35,21 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare and parse the options,
-  and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare and parse the options, and parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:f2t}>>=
+  util.PrepLog("fasta2tab")
   //<<Set usage, Ch.~\ref{ch:f2t}>>
   //<<Declare options, Ch.~\ref{ch:f2t}>>
   //<<Parse options, Ch.~\ref{ch:f2t}>>
   //<<Parse files, Ch.~\ref{ch:f2t}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:f2t}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts, the actual usage message, an
@@ -109,12 +116,6 @@
   if *optV {
 	  util.PrintInfo("fasta2tab")
   }
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:f2t}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are the input files. We pass

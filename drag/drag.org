@@ -81,15 +81,23 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, construct the genealogy, and print it.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, construct the genealogy, and
+  print it.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:dgn}>>=
+  util.PrepLog("drag")
   //<<Set usage, Ch.~\ref{ch:dgn}>>
   //<<Declare options, Ch.~\ref{ch:dgn}>>
   //<<Parse options, Ch.~\ref{ch:dgn}>>
   //<<Construct genealogy, Ch.~\ref{ch:dgn}>>
   //<<Print genealogy, Ch.~\ref{ch:dgn}>>
+#+end_src
+#+begin_src latex
+  We import \ty{util}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:dgn}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of the actual usage message, an explanation of the
@@ -144,12 +152,6 @@
 	  //<<Extract individuals to be traced, Ch.~\ref{ch:dgn}>>
   }
   //<<Seed random number generator, Ch.~\ref{ch:dgn}>>
-#+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:dgn}>>=
-  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   We either trace all individuals or a list of individuals we still need

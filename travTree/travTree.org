@@ -78,15 +78,23 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we set the usage, declare the options, parse the
-  options, prepare the output table, and parse the input files.
+  In the main function we prepare the \ty{log} package, set the usage,
+  declare the options, parse the options, prepare the output table, and
+  parse the input files.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:tt}>>=
+  util.PrepLog("travTree")
   //<<Set usage, Ch.~\ref{ch:tt}>>
   //<<Declare options, Ch.~\ref{ch:tt}>>
   //<<Parse options, Ch.~\ref{ch:tt}>>
   //<<Prepare output table, Ch.~\ref{ch:tt}>>
   //<<Parse input files, Ch.~\ref{ch:tt}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:tt}>>=
+  "github.com/evolbioinf/biobox/util"
 #+end_src
 #+begin_src latex
   The usage consists of three parts, the actual usage message, an
@@ -135,10 +143,9 @@
   }
 #+end_src
 #+begin_src latex
-  We import \ty{util} and \ty{log}.
+  We import \ty{log}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:tt}>>=
-  "github.com/evolbioinf/biobox/util"
   "log"
 #+end_src
 #+begin_src latex
