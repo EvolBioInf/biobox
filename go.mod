@@ -8,7 +8,8 @@ require (
 	github.com/evolbioinf/esa v0.0.0-20220119170951-53a316f07a9b
 	github.com/evolbioinf/fasta v0.0.0-20220329100526-fa625fa59b5d
 	github.com/evolbioinf/kt v0.0.0-20220217115230-7df97358e858
-	github.com/evolbioinf/nwk v0.0.0-20230129095444-f1548e0e0397
+	github.com/evolbioinf/nwk v0.0.0-20230224165000-462a2d4ee7c7
 	github.com/evolbioinf/pal v0.0.0-20220704163646-8994e5ba84d9
 )
+
 replace github.com/evolbioinf/biobox/util => ../util
