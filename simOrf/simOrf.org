@@ -22,7 +22,7 @@
   }
 #+end_src
 #+begin_src latex
-  In the main function we prepare the \ty{log} package}, set the usage,
+  In the main function we prepare the \ty{log} package, set the usage,
     declare the options, parse the options, and simulate the ORFs.
 #+end_src
 #+begin_src go <<Main function, Ch.~\ref{ch:so}>>=
