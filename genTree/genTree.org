@@ -197,7 +197,7 @@ We import \ty{util}.
   for i := n; i > 1; i-- {
 	  p := tree[2 * n - i]
 	  //<<Pick first child, Ch.~\ref{ch:gt}>>
-	  //<<Pick second child, Ch.~ref{ch:gt}>>
+	  //<<Pick second child, Ch.~\ref{ch:gt}>>
   }
 #+end_src
 #+begin_src latex
@@ -218,7 +218,7 @@ We import \ty{util}.
   We pick the second child and replace it by the current parent, which
   thus becomes a child candidate in the next round.
 #+end_src
-#+begin_src go <<Pick second child, Ch.~ref{ch:gt}>>=
+#+begin_src go <<Pick second child, Ch.~\ref{ch:gt}>>=
   r = ran.Intn(i-1)
   c = tree[r]
   p.AddChild(c)
