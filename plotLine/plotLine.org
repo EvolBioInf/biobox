@@ -85,7 +85,7 @@
   ``general option''.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pl}>>=
-  var optV = flag.Bool("v", false, "version")
+  optV := flag.Bool("v", false, "version")
   //<<Declare axes options, Ch~\ref{ch:pl}>>
   //<<Declare plot type options, Ch.~\ref{ch:pl}>>
   //<<Declare device options, Ch.~\ref{ch:pl}>>
@@ -102,35 +102,41 @@
   or not one or both of them are unset.
 #+end_src
 #+begin_src go <<Declare axes options, Ch~\ref{ch:pl}>>=
-  var optX = flag.String("x", "", "x-label")
-  var optY = flag.String("y", "", "y-label")
-  var optXX = flag.String("X", "*:*", "x-range")
-  var optYY = flag.String("Y", "*:*", "y-range")
-  var optL = flag.String("l", "", "log-scale (x|y|xy)")
-  var optU = flag.String("u", "", "unset axis (x|y|xy)")
+  optX := flag.String("x", "", "x-label")
+  optY := flag.String("y", "", "y-label")
+  optXX := flag.String("X", "*:*", "x-range")
+  optYY := flag.String("Y", "*:*", "y-range")
+  optL := flag.String("l", "", "log-scale (x|y|xy)")
+  optU := flag.String("u", "", "unset axis (x|y|xy)")
 #+end_src
 #+begin_src latex
   By default, the plot consists of lines. But the user can opt for lines
-  and points or lines only. She can also opt to write the \ty{gnuplot}
+  and points, or lines only. She can also opt to write the \ty{gnuplot}
   script to file.
 #+end_src
 #+begin_src go <<Declare plot type options, Ch.~\ref{ch:pl}>>=
-  var optPP = flag.Bool("P", false, "points only")
-  var optLL = flag.Bool("L", false, "lines and points")
-  var optS = flag.String("s", "", "write gnuplot script to file")
+  optPP := flag.Bool("P", false, "points only")
+  optLL := flag.Bool("L", false, "lines and points")
+  optS := flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
   The default output destination is the screen and the user can set the
   terminal. Alternatively, the user can write the output to a file of
-  encapsulated postscript. The user can also set the plot dimensions.
+  encapsulated postscript. We provide three default plot dimensions,
+  $640\times 384$ pixels for screens, $5\times 3.5$ in for postscript,
+  and $79\times 24$ characters for the ``dumb'' terminal. Users can also
+  set the dimensions themselves.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
-  var optT = flag.String("t", "", "terminal (default wxt, qt on darwin)")
-  var optP = flag.String("p", "", "encapsulated postscript file")
+  optT := flag.String("t", "",
+	  "terminal (default wxt, qt on darwin)")
+  optP := flag.String("p", "", "encapsulated postscript file")
   defScrDim := "640,384"
   defPsDim := "5,3.5"
-  var optD = flag.String("d", defScrDim, "plot dimensions; " +
-	  "pixels for screen or " + defPsDim + " inches for ps")
+  defDumbDim := "79,24"
+  optD := flag.String("d", defScrDim, "plot dimensions; " +
+	  "pixels for screen, " + defPsDim + " in for ps, " +
+	  defDumbDim + " char for dumb")
 #+end_src
 #+begin_src latex
   At its core, \ty{gnuplot} is a graphing programming language. To make
@@ -138,7 +144,7 @@
   \ty{gnuplot} code.
 #+end_src
 #+begin_src go <<Declare general option, Ch.~\ref{ch:pl}>>=
-  var optG = flag.String("g", "", "gnuplot code")
+  optG := flag.String("g", "", "gnuplot code")
 #+end_src
 #+begin_src latex
   We parse the options and respond to \ty{-v} first, as this might
@@ -195,11 +201,17 @@
 #+end_src
 #+begin_src latex
   If the user requested postscript output and didn't set a size, we set
-  the default postscript size.
+  the default postscript size. Similarly, if the user requested the dumb
+  terminal and didn't set a size, we set the default dumb terminal size.
 #+end_src
 #+begin_src go  <<Collect option values, Ch.~\ref{ch:pl}>>=
-  if args.Ps != "" && args.Dim == defScrDim {
-	  args.Dim = defPsDim
+  args.Win = *optT
+  if args.Dim == defScrDim {
+	  if args.Ps != "" {
+		  args.Dim = defPsDim
+	  } else if args.Win == "dumb" {
+		  args.Dim = defDumbDim
+	  }
   }
 #+end_src
 #+begin_src latex
@@ -207,7 +219,6 @@
   command line, we switch to qt.
 #+end_src
 #+begin_src go <<Set type of output window, Ch.~\ref{ch:pl}>>=
-  args.Win = *optT
   if args.Win == "" {
 	  args.Win = "wxt"
 	  if runtime.GOOS == "darwin" {
@@ -257,8 +268,8 @@
 #+end_src
 #+begin_src latex
   While reading the data, we skip comments. For each data point we are
-  either given a category, or we ad an empty one. Having read the data,
-  we check the number of columns.
+  either given a category, or we add an empty category. Having read the
+  data, we check the number of columns.
 #+end_src
 #+begin_src go <<Read data, Ch.~\ref{ch:pl}>>=
   var data [][]string
@@ -279,8 +290,8 @@
   "strings"
 #+end_src
 #+begin_src latex
-  If the data has the wrong number of columns, there's bound to be a
-  fundamental problem, so we bail with a friendly message.
+  If the data doesn't consist of either two or three columns, there's
+  bound to be a fundamental problem, so we bail with a friendly message.
 #+end_src
 #+begin_src go <<Check number of columns, Ch.~\ref{ch:pl}>>=
   ncol := 0
@@ -300,7 +311,8 @@
   "log"
 #+end_src
 #+begin_src latex
-  We extract the categories.
+  To extract the categories, we track them with a map and store them in
+  a slice.
 #+end_src
 #+begin_src go <<Extract categories, Ch.~\ref{ch:pl}>>=
   var categories []string
@@ -314,8 +326,8 @@
 #+end_src
 #+begin_src latex
   We plot the data by constructing an output stream. We write
-  \ty{gnuplot} code to this output stream inside a Go routine and close
-  it again. Outside of the Go routine we run \ty{gnuplot}, unless the
+  \ty{gnuplot} code to this output stream inside a goroutine and close
+  it again. Outside of the goroutine we run \ty{gnuplot}, unless the
   user opted for the script as output.
 #+end_src
 #+begin_src go <<Plot data, Ch.~\ref{ch:pl}>>=
@@ -367,16 +379,19 @@
   //<<Write data, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
-  The terminal is either encapsulated postscript or a window. If it is a
-  window, that window is persistent. If the user set the size of the
-  postscript plot, we pass that on.
+  The terminal is either encapsulated postscript or a window. If it is
+  an interactive window, that window is persistent. We also set the plot
+  size.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pl}>>=
   t := "set terminal"
   if args.Ps != "" {
 	  t += " postscript eps color"
   } else {
-	  t += " " + args.Win + " persist"
+	  t += " " + args.Win
+  }
+  if util.IsInteractive(args.Win) {
+	  t += " persist"
   }
   t += " size " + args.Dim
   fmt.Fprintf(w, "%s\n", t)
@@ -392,7 +407,7 @@
   background---at least on macOS. We make sure our plots are white.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pl}>>=
-  if args.Ps == "" {
+  if util.IsInteractive(args.Win) && args.Ps == "" {
 	  c := "set object 1 rectangle from screen 0,0 " +
 		  "to screen 1,1 fillcolor rgb 'white' behind"
 	  fmt.Fprintf(w, "%s\n", c)
@@ -458,8 +473,8 @@
   //<<Write one plot per category, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
-  Right before the plot command we print the external \ty{gnuplot} code,
-  which we mark by comments.
+  Right in front of the plot command we print the external \ty{gnuplot}
+  code, which we mark by comments.
 #+end_src
 #+begin_src go <<Write plot command, Ch.~\ref{ch:pl}>>=
   if args.Gp != "" {
@@ -516,11 +531,14 @@
   w.Close()
 #+end_src
 #+begin_src latex
-  We run \ty{gnuplot} and check for errors.
+  We run \ty{gnuplot}, check for errors, and print its output, if any.
 #+end_src
 #+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:pl}>>=
-  err = gcmd.Run()
+  out, err := gcmd.Output()
   util.CheckGnuplot(err)
+  if len(out) > 0 {
+	  fmt.Printf("%s", out)
+  }
 #+end_src
 #+begin_src latex
   We've finished \ty{plotLine}, let's test it.
@@ -567,7 +585,8 @@
 #+begin_src latex
   We create six sets of tests, lines \& points, axis labels, plot size,
   log-scaling, ranges, and combinations of log-scaling and ranges. We
-  also unset axes' tic marks and setting external code.
+  also unset axes' tic marks, set external code, and use the dumb
+  terminal.
 #+end_src
 #+begin_src go <<Prepare tests, Ch.~\ref{ch:pl}>>=
   //<<Test lines and dots, Ch.~\ref{ch:pl}>>
@@ -578,6 +597,7 @@
   //<<Test combinations of log-scaling and ranges, Ch.~\ref{ch:pl}>>
   //<<Test unsetting axes, Ch.~\ref{ch:pl}>>
   //<<Test external code, Ch.~\ref{ch:pl}>>
+  //<<Test dumb terminal, Ch.~\ref{ch:pl}>>
 #+end_src
 #+begin_src latex
   We have two sets of input data, \ty{test3.dat} with the three columns
@@ -619,7 +639,7 @@
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
-  We set the plot size, which only works with postscript output.
+  We set the plot size in combination with postscript output.
 #+end_src
 #+begin_src go <<Test plot size, Ch.~\ref{ch:pl}>>=
   test = exec.Command("./plotLine", "-s", g,
@@ -692,6 +712,14 @@
   test = exec.Command("./plotLine", "-s", g,
 	  "-g", "set title \"External Title\"",
 	  "test3.dat")
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  We test the dumb terminal.
+#+end_src
+#+begin_src go <<Test dumb terminal, Ch.~\ref{ch:pl}>>=
+  test = exec.Command("./plotLine", "-s", g,
+	  "-t", "dumb", "test3.dat")
   tests = append(tests, test)
 #+end_src
 #+begin_src latex

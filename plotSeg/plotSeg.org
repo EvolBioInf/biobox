@@ -87,7 +87,7 @@
   option''. 
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:ps}>>=
-  var optV = flag.Bool("v", false, "version")
+  optV := flag.Bool("v", false, "version")
   //<<Declare axis options, Ch.~\ref{ch:ps}>>
   //<<Declare device options, Ch.~\ref{ch:ps}>>
   //<<Declare general option, Ch.~\ref{ch:ps}>>
@@ -103,32 +103,37 @@
   \ty{gnuplot} code.
 #+end_src
 #+begin_src go <<Declare axis options, Ch.~\ref{ch:ps}>>=
-  var optX = flag.String("x", "", "x-label")
-  var optY = flag.String("y", "", "y-label")
-  var optXX = flag.String("X", "*:*", "x-range")
-  var optYY = flag.String("Y", "*:*", "y-range")
+  optX := flag.String("x", "", "x-label")
+  optY := flag.String("y", "", "y-label")
+  optXX := flag.String("X", "*:*", "x-range")
+  optYY := flag.String("Y", "*:*", "y-range")
 #+end_src
 #+begin_src latex
   The user can chose the terminal for displaying the plot. Moreover,
   instead of showing the plot in a window, the user can write it as
-  encapsulated postscript and set its size. The user can also ask for
-  the \ty{gnuplot} script of the plot.
+  encapsulated postscript and set its size. To guide the user, we
+  provide three default sizes, $640\times 384$ pixels for screen,
+  $5\times 3.5$ in for postscript, and $79\times 24$ characters for the
+  ``dumb'' terminal. The user can also ask for the \ty{gnuplot} script
+  of the plot.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:ps}>>=
-  var optT = flag.String("t", "", "terminal (default wxt, qt on darwin)")
-  var optP = flag.String("p", "", "encapsulated postscript file")
+  optT := flag.String("t", "", "terminal (default wxt, qt on darwin)")
+  optP := flag.String("p", "", "encapsulated postscript file")
   defScrDim := "640,384"
   defPsDim := "5,3.5"
-  var optD = flag.String("d", defScrDim, "plot dimensions; " +
-	    "pixels for screen or " + defPsDim + " inches for ps")
-  var optS = flag.String("s", "", "write gnuplot script to file")
+  defDumbDim := "79,24"
+  optD := flag.String("d", defScrDim, "plot dimensions; " +
+	  "pixels for screen, " + defPsDim + " in for ps, " +
+	  defDumbDim + " char for dumb")
+  optS := flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
   The ``general option'' is a switch for submitting arbitrary
   \ty{gnuplot} code.
 #+end_src
 #+begin_src go <<Declare general option, Ch.~\ref{ch:ps}>>=
-  var optG = flag.String("g", "", "gnuplot code")
+  optG := flag.String("g", "", "gnuplot code")
 #+end_src
 #+begin_src latex
   We parse the options and respond to a request for the version first
@@ -204,9 +209,17 @@ is qt.
   If the user requested postscript output but didn't set a size, we set
   the default postscript size.
 #+end_src
+#+begin_src latex
+  If the user requested postscript or dumb and didn't set a size, we set
+  the default.
+#+end_src
 #+begin_src go <<Collect option values, Ch.~\ref{ch:ps}>>=
-  if opts.Ps != "" && opts.Dim == defScrDim {
-	  opts.Dim = defPsDim
+  if opts.Dim == defScrDim {
+	  if opts.Ps != "" {
+		  opts.Dim = defPsDim
+	  } else if opts.Win == "dumb" {
+		  opts.Dim = defDumbDim
+	  }
   }
 #+end_src
 #+begin_src latex
@@ -316,16 +329,17 @@ is qt.
 #+end_src
 #+begin_src latex
   The terminal is either monochrome encapsulate postscript or a
-  window. If it is a window, that window is persistent. If the user set
-  the size of the postscript plot, we pass that on.
+  window. If it is an interactive window, that window is persistent. We
+  also set the plot size.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:ps}>>=
   t := "set terminal"
   if opts.Ps != "" {
 	  t += " postscript eps monochrome"
   } else {
-	  t += " " + opts.Win + " persist"
+	  t += " " + opts.Win
   }
+  if util.IsInteractive(opts.Win) { t += " persist" }
   t += " size " + opts.Dim
   fmt.Fprintf(w, "%s\n", t)
 #+end_src
@@ -340,7 +354,7 @@ is qt.
   background---at least on macOS. We make sure our plots are white.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:ps}>>=
-  if opts.Ps == "" {
+  if util.IsInteractive(opts.Win) && opts.Ps == "" {
 	  c := "set object 1 rectangle from screen 0,0 " +
 		  "to screen 1,1 fillcolor rgb 'white' behind"
 	  fmt.Fprintf(w, "%s\n", c)
@@ -398,11 +412,14 @@ is qt.
   w.Close()
 #+end_src
 #+begin_src latex
-  We run \ty{gnuplot} and check its error.
+  We run \ty{gnuplot}, check its error, and print its output, if any.
 #+end_src
 #+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:ps}>>=
-  err = gcmd.Run()
+  out, err := gcmd.Output()
   util.CheckGnuplot(err)
+  if len(out) > 0 {
+	  fmt.Printf("%s", out)
+  }
 #+end_src
 #+begin_src latex
   The program \ty{plotSeg} is finished, let's test it.
@@ -449,14 +466,15 @@ is qt.
   "os"
 #+end_src
 #+begin_src latex
-  We test setting axis labels, ranges, plot size, and submitting
-  \ty{gnuplot} code.
+  We test setting axis labels, ranges, plot size, submitting
+  \ty{gnuplot} code, and the dumb terminal.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:ps}>>=
   //<<Test axis labels, Ch.~\ref{ch:ps}>>
   //<<Test axis ranges, Ch.~\ref{ch:ps}>>
   //<<Test plot size, Ch.~\ref{ch:ps}>>
   //<<Test \ty{gnuplot} code, Ch.~\ref{ch:ps}>>
+  //<<Test dumb terminal, Ch.~\ref{ch:ps}>>
 #+end_src
 #+begin_src latex
   We begin by running \ty{plotSeg} on the example data in \ty{test.dat}
@@ -499,7 +517,15 @@ is qt.
 #+end_src
 #+begin_src go <<Test \ty{gnuplot} code, Ch.~\ref{ch:ps}>>=
   te = exec.Command("./plotSeg", "-s", g, "-g",
-	  "\"External Title\"")
+	  "set title \"External Title\"", f)
+  tests = append(tests, te)
+#+end_src
+#+begin_src latex
+  We test the dumb terminal.
+#+end_src
+#+begin_src go <<Test dumb terminal, Ch.~\ref{ch:ps}>>=
+  te = exec.Command("./plotSeg", "-s", g, "-t", "dumb", f)
+  tests = append(tests, te)
 #+end_src
 #+begin_src latex
   For each test we compare what we get with what we want, which is

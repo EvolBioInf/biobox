@@ -1055,3 +1055,18 @@ if err != nil {
 	  }
   }
 #+end_src
+#+begin_export latex
+\section{Function \ty{IsInteractive}}
+!\ty{IsInteractive} checks whether a gnuplot terminal is interactive
+!or not.
+#+end_export
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func IsInteractive(t string) bool {
+	  ii := false
+	  if t == "wxt" || t == "x11" || t == "qt" ||
+		  t == "aqua" || t == "windows" {
+		  ii = true
+	  }
+	  return ii
+  }
+#+end_src

@@ -88,9 +88,9 @@
   irrespective of the degree of the root.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optV = flag.Bool("v", false, "version")
-  var optR = flag.Bool("r", false, "rooted tree (default input)")
-  var optU = flag.Bool("u", false, "unrooted tree (default input)")
+  optV := flag.Bool("v", false, "version")
+  optR := flag.Bool("r", false, "rooted tree (default input)")
+  optU := flag.Bool("u", false, "unrooted tree (default input)")
 #+end_src
 #+begin_src latex
   We import \ty{flag}.
@@ -103,30 +103,35 @@
   \ty{plotTree} draws the labels, but the user can omit them (\ty{-n}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optN = flag.Bool("n", false, "no node labels (default input)")
+  optN := flag.Bool("n", false, "no node labels (default input)")
 #+end_src
 #+begin_src latex
   The default output is drawn to the screen, for which the user can set
   the terminal. Alternatively, the user can draw the tree to a
-  postscript file (\ty{-p}) and give that postscript plot specific
-  dimensions (\ty{-d}). The user can set the plot margins as a fraction
-  of the plot size (\ty{-m}), and the scale of the tree (\ty{-c}).
+  postscript file (\ty{-p}) and give the plot custom dimensions
+  (\ty{-d}). To guide the user, we provide three default dimensions,
+  $640\times 384$ pixels for screen, $5\times 3.5$ in for postscript,
+  and $79\times 24$ characters for the ``dumb'' terminal. The user can
+  also set the plot margins as a fraction of the plot size (\ty{-m}),
+  and the scale of the tree (\ty{-c}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optT = flag.String("t", "", "terminal (default wxt, qt on darwin)")
-  var optP = flag.String("p", "", "encapsulated postscript file")
+  optT := flag.String("t", "", "terminal (default wxt, qt on darwin)")
+  optP := flag.String("p", "", "encapsulated postscript file")
   defScrDim := "640,384"
   defPsDim := "5,3.5"
-  var optD = flag.String("d", defScrDim, "plot dimensions; " +
-	  "pixels for screen or " + defPsDim + " inches for ps")
-  var optM = flag.Float64("m", 0.2, "margin")
-  var optC = flag.Float64("c", 0.0, "scale")
+  defDumbDim := "79,24"
+  optD := flag.String("d", defScrDim, "plot dimensions; " +
+	  "pixels for screen, " + defPsDim + " in for ps, " +
+	  defDumbDim + " char for dumb")
+  optM := flag.Float64("m", 0.2, "margin")
+  optC := flag.Float64("c", 0.0, "scale")
 #+end_src
 #+begin_src latex
   Finally, the user may opt to print the \ty{gnuplot} script.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
-  var optS = flag.String("s", "", "write gnuplot script to file")
+  optS := flag.String("s", "", "write gnuplot script to file")
 #+end_src
 #+begin_src latex
   We parse the options and immediately respond to \ty{-v} as this might
@@ -162,6 +167,7 @@
   opts.Margin = *optM
   opts.Scale = *optC
   opts.Script = *optS
+  opts.Win = *optT
 #+end_src
 #+begin_src latex
   We declare the fields we just used.
@@ -173,12 +179,16 @@
   Script string
 #+end_src
 #+begin_src latex
-  If the user chose postscript and didn't set a size, we set the default
-  postscript size.
+  If the user chose postscript or dumb and didn't set a size, we set the
+  default.
 #+end_src
 #+begin_src go <<Store options, Ch.~\ref{ch:pt}>>=
-  if opts.Ps != "" && opts.Dim == defScrDim {
-	  opts.Dim = defPsDim
+  if opts.Dim == defScrDim {
+	  if opts.Ps != "" {
+		  opts.Dim = defPsDim
+	  } else if opts.Win == "dumb" {
+		  opts.Dim = defDumbDim
+	  }
   }
 #+end_src
 #+begin_src latex
@@ -186,7 +196,6 @@
   running on the darwin system (macOS), in which case we switch to qt.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:pt}>>=
-  opts.Win = *optT
   if opts.Win == "" {
 	  opts.Win = "wxt"
 	  if runtime.GOOS == "darwin" {
@@ -843,16 +852,18 @@
   //<<Write margins, Ch.~\ref{ch:pt}>>
 #+end_src
 #+begin_src latex
-  The terminal is either encapsulated postscript or a persistent
-  window. The postscript plot might have dimensions other than the default.
+  The terminal is either encapsulated postscript or window. If the
+  window is interactive, we make it persistent. We also set the plot
+  dimensions.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pt}>>=
   t := "set terminal"
   if opts.Ps != "" {
 	  t += " postscript eps monochrome"
   } else {
-	  t += " " + opts.Win + " persist"
+	  t += " " + opts.Win
   }
+  if util.IsInteractive(opts.Win) { t += " persist" }
   t += " size " + opts.Dim
   fmt.Fprintf(wr, "%s\n", t)
 #+end_src
@@ -867,7 +878,7 @@
   background---at least on macOS. We make sure our plots are white.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pt}>>=
-  if opts.Ps == "" {
+  if util.IsInteractive(opts.Win) {
 	  c := "set object 1 rectangle from screen 0,0 " +
 		  "to screen 1,1 fillcolor rgb 'white' behind"
 	  fmt.Fprintf(wr, "%s\n", c)
@@ -968,11 +979,15 @@
   wr.Close()
 #+end_src
 #+begin_src latex
-  We run the \ty{gnuplot} command and check the error it returns.
+  We run the \ty{gnuplot} command, check for errors, and print the
+  output, if any.
 #+end_src
 #+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:pt}>>=
-  err = gcmd.Run()
+  out, err := gcmd.Output()
   util.CheckGnuplot(err)
+  if len(out) > 0 {
+	  fmt.Printf("%s", out)
+  }
 #+end_src
 #+begin_src latex
   There is still the file counter to increment.
@@ -1038,6 +1053,8 @@
   test = exec.Command("./plotTree", "-r", "-s", g, "-n", f)
   tests = append(tests, test)
   test = exec.Command("./plotTree", "-u", "-s", g, "-n", f)
+  tests = append(tests, test)
+  test = exec.Command("./plotTree", "-t", "dumb", "-s", g, f)
   tests = append(tests, test)
 #+end_src
 #+begin_src latex
