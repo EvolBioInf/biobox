@@ -861,7 +861,9 @@
   } else {
 	  t += " " + opts.Win
   }
-  if util.IsInteractive(opts.Win) { t += " persist" }
+  if util.IsInteractive(opts.Win) && opts.Ps == "" {
+	  t += " persist"
+  }
   t += " size " + opts.Dim
   fmt.Fprintf(wr, "%s\n", t)
 #+end_src
@@ -876,7 +878,7 @@
   background---at least on macOS. We make sure our plots are white.
 #+end_src
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pt}>>=
-  if util.IsInteractive(opts.Win) {
+  if util.IsInteractive(opts.Win) && opts.Ps == "" {
 	  c := "set object 1 rectangle from screen 0,0 " +
 		  "to screen 1,1 fillcolor rgb 'white' behind"
 	  fmt.Fprintf(wr, "%s\n", c)

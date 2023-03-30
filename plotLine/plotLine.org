@@ -390,7 +390,7 @@
   } else {
 	  t += " " + args.Win
   }
-  if util.IsInteractive(args.Win) {
+  if util.IsInteractive(args.Win) && args.Ps == "" {
 	  t += " persist"
   }
   t += " size " + args.Dim
