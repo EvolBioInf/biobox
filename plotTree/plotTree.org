@@ -113,7 +113,8 @@
   $640\times 384$ pixels for screen, $5\times 3.5$ in for postscript,
   and $79\times 24$ characters for the ``dumb'' terminal. The user can
   also set the plot margins as a fraction of the plot size (\ty{-m}),
-  and the scale of the tree (\ty{-c}).
+  set the scale of the tree (\ty{-c}), and inject arbitrary \ty{gnuplot}
+  code.
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:pt}>>=
   optT := flag.String("t", "", "terminal (default wxt, qt on darwin)")
@@ -126,6 +127,7 @@
 	  defDumbDim + " char for dumb")
   optM := flag.Float64("m", 0.2, "margin")
   optC := flag.Float64("c", 0.0, "scale")
+  optG := flag.String("g", "", "gnuplot code")
 #+end_src
 #+begin_src latex
   Finally, the user may opt to print the \ty{gnuplot} script.
@@ -168,6 +170,7 @@
   opts.Scale = *optC
   opts.Script = *optS
   opts.Win = *optT
+  opts.Code = *optG
 #+end_src
 #+begin_src latex
   We declare the fields we just used.
@@ -176,7 +179,7 @@
   Rooted, Unrooted, NoLabels bool
   Ps, Dim string
   Margin, Scale float64
-  Script string
+  Script, Win, Code string
 #+end_src
 #+begin_src latex
   If the user chose postscript or dumb and didn't set a size, we set the
@@ -202,12 +205,6 @@
 		  opts.Win = "qt"
 	  }
   }
-#+end_src
-#+begin_src latex
-  We add the \ty{opts} field \ty{Win}.
-#+end_src
-#+begin_src go <<Opts fields, Ch.~\ref{ch:pt}>>=
-  Win string
 #+end_src
 #+begin_src latex
   We import \ty{runtime}.
@@ -839,12 +836,13 @@
   <-done
 #+end_src
 #+begin_src latex
-  We write the \ty{gnuplot} code in four steps: We write the terminal,
-  remove the axes, write the labels, write the plot, its segments, and
-  its margins.
+  We write the \ty{gnuplot} code in seven steps: We write the terminal,
+  add the code passed by the user, remove the axes, write the labels,
+  write the plot, its segments, and its margins.
 #+end_src
 #+begin_src go <<Write \ty{gnuplot} code to output stream, Ch.~\ref{ch:pt}>>=
   //<<Write terminal, Ch.~\ref{ch:pt}>>
+  //<<Write \ty{gnuplot} code, Ch.~\ref{ch:pt}>>
   //<<Remove axes, Ch.~\ref{ch:pt}>>
   //<<Write labels, Ch.~\ref{ch:pt}>>
   //<<Write plot, Ch.~\ref{ch:pt}>>
@@ -890,6 +888,17 @@
 #+begin_src go <<Write terminal, Ch.~\ref{ch:pt}>>=
   if opts.Ps != "" {
 	  fmt.Fprintf(wr, "set output \"%s\"\n", opts.Ps)
+  }
+#+end_src
+#+begin_src latex
+  If the user passed \ty{gnuplot} code, we print it, surrounded by
+  comments.
+#+end_src
+#+begin_src go <<Write \ty{gnuplot} code, Ch.~\ref{ch:pt}>>=
+  if opts.Code != "" {
+	  fmt.Fprintf(wr, "# Start of external code\n")
+	  fmt.Fprintf(wr, "%s\n", opts.Code)
+	  fmt.Fprintf(wr, "# End of external code\n")
   }
 #+end_src
 #+begin_src latex
