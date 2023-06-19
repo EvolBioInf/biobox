@@ -1,8 +1,8 @@
 # `biobox`
 ## Description
 Tools for bioinformatics, many of which are also used in our book
-(*Bioinformatics for Evolutionary
-Biologists*)[https://link.springer.com/book/10.1007/978-3-031-20414-2].
+[*Bioinformatics for Evolutionary
+Biologists*](https://link.springer.com/book/10.1007/978-3-031-20414-2).
 ## Author
 [Bernhard Haubold](http://guanine.evolbio.mpg.de/), `haubold@evolbio.mpg.de`
 ## Windows/Ubuntu
