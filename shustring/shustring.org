@@ -155,7 +155,8 @@ We import \ty{util}.
   \item \texttt{-s} $r$: Restrict output to sequences with names
     matching regular expression $r$
   \item \texttt{-r}: Include reverse strand
-  \item \texttt{-q}: Quiet, don't print shustring sequences
+  \item \texttt{-q}: Quiet, don't print shustring sequences; this not
+    only avoids clutter, it also saves memory when analyzing long sequences
   \item \texttt{-v}: Program version
   \end{enumerate}
 #+end_src
@@ -164,7 +165,7 @@ We import \ty{util}.
   var optS = flag.String("s", ".", "restrict output to sequences " +
 	  "described by regex")
   var optR = flag.Bool("r", false, "include reverse strand")
-  var optQ = flag.Bool("q", false, "quiet, don't print shustrings")
+  var optQ = flag.Bool("q", false, "quiet, don't print shustrings; saves memory")
   var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
