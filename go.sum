@@ -4,6 +4,8 @@ github.com/evolbioinf/dist v0.0.0-20230320162102-c887c99309e3 h1:dqcLD3gx7yhipyb
 github.com/evolbioinf/dist v0.0.0-20230320162102-c887c99309e3/go.mod h1:iovh5uCC25Dgmxdz6DRZXFGEJXUoSML8+/QixZsVar4=
 github.com/evolbioinf/esa v0.0.0-20220119170951-53a316f07a9b h1:Dg6P2c7dwVuu2P9jKzRmb0LGTqPvxZLdpgrkQFEXn54=
 github.com/evolbioinf/esa v0.0.0-20220119170951-53a316f07a9b/go.mod h1:3JO3FxGmnJ11JQBeeLoL61XBsZ76s9jod10IyKrxjHs=
+github.com/evolbioinf/esa v0.0.0-20230927083709-51f6ba41362b h1:9WO1nd3AdylOZe0Q3Sc2D033PclQGe/ROkbJ5SXrFzg=
+github.com/evolbioinf/esa v0.0.0-20230927083709-51f6ba41362b/go.mod h1:JHdYx+agish2s0bExLYu4sfnkIpQfzQkugwgq+yPXDY=
 github.com/evolbioinf/fasta v0.0.0-20210309091740-48b65faf5d3e/go.mod h1:kPJhClPhTozhqGfmcFJVxhz0J1xX/yBvDa8FBTlxbm4=
 github.com/evolbioinf/fasta v0.0.0-20211125081250-489cff0f4d5d/go.mod h1:1bD5OMlu85gdxSDr74kxUElPjLc/EVTzkRw2UT+FMhg=
 github.com/evolbioinf/fasta v0.0.0-20220329100526-fa625fa59b5d h1:13pT8++1YrSDWT1cD1R+L/N7ulgjkKrnhBgXMUYyKYk=
