@@ -182,7 +182,7 @@ We import \ty{util}.
   for i := n; i > 1; i-- {
 	  lambda := float64(n * (n-1) / 2)
 	  if *optC { lambda = float64(i * (i-1) / 2) }
-	  t += rand.ExpFloat64() / lambda
+	  t += ran.ExpFloat64() / lambda
 	  j := 2 * n - i
 	  tree[j].Length = t
 	  tree[j].HasLength = true
