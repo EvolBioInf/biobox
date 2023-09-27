@@ -138,6 +138,7 @@ drag/*.sh
 drag/*.awk
 drawKt/ktWrapper*
 drawKt/kt.tex
+keyMat/makeRes.sh
 ranDot/*.sh
 plotLine/lineTmpl.txt
 plotLine/makeRes.sh
