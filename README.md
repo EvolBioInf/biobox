@@ -14,12 +14,13 @@ style of programming that emphasizes readability.
 - Install additional packages  
   `$ sudo apt update`  
   `$ sudo apt upgrade`  
-  `$ sudo apt install gnuplot golang graphviz libgsl-dev make noweb libdivsufsort-dev texlive`
+  `$ sudo apt install evince gnuplot golang graphviz libgsl-dev make noweb
+  libdivsufsort-dev texlive texlive-latex-extra texlive-science texlive-pstricks`
 - Make package  
   `$ make`  
   The directory `bin` should now contain the programs listed in `progs.txt`
 - Optional: Documentation  
-  `$ sudo apt install texlive-latex-extra texlive-science texlive-pstricks texlive-fonts-extra`  
+  `$ sudo apt install texlive-fonts-extra`  
   `$ make doc`  
   The documentation should now be in `doc/bioboxDoc.pdf`
 ## macOS
