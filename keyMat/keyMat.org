@@ -59,7 +59,8 @@
   \end{enumerate}
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:km}>>=
-  var optP = flag.String("p", "", "file with FASTA-formatted patterns")
+  m := "file with FASTA-formatted patterns"
+  var optP = flag.String("p", "", m)
   var optR = flag.Bool("r", false, "include reverse strand")
   var optV = flag.Bool("v", false, "version")
 #+end_src
@@ -150,7 +151,8 @@
 #+end_src
 #+begin_src go <<Check patterns, Ch.~\ref{ch:km}>>=
   if len(patterns) == 0 {
-	  fmt.Fprintf(os.Stderr, "please enter at least one pattern\n")
+	  m := "please enter at least one pattern\n"
+	  fmt.Fprintf(os.Stderr, m)
 	  os.Exit(-1)
   }
 #+end_src
@@ -211,8 +213,9 @@
   optR := args[3].(bool)
 #+end_src
 #+begin_src latex
-  We search the forward and possibly also the reverse strand of a sequence,
-  and print the matches.
+  We search the forward and possibly also the reverse strand of a
+  sequence. If we include the reverse strand, we also map the match
+  positions to the forward strand. Then we print the matches.
 #+end_src
 #+begin_src go <<Search sequence, Ch.~\ref{ch:km}>>=
   matches := tree.Search(seq.Data(), pstr)
@@ -221,18 +224,39 @@
   if optR {
 	  seq.ReverseComplement()
 	  matches = tree.Search(seq.Data(), pstr)
+	  //<<Map reverse positions to forward strand, Ch.~\ref{ch:km}>>
 	  fmt.Printf("# %s - Reverse\n", seq.Header())
 	  printMatches(matches, pseq)
+  }
+#+end_src
+#+begin_export latex
+Let $p_{\rm r}$ be the position of a match of length $\ell_{\rm m}$ on
+the reverse strand of a sequence length $\ell_{\rm s}$. Then the start
+position on the forward strand is
+\[
+p_{\rm f} = \ell_{\rm s} - p_{\rm r} - \ell_{\rm m}.
+\]
+#+end_export
+#+begin_src go <<Map reverse positions to forward strand, Ch.~\ref{ch:km}>>=
+  ls := len(seq.Data())
+  for i, match := range matches {
+	  lm := len(pseq[match.Pattern].Data())
+	  pr := match.Position
+	  pf := ls - pr - lm
+	  match.Position = pf
+	  matches[i] = match
   }
 #+end_src
 #+begin_src latex
   Matches are printed as pairs of positions and names.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:km}>>=
-  func printMatches(matches []kt.Match, patterns []*fasta.Sequence) {
+  func printMatches(matches []kt.Match,
+	  patterns []*fasta.Sequence) {
 	  for _, m := range matches {
 		  s := patterns[m.Pattern]
-		  fmt.Printf("%d\t%s\n", m.Position+1, s.Header())
+		  fmt.Printf("%d\t%s\n", m.Position+1,
+			  s.Header())
 	  }
   }
 #+end_src
