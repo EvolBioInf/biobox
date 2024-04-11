@@ -6,7 +6,7 @@ Biologists*](https://link.springer.com/book/10.1007/978-3-031-20414-2). The
 programs in the biobox are written in [Go](https://go.dev) using
 [literate
 programming](https://www-cs-faculty.stanford.edu/~knuth/lp.html), a
-style of programming that emphasizes readability. The complete
+style of programming that emphasizes readability. The 
 documentation of the package is [here](https://owncloud.gwdg.de/index.php/s/IbVmZ0TKfeGKvU5).
 ## Author
 [Bernhard Haubold](http://guanine.evolbio.mpg.de/), `haubold@evolbio.mpg.de`
