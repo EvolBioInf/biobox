@@ -19,6 +19,9 @@ bioboxDoc.pdf: $(src) rd1.ps rd2.ps
 	latex bioboxDoc
 	dvips bioboxDoc -o -q
 	ps2pdf -dALLOWPSTRANSPARENCY bioboxDoc.ps
+	if [ -d /mnt/c/Users/haubold/ownCloud\ -\ haubold@evolbio.mpg.de@owncloud.gwdg.de/docs/ ]; then \
+		cp bioboxDoc.pdf /mnt/c/Users/haubold/ownCloud\ -\ haubold@evolbio.mpg.de@owncloud.gwdg.de/docs/; \
+	fi
 rd1.ps: ../ranDot/rd1.dot
 	neato -T ps ../ranDot/rd1.dot > rd1.ps
 rd2.ps: ../ranDot/rd2.dot
