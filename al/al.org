@@ -2,7 +2,7 @@
   \section*{Introduction}
   The program \texttt{al} aligns two sequences, a query, $q$, and a
   subject, $s$. It computes a global alignment by default
-  (Figure~\ref{fig:alTypes}A), but the user can request a global
+  (Figure~\ref{fig:alTypes}A), but the user can request a local
   alignment (Figure~\ref{fig:alTypes}B) or an overlap
   (Figure~\ref{fig:alTypes}C) alignment.
   \begin{figure}
