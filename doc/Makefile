@@ -8,19 +8,19 @@ rep2plot.tex rpois.tex sass.tex sblast.tex sequencer.tex shustring.tex \
 simNorm.tex simOrf.tex sops.tex testMeans.tex translate.tex travTree.tex \
 repeater.tex revComp.tex upgma.tex util.tex var.tex watterson.tex wrapSeq.tex
 
-all: $(src) bioboxDoc.pdf 
-%.tex:	../*/%.org bioboxDoc.tex
+all: $(src) biobox.pdf 
+%.tex:	../*/%.org biobox.tex
 	bash ../scripts/org2nw $< | noweave -n -x | sed 's/_test/\\_test/g' > $@
-bioboxDoc.pdf: $(src) rd1.ps rd2.ps
-	latex bioboxDoc
-	bibtex bioboxDoc
-	latex bioboxDoc
-	latex bioboxDoc
-	latex bioboxDoc
-	dvips bioboxDoc -o -q
-	ps2pdf -dALLOWPSTRANSPARENCY bioboxDoc.ps
+biobox.pdf: $(src) rd1.ps rd2.ps
+	latex biobox
+	bibtex biobox
+	latex biobox
+	latex biobox
+	latex biobox
+	dvips biobox -o -q
+	ps2pdf -dALLOWPSTRANSPARENCY biobox.ps
 	if [ -d /mnt/c/Users/haubold/ownCloud\ -\ haubold@evolbio.mpg.de@owncloud.gwdg.de/docs/ ]; then \
-		cp bioboxDoc.pdf /mnt/c/Users/haubold/ownCloud\ -\ haubold@evolbio.mpg.de@owncloud.gwdg.de/docs/; \
+		cp biobox.pdf /mnt/c/Users/haubold/ownCloud\ -\ haubold@evolbio.mpg.de@owncloud.gwdg.de/docs/; \
 	fi
 rd1.ps: ../ranDot/rd1.dot
 	neato -T ps ../ranDot/rd1.dot > rd1.ps

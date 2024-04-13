@@ -1,15 +1,13 @@
 progs.txt
-*/*.go
-!newick/newick.go
 bin/*
-doc/bioboxDoc.aux
-doc/bioboxDoc.bbl
-doc/bioboxDoc.blg
-doc/bioboxDoc.dvi
+doc/biobox.aux
+doc/biobox.bbl
+doc/biobox.blg
+doc/biobox.dvi
 doc/*.log
-doc/bioboxDoc.pdf
-doc/bioboxDoc.toc
-doc/bioboxDoc.ps
+doc/biobox.pdf
+doc/biobox.toc
+doc/biobox.ps
 doc/rd*.ps
 doc/*~
 
