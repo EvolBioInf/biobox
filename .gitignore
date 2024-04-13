@@ -1,5 +1,6 @@
 progs.txt
 bin/*
+doc/*~
 doc/biobox.aux
 doc/biobox.bbl
 doc/biobox.blg
@@ -8,8 +9,9 @@ doc/*.log
 doc/biobox.pdf
 doc/biobox.toc
 doc/biobox.ps
+doc/date.txt
 doc/rd*.ps
-doc/*~
+doc/version.txt
 
 # LaTeX files of individual programs
 doc/al.tex
