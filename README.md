@@ -10,7 +10,7 @@ Biologists*](https://link.springer.com/book/10.1007/978-3-031-20414-2).
 - Install additional packages  
   `$ sudo apt update`  
   `$ sudo apt upgrade`  
-  `$ sudo apt install git gnuplot golang graphviz libgsl-dev make`  
+  `$ sudo apt install git gnuplot golang graphviz libdivsufsort-dev libgsl-dev make`  
   `$ git clone https://github.com/evolbioinf/biobox`  
   `$ cd biobox`
 - Make package  
