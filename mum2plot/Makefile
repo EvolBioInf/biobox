@@ -2,11 +2,14 @@ VERSION = $(shell git describe)
 DATE := $(shell git log | grep Date | head -n 1 | sed -r 's/Date: +[A-Z][a-z]+ ([A-Z][a-z]+) ([0-9]+) [^ ]+ ([0-9]+) .+/\2_\1_\3/')
 
 EXE = mum2plot
+VF = -X github.com/evolbioinf/biobox/util.version=$(VERSION)
+DF = -X github.com/evolbioinf/biobox/util.date=$(DATE)
+BUILD = go build -ldflags "$(VF) $(DF)" $(EXE).go
 
-all: $(EXE)
-
-$(EXE): $(EXE).go
-	go build -ldflags "-X github.com/evolbioinf/biobox/util.version=$(VERSION) -X github.com/evolbioinf/biobox/util.date=$(DATE)" $(EXE).go
+$(EXE):
+	$(BUILD)
+fromOrg: $(EXE).go
+	$(BUILD)
 $(EXE).go: $(EXE).org
 	bash ../scripts/org2nw $(EXE).org | notangle -R$(EXE).go | gofmt > $(EXE).go
 test: $(EXE) $(EXE)_test.go

@@ -17,6 +17,17 @@ all:
 		echo $$prog >> progs.txt; \
 		cp $$prog/$$prog bin; \
 	done
+fromOrg:
+	test -d bin || mkdir bin
+	for pack in $(packs); do \
+		make fromOrg -C $$pack; \
+	done
+	printf "" > progs.txt
+	for prog in $(progs); do \
+		make fromOrg -C $$prog; \
+		echo $$prog >> progs.txt; \
+		cp $$prog/$$prog bin; \
+	done
 .PHONY: doc
 doc:
 	make -C doc
