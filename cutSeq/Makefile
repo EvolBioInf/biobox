@@ -1,5 +1,5 @@
 VERSION = $(shell git describe)
-DATE := $(shell git log | grep Date | head -n 1 | sed -r 's/Date: +[A-Z][a-z]+ ([A-Z][a-z]+) ([0-9]+) [^ ]+ ([0-9]+) .+/\2_\1_\3/')
+DATE := $(shell git log | grep -m 1 Date | sed -r 's/Date: +[A-Z][a-z]+ ([A-Z][a-z]+) ([0-9]+) [^ ]+ ([0-9]+) .+/\2_\1_\3/')
 
 EXE = cutSeq
 VF = -X github.com/evolbioinf/biobox/util.version=$(VERSION)
