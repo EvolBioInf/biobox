@@ -195,22 +195,15 @@
   }
 #+end_src
 #+begin_src latex
-  If the user didn't set a terminal, we set it to wxt unless we are
-  running on the darwin system (macOS), in which case we switch to qt.
+  If the user didn't set a terminal, we get one. Otherwise we check the
+  terminal passed actually exists.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:pt}>>=
   if opts.Win == "" {
-	  opts.Win = "wxt"
-	  if runtime.GOOS == "darwin" {
-		  opts.Win = "qt"
-	  }
+	  opts.Win = util.GetWindow()
+  } else {
+	  util.CheckWindow(opts.Win)
   }
-#+end_src
-#+begin_src latex
-  We import \ty{runtime}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "runtime"
 #+end_src
 #+begin_src latex
   \subsection*{Scan Input Files}
@@ -655,6 +648,12 @@
   } else if !o.NoLabels {
 	  label = " " + v.label
   }
+#+end_src
+#+begin_export latex
+We import \ty{runtime}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "runtime"
 #+end_src
 #+begin_src latex
   The scale is located at the top right hand corner of the tree. To find

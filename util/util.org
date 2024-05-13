@@ -1070,3 +1070,126 @@ if err != nil {
 	  return ii
   }
 #+end_src
+#+begin_export latex
+\section{Function \ty{GetWindow}}
+!\ty{GetWindow} returns an interactive \ty{gnuplot} terminal for the
+!current system, if possible; otherwise it throws an error.
+The list of available terminals is a map filled by calling the
+function \ty{getTerminals}, which we still need to write.
+#+end_export
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func GetWindow() string {
+	  var terms map[string]bool
+	  terms = getTerminals()
+	  term := ""
+	  //<<Iterate over interactive terminals, Ch.~\ref{ch:uti}>>
+	  if term == "" {
+		  //<<Throw error, Ch.~\ref{ch:uti}>>
+	  }
+	  return term
+  }
+#+end_src
+#+begin_export latex
+In \ty{getTerminals} we run \ty{gnuplot} and extract the available
+terminals as a map of strings.
+#+end_export
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func getTerminals() map[string]bool {
+	  terms := make(map[string]bool)
+	  //<<Run \ty{gnuplot}, Ch.~\ref{ch:uti}>>
+	  //<<Extract terminals, Ch.~\ref{ch:uti}>>
+	  return terms
+  }
+#+end_src
+#+begin_export latex
+The command
+\begin{verbatim}
+$ gnuplot -e "set term"
+\end{verbatim}
+list the available terminals. However, the output is sent in two lots
+to the standard error stream, accessing the second lot requires
+pressing return. To sent the output to stdout, we set the \ty{PAGER}
+environment variable to \ty{more}. Then we run \ty{gnuplot}, capture
+its output and check the error it returns.
+#+end_export
+#+begin_src go <<Run \ty{gnuplot}, Ch.~\ref{ch:uti}>>=
+  os.Setenv("PAGER", "more")
+  cmd := exec.Command("gnuplot", "-e", "set term")
+  out, err := cmd.Output()
+  if err != nil {
+	  log.Fatal(err)
+  }
+#+end_src
+#+begin_export latex
+We import \ty{exec}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:uti}>>=
+  "os/exec"
+#+end_src
+#+begin_export latex
+We convert the output from a slice of bytes to a slice of strings,
+each string a row of output like
+\begin{verbatim}
+
+Available terminal types:
+       cairolatex  LaTeX picture environment...
+           canvas  HTML Canvas object
+...
+\end{verbatim}
+From row 3 onward we split the rows into fields and store the first
+field, the terminal.
+#+end_export
+#+begin_src go <<Extract terminals, Ch.~\ref{ch:uti}>>=
+  rows := strings.Split(string(out), "\n")
+  rows = rows[2:]
+  for _, row := range rows {
+	  arr := strings.Fields(row)
+	  if len(arr) > 0 {
+		  terms[arr[0]] = true
+	  }
+  }
+#+end_src
+#+begin_export latex
+We import \ty{strings}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:uti}>>=
+  "strings"
+#+end_src
+#+begin_export latex
+We iterate over five interactive terminals, \ty{wxt}, \ty{windows},
+\ty{qt}, \ty{x11}, and \ty{aqua}, and return the first we find.
+#+end_export
+#+begin_src go <<Iterate over interactive terminals, Ch.~\ref{ch:uti}>>=
+  its := []string{"wxt", "windows", "qt", "x11", "aqua"}
+  for _, it := range its {
+	  if terms[it] {
+		  return it
+	  }
+  }
+#+end_src
+#+begin_export latex
+If we found no interactive \ty{gnuplot}, we create the corresponding
+error and pass it to the function \ty{CheckGnuplot}.
+#+end_export
+#+begin_src go <<Throw error, Ch.~\ref{ch:uti}>>=
+  err := fmt.Errorf("Found no interactive gnuplot terminal.")
+  CheckGnuplot(err)
+#+end_src
+#+begin_export latex
+\section{Function \ty{CheckWindow}}
+!\ty{CheckWindow} tests the existence of a given \ty{gnuplot}
+!terminal. If it doesn't exist, we alert the user and call
+!\ty{CheckGnuplot} with an error.
+#+end_export
+#+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
+  func CheckWindow(win string) {
+	  terms := getTerminals()
+	  if !terms[win] {
+		  p := log.Prefix()
+		  fmt.Fprintf(os.Stderr, "%sError, no terminal %q.\n",
+			  p, win)
+		  err := fmt.Errorf("Couldn't find %s.", win)
+		  CheckGnuplot(err)
+	  }
+  }
+#+end_src

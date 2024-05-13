@@ -17,7 +17,9 @@ import (
 	"log"
 	"math"
 	"os"
+	"os/exec"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -323,4 +325,52 @@ func IsInteractive(t string) bool {
 		ii = true
 	}
 	return ii
+}
+
+// GetWindow returns an interactive gnuplot terminal for the current system, if possible; otherwise it throws an error.
+func GetWindow() string {
+	var terms map[string]bool
+	terms = getTerminals()
+	term := ""
+	its := []string{"wxt", "windows", "qt", "x11", "aqua"}
+	for _, it := range its {
+		if terms[it] {
+			return it
+		}
+	}
+	if term == "" {
+		err := fmt.Errorf("Found no interactive gnuplot terminal.")
+		CheckGnuplot(err)
+	}
+	return term
+}
+func getTerminals() map[string]bool {
+	terms := make(map[string]bool)
+	os.Setenv("PAGER", "more")
+	cmd := exec.Command("gnuplot", "-e", "set term")
+	out, err := cmd.Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	rows := strings.Split(string(out), "\n")
+	rows = rows[2:]
+	for _, row := range rows {
+		arr := strings.Fields(row)
+		if len(arr) > 0 {
+			terms[arr[0]] = true
+		}
+	}
+	return terms
+}
+
+// CheckWindow tests the existence of a given gnuplot terminal. If it doesn't exist, we alert the user and call CheckGnuplot with an error.
+func CheckWindow(win string) {
+	terms := getTerminals()
+	if !terms[win] {
+		p := log.Prefix()
+		fmt.Fprintf(os.Stderr, "%sError, no terminal %q.\n",
+			p, win)
+		err := fmt.Errorf("Couldn't find %s.", win)
+		CheckGnuplot(err)
+	}
 }
