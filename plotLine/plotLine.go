@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 )
 
@@ -203,10 +202,9 @@ func main() {
 		}
 	}
 	if args.Win == "" {
-		args.Win = "wxt"
-		if runtime.GOOS == "darwin" {
-			args.Win = "qt"
-		}
+		args.Win = util.GetWindow()
+	} else {
+		util.CheckWindow(args.Win)
 	}
 	files := flag.Args()
 	clio.ParseFiles(files, scan, args)

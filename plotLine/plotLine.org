@@ -215,15 +215,14 @@
   }
 #+end_src
 #+begin_src latex
-  The default output window is wxt. If we're running on the macOS
-  command line, we switch to qt.
+  If the user didn't set an output window, we get one. Otherwise, we
+  check the existence of the window passed.
 #+end_src
 #+begin_src go <<Set type of output window, Ch.~\ref{ch:pl}>>=
   if args.Win == "" {
-	  args.Win = "wxt"
-	  if runtime.GOOS == "darwin" {
-		  args.Win = "qt"
-	  }
+	  args.Win = util.GetWindow()
+  } else {
+	  util.CheckWindow(args.Win)
   }
 #+end_src
 #+begin_src latex 
@@ -231,12 +230,6 @@
 #+end_src
 #+begin_src go <<\ty{Args} fields, Ch.~\ref{ch:pl}>>=
   Win string
-#+end_src
-#+begin_src latex
-  We import \ty{runtime}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
-  "runtime"
 #+end_src
 #+begin_src latex
   The remaining tokens on the command line are taken as input

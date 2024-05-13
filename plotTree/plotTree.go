@@ -435,10 +435,9 @@ func main() {
 		}
 	}
 	if opts.Win == "" {
-		opts.Win = "wxt"
-		if runtime.GOOS == "darwin" {
-			opts.Win = "qt"
-		}
+		opts.Win = util.GetWindow()
+	} else {
+		util.CheckWindow(opts.Win)
 	}
 	files := flag.Args()
 	fileCounter := 0

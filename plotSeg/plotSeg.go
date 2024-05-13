@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 )
 
@@ -137,10 +136,9 @@ func main() {
 	opts.Gp = *optG
 	opts.Win = *optT
 	if opts.Win == "" {
-		opts.Win = "wxt"
-		if runtime.GOOS == "darwin" {
-			opts.Win = "qt"
-		}
+		opts.Win = util.GetWindow()
+	} else {
+		util.CheckWindow(opts.Win)
 	}
 	if opts.Dim == defScrDim {
 		if opts.Ps != "" {

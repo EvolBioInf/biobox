@@ -178,24 +178,17 @@
   opts.Gp = *optG
 #+end_src
 #+begin_export latex
-The one option we haven't collected yet is the terminal. This is wxt
-by default, but if we are running on darwin under macOS, the default
-is qt.
+The one option we haven't collected yet is the terminal. If the user
+didn't set one, we get one. Otherwise, we check whether the windo
+passed actually exists.
 #+end_export
 #+begin_src go <<Collect option values, Ch.~\ref{ch:ps}>>=
   opts.Win = *optT
   if opts.Win == "" {
-	  opts.Win = "wxt"
-	  if runtime.GOOS == "darwin" {
-		  opts.Win = "qt"
-	  }
+	  opts.Win = util.GetWindow()
+  } else {
+	  util.CheckWindow(opts.Win)
   }
-#+end_src
-#+begin_src latex
-  We import \ty{runtime}.
-#+end_src
-#+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
-  "runtime"
 #+end_src
 #+begin_src latex
   We add the fields we just used to \ty{Options}.
