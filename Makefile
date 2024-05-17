@@ -17,19 +17,19 @@ all:
 		echo $$prog >> progs.txt; \
 		cp $$prog/$$prog bin; \
 	done
-fromOrg:
+tangle:
 	test -d bin || mkdir bin
 	for pack in $(packs); do \
-		make fromOrg -C $$pack; \
+		make tangle -C $$pack; \
 	done
 	printf "" > progs.txt
 	for prog in $(progs); do \
-		make fromOrg -C $$prog; \
+		make tangle -C $$prog; \
 		echo $$prog >> progs.txt; \
 		cp $$prog/$$prog bin; \
 	done
-.PHONY: doc
-doc:
+.PHONY: weave
+weave:
 	make -C doc
 clean:
 	for prog in $(progs) $(packs) doc; do \
