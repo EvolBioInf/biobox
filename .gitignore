@@ -145,5 +145,4 @@ plotLine/makeRes.sh
 plotSeg/makeRes.sh
 plotTree/makePlots.sh
 genTree/makeTests.sh
-scripts/setup.sh
 sequencer/makeRes.sh
