@@ -8,8 +8,7 @@ BUILD = go build -ldflags "$(VF) $(DF)" $(EXE).go
 
 $(EXE):
 	$(BUILD)
-tangle: $(EXE).go
-	$(BUILD)
+tangle: $(EXE).go $(EXE)_test.go
 $(EXE).go: $(EXE).org
 	bash ../scripts/org2nw $(EXE).org | notangle -R$(EXE).go | gofmt > $(EXE).go
 test: $(EXE) $(EXE)_test.go

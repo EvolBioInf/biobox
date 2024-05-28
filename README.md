@@ -7,12 +7,8 @@ Biologists*](https://link.springer.com/book/10.1007/978-3-031-20414-2).
 [Bernhard Haubold](http://guanine.evolbio.mpg.de/), `haubold@evolbio.mpg.de`
 ## Windows/Ubuntu
 - [Install Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install)
-- Install additional packages
+- Clone repo and install additional packages
 
-  `sudo apt update`  
-  `sudo apt -y upgrade`  
-  `sudo apt -y autoremove`  
-  `sudo apt -y install git`  
   `git clone https://github.com/evolbioinf/biobox`  
   `cd biobox`  
   `bash scripts/setup.sh`

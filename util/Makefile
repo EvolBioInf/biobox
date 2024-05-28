@@ -2,7 +2,7 @@ all : util
 
 util:
 	go build util.go
-tangle: util.go
+tangle: util.go util_test.go
 	go build util.go
 util.go: util.org
 	awk -f ../scripts/preTangle.awk util.org | bash ../scripts/org2nw | notangle -Rutil.go | gofmt > util.go

@@ -22,11 +22,8 @@ tangle:
 	for pack in $(packs); do \
 		make tangle -C $$pack; \
 	done
-	printf "" > progs.txt
 	for prog in $(progs); do \
 		make tangle -C $$prog; \
-		echo $$prog >> progs.txt; \
-		cp $$prog/$$prog bin; \
 	done
 .PHONY: weave
 weave:
