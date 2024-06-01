@@ -1,5 +1,5 @@
-VERSION = $(shell git describe)
-DATE := $(shell git log | grep -m 1 Date | sed -r 's/Date: +[A-Z][a-z]+ ([A-Z][a-z]+) ([0-9]+) [^ ]+ ([0-9]+) .+/\2_\1_\3/')
+VERSION = $(shell bash ../scripts/getVersion.sh)
+DATE = $(shell bash ../scripts/getDate.sh)
 
 EXE = maf
 VF = -X github.com/evolbioinf/biobox/util.version=$(VERSION)
