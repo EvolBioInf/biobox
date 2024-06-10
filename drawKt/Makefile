@@ -5,15 +5,20 @@ EXE = drawKt
 VF = -X github.com/evolbioinf/biobox/util.version=$(VERSION)
 DF = -X github.com/evolbioinf/biobox/util.date=$(DATE)
 BUILD = go build -ldflags "$(VF) $(DF)" $(EXE).go
+NW = $(shell which noweb)
 
-$(EXE):
+$(EXE): $(EXE).go
 	$(BUILD)
 tangle: $(EXE).go $(EXE)_test.go
 $(EXE).go: $(EXE).org
-	bash ../scripts/org2nw $(EXE).org | notangle -R$(EXE).go | gofmt > $(EXE).go
+	if [ $(NW) != "" ]; then\
+		bash ../scripts/org2nw $(EXE).org | notangle -R$(EXE).go | gofmt > $(EXE).go;\
+	fi
 test: $(EXE) $(EXE)_test.go
 	go test -v
 $(EXE)_test.go: $(EXE).org
-	bash ../scripts/org2nw $(EXE).org | notangle -R$(EXE)_test.go | gofmt > $(EXE)_test.go
+	if [ $(NW) != "" ]; then\
+		bash ../scripts/org2nw $(EXE).org | notangle -R$(EXE)_test.go | gofmt > $(EXE)_test.go;\
+	fi
 clean:
 	rm -f $(EXE) *.go
