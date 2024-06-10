@@ -34,6 +34,6 @@ clean:
 	done
 	rm -f bin/* progs.txt
 test:
-	for prog in $(progs) $(packs); do \
+	for prog in $(packs) $(progs); do \
 		make test -C $$prog; \
 	done
