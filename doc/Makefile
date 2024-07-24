@@ -24,6 +24,7 @@ biobox.pdf: $(src) rd1.ps rd2.ps
 	latex biobox
 	dvips biobox -o -q
 	ps2pdf -dALLOWPSTRANSPARENCY biobox.ps
+publish: biobox.pdf	
 	if [ -d /mnt/c/Users/haubold/ownCloud\ -\ haubold@evolbio.mpg.de@owncloud.gwdg.de/docs/ ]; then \
 		cp biobox.pdf /mnt/c/Users/haubold/ownCloud\ -\ haubold@evolbio.mpg.de@owncloud.gwdg.de/docs/; \
 	fi
