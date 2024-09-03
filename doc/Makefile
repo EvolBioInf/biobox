@@ -13,7 +13,7 @@ version = $(shell git describe)
 
 all: $(src) biobox.pdf 
 %.tex:	../*/%.org biobox.tex
-	bash ../scripts/org2nw $< | noweave -n -x | sed 's/_test/\\_test/g' > $@
+	bash ../scripts/org2nw $< | awk -f ../scripts/preWeave.awk | noweave -n -x | sed 's/_test/\\_test/g' > $@
 biobox.pdf: $(src) rd1.ps rd2.ps
 	echo $(date) | tr '_' ' ' > date.txt
 	echo $(version) | tr '-' ' ' | awk '{printf "%s", $$1; if ($$2) printf "-%s", $$2; printf "\n"}' > version.txt
