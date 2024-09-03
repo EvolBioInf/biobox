@@ -111,7 +111,8 @@ func main() {
 	optY := flag.String("y", "", "y-label")
 	optXX := flag.String("X", "*:*", "x-range")
 	optYY := flag.String("Y", "*:*", "y-range")
-	optT := flag.String("t", "", "terminal (default wxt, qt on darwin)")
+	term := util.GetWindow()
+	optT := flag.String("t", term, "terminal, wxt|qt|x11|...")
 	optP := flag.String("p", "", "encapsulated postscript file")
 	defScrDim := "640,384"
 	defPsDim := "5,3.5"
@@ -135,11 +136,7 @@ func main() {
 	opts.Script = *optS
 	opts.Gp = *optG
 	opts.Win = *optT
-	if opts.Win == "" {
-		opts.Win = util.GetWindow()
-	} else {
-		util.CheckWindow(opts.Win)
-	}
+	util.CheckWindow(opts.Win)
 	if opts.Dim == defScrDim {
 		if opts.Ps != "" {
 			opts.Dim = defPsDim

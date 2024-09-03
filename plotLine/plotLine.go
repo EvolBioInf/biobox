@@ -166,8 +166,9 @@ func main() {
 	optPP := flag.Bool("P", false, "points only")
 	optLL := flag.Bool("L", false, "lines and points")
 	optS := flag.String("s", "", "write gnuplot script to file")
-	optT := flag.String("t", "",
-		"terminal (default wxt, qt on darwin)")
+	term := util.GetWindow()
+	optT := flag.String("t", term,
+		"terminal, wxt|qt|x11|...")
 	optP := flag.String("p", "", "encapsulated postscript file")
 	defScrDim := "640,384"
 	defPsDim := "5,3.5"
@@ -201,11 +202,7 @@ func main() {
 			args.Dim = defDumbDim
 		}
 	}
-	if args.Win == "" {
-		args.Win = util.GetWindow()
-	} else {
-		util.CheckWindow(args.Win)
-	}
+	util.CheckWindow(args.Win)
 	files := flag.Args()
 	clio.ParseFiles(files, scan, args)
 }

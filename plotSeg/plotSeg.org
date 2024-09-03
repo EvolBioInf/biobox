@@ -59,9 +59,9 @@
   //<<Parse options, Ch.~\ref{ch:ps}>>
   //<<Parse input files, Ch.~\ref{ch:ps}>>
 #+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
 #+begin_src go <<Imports, Ch.~\ref{ch:ps}>>=
   "github.com/evolbioinf/biobox/util"
 #+end_src
@@ -118,7 +118,8 @@
   of the plot.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:ps}>>=
-  optT := flag.String("t", "", "terminal (default wxt, qt on darwin)")
+  term := util.GetWindow()
+  optT := flag.String("t", term, "terminal, wxt|qt|x11|...")
   optP := flag.String("p", "", "encapsulated postscript file")
   defScrDim := "640,384"
   defPsDim := "5,3.5"
@@ -178,17 +179,12 @@
   opts.Gp = *optG
 #+end_src
 #+begin_export latex
-The one option we haven't collected yet is the terminal. If the user
-didn't set one, we get one. Otherwise, we check whether the windo
-passed actually exists.
+The one option we haven't collected yet is the terminal. Here we check
+whether the window passed actually exists.
 #+end_export
 #+begin_src go <<Collect option values, Ch.~\ref{ch:ps}>>=
   opts.Win = *optT
-  if opts.Win == "" {
-	  opts.Win = util.GetWindow()
-  } else {
-	  util.CheckWindow(opts.Win)
-  }
+  util.CheckWindow(opts.Win)
 #+end_src
 #+begin_src latex
   We add the fields we just used to \ty{Options}.

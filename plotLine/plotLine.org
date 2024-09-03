@@ -56,9 +56,9 @@
   //<<Set type of output window, Ch.~\ref{ch:pl}>>
   //<<Parse input files, Ch.~\ref{ch:pl}>>
 #+end_src
-#+begin_src latex
-  We import \ty{util}.
-#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
 #+begin_src go <<Imports, Ch.~\ref{ch:pl}>>=
   "github.com/evolbioinf/biobox/util"
 #+end_src
@@ -128,8 +128,9 @@
   set the dimensions themselves.
 #+end_src
 #+begin_src go <<Declare device options, Ch.~\ref{ch:pl}>>=
-  optT := flag.String("t", "",
-	  "terminal (default wxt, qt on darwin)")
+  term := util.GetWindow()
+  optT := flag.String("t", term,
+	  "terminal, wxt|qt|x11|...")
   optP := flag.String("p", "", "encapsulated postscript file")
   defScrDim := "640,384"
   defPsDim := "5,3.5"
@@ -215,15 +216,10 @@
   }
 #+end_src
 #+begin_src latex
-  If the user didn't set an output window, we get one. Otherwise, we
-  check the existence of the window passed.
+  We check the existence of the window passed.
 #+end_src
 #+begin_src go <<Set type of output window, Ch.~\ref{ch:pl}>>=
-  if args.Win == "" {
-	  args.Win = util.GetWindow()
-  } else {
-	  util.CheckWindow(args.Win)
-  }
+  util.CheckWindow(args.Win)
 #+end_src
 #+begin_src latex 
   We add the \ty{Win} field to \ty{Args}.
