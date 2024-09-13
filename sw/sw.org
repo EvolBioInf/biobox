@@ -1,0 +1,376 @@
+#+begin_export latex
+\section*{Introduction}
+Sliding window analyses are a standard method for summarizing
+sequential data. The program \ty{sw} implements a simple sliding
+window analysis on a set of floating point numbers, one number per
+line by averaging the values across a window. The output consists of
+three columns, file name, window mindpoint, and average value, for
+example
+\begin{verbatim}
+...
+NC_000021.fasta     26000929        0.8913
+NC_000021.fasta     26001929        0.8881
+NC_000021.fasta     26002929        0.8848
+NC_000021.fasta     26003929        0.8864
+NC_000021.fasta     26004929        0.8864
+...
+\end{verbatim}
+
+\section*{Implementation}
+The outline of \ty{sw} has hooks for imports, variables, functions,
+and the logic of the main function.
+#+end_export
+#+begin_src go <<sw.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch. \ref{ch:sw}>>
+  )
+  //<<Variables, Ch. \ref{ch:sw}>>
+  //<<Functions, Ch. \ref{ch:sw}>>
+  func main () {
+	  //<<Main function, Ch. \ref{ch:sw}>>
+  }
+#+end_src
+#+begin_export latex
+In the main function we prepare the \ty{log} package, set the usage,
+declare the options, parse the options, and parse the input files.
+#+end_export
+#+begin_src go <<Main function, Ch. \ref{ch:sw}>>=
+  util.PrepLog("sw")
+  //<<Set usage, Ch. \ref{ch:sw}>>
+  //<<Declare options, Ch. \ref{ch:sw}>>
+  //<<Parse options, Ch. \ref{ch:sw}>>
+  //<<Parse input files, Ch. \ref{ch:sw}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sw}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_export latex
+The usage consists of the actual usage message, an explanation of the
+purpose of \ty{sw}, and an example command.
+#+end_export
+#+begin_src go <<Set usage, Ch. \ref{ch:sw}>>=
+  u := "sw [option]... [foo.txt]..."
+  p := "Calculate sliding window analysis on " +
+	  "numbers, one per line."
+  e := "sw -w 100 too.txt"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_export latex
+We import \ty{clio}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sw}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_export latex
+Apart from the version, we declare two options, the window length and
+the step length. The window length is a mandatory option, so we don't
+set a default. The step length is by default one tenth of the window
+length.
+#+end_export
+#+begin_src go <<Declare options, Ch. \ref{ch:sw}>>=
+  optV := flag.Bool("v", false, "version")
+  optW := flag.Int("w", 0, "window length")
+  optK := flag.Int("k", 0, "step length (default: winLen/10)")
+#+end_src
+#+begin_export latex
+We import \ty{flag}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sw}>>=
+  "flag"
+#+end_src
+#+begin_export latex
+We parse the options and first respond to \ty{-v} as this would stop
+the program. Then we respond to \ty{-w} and \ty{-k}.
+#+end_export
+#+begin_src go <<Parse options, Ch. \ref{ch:sw}>>=
+  flag.Parse()
+  //<<Respond to \ty{-v}, Ch. \ref{ch:sw}>>
+  //<<Respond to \ty{-w}, Ch. \ref{ch:sw}>>
+  //<<Respond to \ty{-k}, Ch. \ref{ch:sw}>>
+#+end_src
+#+begin_export latex
+If the user requested the program version, we print it by calling
+\ty{PrintInfo}.
+#+end_export
+#+begin_src go <<Respond to \ty{-v}, Ch. \ref{ch:sw}>>=
+  if *optV {
+	  util.PrintInfo("sw")
+  }
+#+end_src
+#+begin_export latex
+We make sure the user has set a window length,
+otherwise we ask for one.
+#+end_export
+#+begin_src go <<Respond to \ty{-w}, Ch. \ref{ch:sw}>>=
+  if *optW == 0 {
+	  log.Fatal("please enter a window length, -w")
+  }
+#+end_src
+#+begin_export latex
+If the user hasn't set a step, we also set that to one tenth of the
+window length, and make sure it is at least 1.
+#+end_export
+#+begin_src go <<Respond to \ty{-k}, Ch. \ref{ch:sw}>>=
+  if *optK == 0 {
+	  (*optK) = *optW / 10
+	  if *optK == 0 {
+		  (*optK) = 1
+	  }
+  }
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sw}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_export latex
+The remaining tokens on the command line are taken as input
+files. The function \ty{ParseFiles} takes as parameter the function
+\ty{scan}, which is applied to each file using the window length and
+the step length as parameters. Inside \ty{scan} we also need to look
+up the name of the current file, so we assign the file names to the
+global variable \ty{fileNames}.
+#+end_export
+#+begin_src go <<Parse input files, Ch. \ref{ch:sw}>>=
+  files := flag.Args()
+  fileNames = files
+  clio.ParseFiles(files, scan, *optW, *optK)
+#+end_src
+#+begin_export latex
+We declare the variable \ty{fileNames} as a string slice.
+#+end_export
+#+begin_src go <<Variables, Ch. \ref{ch:sw}>>=
+  var fileNames []string
+#+end_src
+#+begin_export latex
+Inside \ty{scan}, we retrieve the two arguments just passed, look up
+the name of the current file, read the data into a slice of floats,
+and carry out the sliding window analysis.
+#+end_export
+#+begin_src go <<Functions, Ch. \ref{ch:sw}>>=
+  func scan(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch. \ref{ch:sw}>>
+	  //<<Look up file name, Ch. \ref{ch:sw}>>
+	  var data []float64
+	  //<<Read data, Ch. \ref{ch:sw}>>
+	  //<<Carry out sliding window analysis, Ch. \ref{ch:sw}>>
+  }
+#+end_src
+#+begin_export latex
+We import \ty{io}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sw}>>=
+  "io"
+#+end_src
+#+begin_export latex
+We retrieve the window length and the step length.
+#+end_export
+#+begin_src go <<Retrieve arguments, Ch. \ref{ch:sw}>>=
+  w := args[0].(int)
+  k := args[1].(int)
+#+end_src
+#+begin_export latex
+The default file name is ``stdin''. If the user supplied actual files,
+we look up the first one and reslice the slice of file names.
+#+end_export
+#+begin_src go <<Look up file name, Ch. \ref{ch:sw}>>=
+  fn := "stdin"
+  if len(fileNames) > 0 {
+	  fn = fileNames[0]
+	  fileNames = fileNames[1:]
+  }
+#+end_src
+#+begin_export latex
+We use a scanner to read the data. The numbers are converted from
+strings to floats before we append them to the data slice.
+#+end_export
+#+begin_src go <<Read data, Ch. \ref{ch:sw}>>=
+  sc := bufio.NewScanner(r)
+  for sc.Scan() {
+	  x, e := strconv.ParseFloat(sc.Text(), 64)
+	  if e != nil {
+		  log.Fatal(e)
+	  }
+	  data = append(data, x)
+  }
+#+end_src
+#+begin_export latex
+We import \ty{bufio}, \ty{strconv}, and \ty{log}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sw}>>=
+  "bufio"
+  "strconv"
+  "log"
+#+end_src
+#+begin_export latex
+We begin the sliding window analysis by analyzing the first
+window. Then we analyze the remaining windows.
+#+end_export
+#+begin_src go <<Carry out sliding window analysis, Ch. \ref{ch:sw}>>=
+  //<<Analyze first window, Ch. \ref{ch:sw}>>
+  //<<Analyze remaining windows, Ch. \ref{ch:sw}>>
+#+end_src
+#+begin_export latex
+We analyze the first window by extending its right border by $w$ steps
+and summing the values. Then we print the result.
+#+end_export
+#+begin_src go <<Analyze first window, Ch. \ref{ch:sw}>>=
+  var lb, rb int
+  n := len(data)
+  s := 0.0
+  for rb < n && rb < w {
+	  s += data[rb]
+	  rb++
+  }
+  if rb == w {
+	  //<<Print result, Ch. \ref{ch:sw}>>
+  }
+#+end_src
+#+begin_export latex
+We calculate the midpoint of the current window and its average
+value. Then we print the file name, the midpoint, and the value
+separated by tabs.
+#+end_export
+#+begin_src go <<Print result, Ch. \ref{ch:sw}>>=
+  m := float64(lb + rb) / 2.0
+  x := s / float64(w)
+  fmt.Printf("%s\t%g\t%.6g\n", fn, m, x)
+#+end_src
+#+begin_export latex
+We import \ty{fmt}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sw}>>=
+  "fmt"
+#+end_src
+#+begin_export latex
+To analyze the remaining windows, we repeatedly slide the window by
+$k$ steps and print the result.
+#+end_export
+#+begin_src go <<Analyze remaining windows, Ch. \ref{ch:sw}>>=
+  for rb < n {
+	  i := 0
+	  for rb < n && i < k {
+		  //<<Slide window, Ch. \ref{ch:sw}>>
+		  i++
+	  }
+	  if i == k {
+		  //<<Print result, Ch. \ref{ch:sw}>>
+	  }
+  }
+#+end_src
+#+begin_export latex
+We slide the window one step to the right by adding the value of the
+new right border and subtracting the value of the old left border.
+#+end_export
+#+begin_src go <<Slide window, Ch. \ref{ch:sw}>>=
+  s += data[rb]
+  s -= data[lb]
+  rb++
+  lb++
+#+end_src
+#+begin_export latex
+This completes the program \ty{sw}, time to test it.
+\section*{Testing}
+The outline of our testing program has hooks for imports and the
+testing logic.
+#+end_export
+#+begin_src go <<sw_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch. \ref{ch:sw}>>
+  )
+
+  func TestSw(t *testing.T) {
+	  //<<Testing, Ch. \ref{ch:sw}>>
+  }
+#+end_src
+#+begin_export latex
+We create a set of tests and iterate over them.
+#+end_export
+#+begin_src go <<Testing, Ch. \ref{ch:sw}>>=
+  var tests []*exec.Cmd
+  //<<Create tests, Ch. \ref{ch:sw}>>
+  for i, test := range tests {
+	  //<<Run test, Ch. \ref{ch:sw}>>
+  }
+#+end_src
+#+begin_export latex
+We import \ty{exec}.
+#+end_export
+#+begin_src go <<Testing imports, Ch. \ref{ch:sw}>>=
+  "os/exec"
+#+end_src
+#+begin_export latex
+We run our tests on two data sets, a small one comprising only ten
+lines, \ty{test1.dat}, and a larger one comprising 10,000 lines. Our
+first test is on the small data set with a window length of 5.
+#+end_export
+#+begin_src go <<Create tests, Ch. \ref{ch:sw}>>=
+  ds := "test1.dat"
+  test := exec.Command("./sw", "-w", "5", ds)
+  tests = append(tests, test)
+#+end_src
+#+begin_export latex
+Our second test is with a step size of 2, instead of the default of 1.
+#+end_export
+#+begin_src go <<Create tests, Ch. \ref{ch:sw}>>=
+  test = exec.Command("./sw", "-w", "5", "-k", "2", ds)
+  tests = append(tests, test)
+#+end_src
+#+begin_export latex
+The remaining tests are on the larger data set, \ty{test2.dat}. We
+first analyze it with a window size of 100.
+#+end_export
+#+begin_src go <<Create tests, Ch. \ref{ch:sw}>>=
+  ds = "test2.dat"
+  test = exec.Command("./sw", "-w", "100", ds)
+  tests = append(tests, test)
+#+end_src
+#+begin_export latex
+Then we run the test with a step size of 1.
+#+end_export
+#+begin_src go <<Create tests, Ch. \ref{ch:sw}>>=
+  test = exec.Command("./sw", "-w", "100", "-k", "1", ds)
+  tests = append(tests, test)
+#+end_src
+#+begin_export latex
+Our last test is with a step length of 20.
+#+end_export
+#+begin_src go <<Create tests, Ch. \ref{ch:sw}>>=
+  test = exec.Command("./sw", "-w", "100", "-k", "20", ds)
+  tests = append(tests, test)
+#+end_src
+#+begin_export latex
+When we run a test, we compare the results we get with the results we
+want, which are stored in files \ty{r1.txt}, \ty{r2.txt}, and so on.
+#+end_export
+#+begin_src go <<Run test, Ch. \ref{ch:sw}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Error(err)
+  }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := os.ReadFile(f)
+  if err != nil {
+	  t.Error(err)
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_export latex
+We import \ty{strconv}, \ty{os}, and \ty{bytes}.
+#+end_export
+#+begin_src go <<Testing imports, Ch. \ref{ch:sw}>>=
+  "strconv"
+  "os"
+  "bytes"
+#+end_src

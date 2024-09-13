@@ -1,0 +1,6 @@
+test1.dat	2.5	3
+test1.dat	3.5	4
+test1.dat	4.5	5
+test1.dat	5.5	6
+test1.dat	6.5	7
+test1.dat	7.5	8

@@ -64,6 +64,7 @@ doc/shustring.tex
 doc/simNorm.tex
 doc/simOrf.tex
 doc/sops.tex
+doc/sw.tex
 doc/testMeans.tex
 doc/translate.tex
 doc/travTree.tex
@@ -124,6 +125,7 @@ shustring/shustring
 simNorm/simNorm
 simOrf/simOrf
 sops/sops
+sw/sw
 testMeans/testMeans
 translate/translate
 travTree/travTree
@@ -134,15 +136,16 @@ wrapSeq/wrapSeq
 
 # Miscellaneous
 clac/drawTrees.sh
-drag/*.sh
 drag/*.awk
-drawKt/ktWrapper*
+drag/*.sh
 drawKt/kt.tex
+drawKt/ktWrapper*
+genTree/makeTests.sh
 keyMat/makeRes.sh
-ranDot/*.sh
 plotLine/lineTmpl.txt
 plotLine/makeRes.sh
 plotSeg/makeRes.sh
 plotTree/makePlots.sh
-genTree/makeTests.sh
+ranDot/*.sh
 sequencer/makeRes.sh
+sw/makeRes.sh

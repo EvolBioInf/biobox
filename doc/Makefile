@@ -5,7 +5,7 @@ kerror.tex keyMat.tex maf.tex midRoot.tex mtf.tex mum2plot.tex mutator.tex \
 naiveMatcher.tex nj.tex num2char.tex numAl.tex olga.tex pam.tex plotLine.tex \
 plotSeg.tex plotTree.tex pps.tex ranseq.tex randomizeSeq.tex ranDot.tex \
 rep2plot.tex rpois.tex sass.tex sblast.tex sequencer.tex shustring.tex \
-simNorm.tex simOrf.tex sops.tex testMeans.tex translate.tex travTree.tex \
+simNorm.tex simOrf.tex sops.tex sw.tex testMeans.tex translate.tex travTree.tex \
 repeater.tex revComp.tex upgma.tex util.tex var.tex watterson.tex wrapSeq.tex
 
 date = $(shell git log | grep -m 1 Date | sed -r 's/Date: +[A-Z][a-z]+ ([A-Z][a-z]+) ([0-9]+) [^ ]+ ([0-9]+) .+/\2_\1_\3/')
