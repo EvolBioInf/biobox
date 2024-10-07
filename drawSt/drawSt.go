@@ -207,7 +207,7 @@ func drawCnode(v *node, args ...interface{}) {
 			v.id, sa[v.l]+1)
 	} else if depth {
 		fmt.Printf("\\nput{0}{%d}{"+
-			"\\ovalnode[linecolor=lightgray]{%d}{%d}}\n",
+			"\\circlenode[linecolor=lightgray]{%d}{%d}}\n",
 			v.id, v.id, v.d)
 	}
 }

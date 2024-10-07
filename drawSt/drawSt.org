@@ -690,8 +690,8 @@
 #+end_src
 #+begin_src latex
   Leaves are labeled by the suffix position. Internal nodes might be
-  labeled by their string depth, which we place in a box to distinguish
-  it from the labels of nodes and leaves.
+  labeled by their string depth, which we place in a circle to
+  distinguish it from the labels of nodes and leaves.
 #+end_src
 #+begin_src go <<Label conventional node, Ch.~\ref{ch:dst}>>=
   if v.child == nil {
@@ -699,7 +699,7 @@
 		  v.id, sa[v.l]+1)
   } else if depth {
 	  fmt.Printf("\\nput{0}{%d}{" +
-		  "\\ovalnode[linecolor=lightgray]{%d}{%d}}\n",
+		  "\\circlenode[linecolor=lightgray]{%d}{%d}}\n",
 		  v.id, v.id, v.d)
   }
 #+end_src
