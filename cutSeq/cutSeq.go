@@ -35,6 +35,12 @@ func scan(r io.Reader, args ...interface{}) {
 			h := seq.Header() + " join("
 			for i, r := range regions {
 				sl := len(seq.Data())
+				if r.start > sl {
+					fmt.Fprintf(os.Stderr,
+						"region (%d, %d) outside of sequence %s\n",
+						r.start, r.end, seq.Header())
+					continue
+				}
 				if r.end > sl {
 					fmt.Fprintf(os.Stderr, "curtailing (%d, %d) to (%d, %d)\n",
 						r.start, r.end, r.start, sl)
@@ -54,6 +60,12 @@ func scan(r io.Reader, args ...interface{}) {
 		} else {
 			for _, r := range regions {
 				sl := len(seq.Data())
+				if r.start > sl {
+					fmt.Fprintf(os.Stderr,
+						"region (%d, %d) outside of sequence %s\n",
+						r.start, r.end, seq.Header())
+					continue
+				}
 				if r.end > sl {
 					fmt.Fprintf(os.Stderr, "curtailing (%d, %d) to (%d, %d)\n",
 						r.start, r.end, r.start, sl)

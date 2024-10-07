@@ -271,11 +271,11 @@ We import \ty{util}.
 #+begin_src latex
   The joined header and sequence is constructed in one pass over the
   slice of regions. But before we apply a region to a sequence, we
-  make sure it doesn't overrun the sequence.
+  make sure it is contained in it.
 #+end_src
 #+begin_src go <<Construct joined header and sequence, Ch.~\ref{ch:cut}>>=
   for i, r := range regions {
-	  //<<Ensure region doesn't overrun sequence, Ch.~\ref{ch:cut}>>
+	  //<<Ensure region is contained in sequence, Ch.~\ref{ch:cut}>>
 	  s := r.start
 	  e := r.end
 	  if i > 0 {
@@ -286,11 +286,18 @@ We import \ty{util}.
   }
 #+end_src
 #+begin_src latex
-  If the region overruns the sequence, we curtail it to the sequence end
-  and warn the user.
+  If the start of the region is beyond its end, we cut nothing and warn
+  the user. Similarly, if the region overruns the sequence, we curtail
+  it to the sequence end and warn the user.
 #+end_src
-#+begin_src go <<Ensure region doesn't overrun sequence, Ch.~\ref{ch:cut}>>=
+#+begin_src go <<Ensure region is contained in sequence, Ch.~\ref{ch:cut}>>=
   sl := len(seq.Data())
+  if r.start > sl {
+	  fmt.Fprintf(os.Stderr,
+		  "region (%d, %d) outside of sequence %s\n",
+		  r.start, r.end, seq.Header())
+	  continue
+  }
   if r.end > sl {
 	  fmt.Fprintf(os.Stderr, "curtailing (%d, %d) to (%d, %d)\n",
 		  r.start, r.end, r.start, sl)
@@ -299,11 +306,12 @@ We import \ty{util}.
 #+end_src
 #+begin_src latex
   Printing the cut-out regions separately is simpler, we just iterate
-  over the slice of regions. Again, we ensure there's no overrun.
+  over the slice of regions. Again, we ensure the region is inside the
+  sequence.
 #+end_src
 #+begin_src go <<Print separate regions, Ch.~\ref{ch:cut}>>=
   for _, r := range regions {
-	  //<<Ensure region doesn't overrun sequence, Ch.~\ref{ch:cut}>>
+	  //<<Ensure region is contained in sequence, Ch.~\ref{ch:cut}>>
 	  s := r.start
 	  e := r.end
 	  h := seq.Header() + " "
