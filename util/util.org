@@ -1156,11 +1156,11 @@ We import \ty{strings}.
   "strings"
 #+end_src
 #+begin_export latex
-We iterate over five interactive terminals, \ty{wxt}, \ty{windows},
-\ty{qt}, \ty{x11}, and \ty{aqua}, and return the first we find.
+We iterate over five interactive terminals, \ty{x11}, \ty{qt},
+\ty{windows}, \ty{aqua}, and \ty{wxt}, and return the first we find.
 #+end_export
 #+begin_src go <<Iterate over interactive terminals, Ch.~\ref{ch:uti}>>=
-  its := []string{"wxt", "windows", "qt", "x11", "aqua"}
+  its := []string{"x11", "qt", "windows", "aqua", "wxt"}
   for _, it := range its {
 	  if terms[it] {
 		  return it

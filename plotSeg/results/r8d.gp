@@ -1,4 +1,4 @@
-set terminal qt persist size 300,300
+set terminal x11 persist size 300,300
 set object 1 rectangle from screen 0,0 to screen 1,1 fillcolor rgb 'white' behind
 set format x ''
 unset xtics

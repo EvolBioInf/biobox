@@ -332,7 +332,7 @@ func GetWindow() string {
 	var terms map[string]bool
 	terms = getTerminals()
 	term := ""
-	its := []string{"wxt", "windows", "qt", "x11", "aqua"}
+	its := []string{"x11", "qt", "windows", "aqua", "wxt"}
 	for _, it := range its {
 		if terms[it] {
 			return it
