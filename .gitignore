@@ -146,6 +146,7 @@ plotLine/lineTmpl.txt
 plotLine/makeRes.sh
 plotSeg/makeRes.sh
 plotTree/makePlots.sh
+release
 ranDot/*.sh
 sequencer/makeRes.sh
 sw/makeRes.sh
