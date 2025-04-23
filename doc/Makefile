@@ -24,10 +24,14 @@ biobox.pdf: $(src) rd1.ps rd2.ps
 	latex biobox
 	dvips biobox -o -q
 	ps2pdf -dALLOWPSTRANSPARENCY biobox.ps
-publish: biobox.pdf	
+publish: biobox.pdf
 	if [ -d /mnt/c/Users/haubold/ownCloud\ -\ haubold@evolbio.mpg.de@owncloud.gwdg.de/docs/ ]; then \
 		cp biobox.pdf /mnt/c/Users/haubold/ownCloud\ -\ haubold@evolbio.mpg.de@owncloud.gwdg.de/docs/; \
 	fi
+#	gh release create "${version}" <deb_file>
+publish-update:
+#	gh release delete-asset "${version}" <deb_file>
+#	gh release upload       "${version}" <deb_file>
 rd1.ps: ../ranDot/rd1.dot
 	neato -T ps ../ranDot/rd1.dot > rd1.ps
 rd2.ps: ../ranDot/rd2.dot
