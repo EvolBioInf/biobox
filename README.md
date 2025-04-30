@@ -1,4 +1,4 @@
-# [`biobox`](https://owncloud.gwdg.de/index.php/s/h8Wzg5BvNOjisGB)
+# [`biobox`](https://github.com/EvolBioInf/biobox/releases/download/v1.1/biobox.pdf)
 ## Description
 Tools for bioinformatics, many of which are also used in the text book
 [*Bioinformatics for Evolutionary
