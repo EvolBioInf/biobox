@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"github.com/evolbioinf/biobox/util"
@@ -18,9 +19,15 @@ func scan(r io.Reader, args ...interface{}) {
 	pseq := args[1].([]*fasta.Sequence)
 	pstr := args[2].([]string)
 	optR := args[3].(bool)
+	optI := args[4].(bool)
 	scanner := fasta.NewScanner(r)
 	for scanner.ScanSequence() {
 		seq := scanner.Sequence()
+		if optI {
+			d := seq.Data()
+			d = bytes.ToUpper(d)
+			seq = fasta.NewSequence(seq.Header(), d)
+		}
 		matches := tree.Search(seq.Data(), pstr)
 		fmt.Printf("# %s\n", seq.Header())
 		printMatches(matches, pseq)
@@ -57,6 +64,7 @@ func main() {
 	m := "file with FASTA-formatted patterns"
 	var optP = flag.String("p", "", m)
 	var optR = flag.Bool("r", false, "include reverse strand")
+	var optI = flag.Bool("i", false, "ignore case")
 	var optV = flag.Bool("v", false, "version")
 	flag.Parse()
 	if *optV {
@@ -89,8 +97,12 @@ func main() {
 	}
 	var sp []string
 	for _, s := range patterns {
-		sp = append(sp, string(s.Data()))
+		seq := string(s.Data())
+		if *optI {
+			seq = strings.ToUpper(seq)
+		}
+		sp = append(sp, seq)
 	}
 	tree := kt.NewKeywordTree(sp)
-	clio.ParseFiles(files, scan, tree, patterns, sp, *optR)
+	clio.ParseFiles(files, scan, tree, patterns, sp, *optR, *optI)
 }

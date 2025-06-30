@@ -55,6 +55,7 @@
   \begin{enumerate}
   \item \texttt{-f}: file containing patterns
   \item \texttt{-r}: include reverse strand
+  \item \texttt{-i}: ignore case
   \item \texttt{-v}: program version
   \end{enumerate}
 #+end_src
@@ -62,6 +63,7 @@
   m := "file with FASTA-formatted patterns"
   var optP = flag.String("p", "", m)
   var optR = flag.Bool("r", false, "include reverse strand")
+  var optI = flag.Bool("i", false, "ignore case")
   var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
@@ -167,15 +169,22 @@
   the remaining command line arguments. We apply the function
   \texttt{scan} to each file. This function takes as argument the
   keyword tree constructed from the patterns, the patterns in sequence
-  and string format, and the \texttt{-r} flag.
+  and string format, the \texttt{-r} flag, and the \ty{-i} flag. If the
+  user opted to ignore case (\ty{-i}), we set all patterns in the
+  keyword tree to upper case, and later do the same thing with the
+  sequences.
 #+end_src
 #+begin_src go <<Run search, Ch.~\ref{ch:km}>>=
   var sp []string
   for _, s := range patterns {
-	  sp = append(sp, string(s.Data()))
+	  seq := string(s.Data())
+	  if *optI {
+		  seq = strings.ToUpper(seq)
+	  }
+	  sp = append(sp, seq)
   }
   tree := kt.NewKeywordTree(sp)
-  clio.ParseFiles(files, scan, tree, patterns, sp, *optR)
+  clio.ParseFiles(files, scan, tree, patterns, sp, *optR, *optI)
 #+end_src
 #+begin_src latex
   We import \texttt{kt}.
@@ -211,13 +220,16 @@
   pseq := args[1].([]*fasta.Sequence)
   pstr := args[2].([]string)
   optR := args[3].(bool)
+  optI := args[4].(bool)
 #+end_src
 #+begin_src latex
-  We search the forward and possibly also the reverse strand of a
-  sequence. If we include the reverse strand, we also map the match
+  Before we start the search, we check whether we should ignore
+  case. Then we search the forward and possibly also the reverse strand
+  of a sequence. If we include the reverse strand, we also map the match
   positions to the forward strand. Then we print the matches.
 #+end_src
 #+begin_src go <<Search sequence, Ch.~\ref{ch:km}>>=
+  //<<Ignore case? Ch.~\ref{ch:km}>>
   matches := tree.Search(seq.Data(), pstr)
   fmt.Printf("# %s\n", seq.Header())
   printMatches(matches, pseq)
@@ -228,6 +240,22 @@
 	  fmt.Printf("# %s - Reverse\n", seq.Header())
 	  printMatches(matches, pseq)
   }
+#+end_src
+#+begin_export latex
+If the user opted to ignore case, we set the sequence to upper case.
+#+end_export
+#+begin_src go  <<Ignore case? Ch.~\ref{ch:km}>>=
+  if optI {
+	  d := seq.Data()
+	  d = bytes.ToUpper(d)
+	  seq = fasta.NewSequence(seq.Header(), d)
+  }
+#+end_src
+#+begin_export latex
+We import \ty{bytes}.
+#+end_export
+#+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
+  "bytes"
 #+end_src
 #+begin_export latex
 Let $p_{\rm r}$ be the position of a match of length $\ell_{\rm m}$ on
@@ -304,7 +332,7 @@ p_{\rm f} = \ell_{\rm s} - p_{\rm r} - \ell_{\rm m}.
 #+end_src
 #+begin_src go <<Construct commands, Ch.~\ref{ch:km}>>=
   r := "./keyMat"
-  p := "ATTT,ATTC,AT,TG,TT"
+  p := "ATTT,attc,AT,TG,TT"
   f := "patterns.fasta"
   i := "test.fasta"
   //<<Write commands, Ch.~\ref{ch:km}>>
@@ -319,7 +347,9 @@ p_{\rm f} = \ell_{\rm s} - p_{\rm r} - \ell_{\rm m}.
   commands = append(commands, c)
   c = exec.Command(r, "-p", f, i)
   commands = append(commands, c)
-  c = exec.Command(r, "-p", f, "-r", i)
+  c = exec.Command(r, "-i", p, i)
+  commands = append(commands, c)
+  c = exec.Command(r, "-p", f, "-r", "-i", i)
   commands = append(commands, c)
 #+end_src
 #+begin_src latex
