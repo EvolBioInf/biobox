@@ -8,6 +8,7 @@ doc/biobox.dvi
 doc/*.log
 doc/biobox.pdf
 doc/biobox.toc
+doc/biobox.out
 doc/biobox.ps
 doc/date.txt
 doc/rd*.ps
