@@ -164,7 +164,7 @@
 #+begin_src go <<Set usage, Ch.~\ref{ch:dst}>>=
   m := "drawSt [-h] [options] [files]"
   p := "Draw suffix tree."
-  e := "drawSt foo.fasta"
+  e := "drawSt -w wrapper.tex foo.fasta > st.tex"
   clio.Usage(m, p, e)
 #+end_src
 #+begin_src latex
@@ -176,16 +176,17 @@
 #+begin_src latex
   By default, the program specifies the tree in \LaTeX{} using the
   conventional notation of Figure~\ref{fig:stConv}. We declare options
-  for the two alternative formats, interval notation (\ty{-i},
-  Figure~\ref{fig:stInt}), and Newick notation (\ty{-n},
-  Figure~\ref{fig:stNwk}A). The user can also print the node depth
-  (\ty{-d}), label the nodes (\ty{-l}), change the default x- and
-  y-units (\ty{-x} \& \ty{-y}), add a sentinel character (\ty{-w}),
-  write a \LaTeX{} wrapper (\ty{-w}), and print the program version
-  (\ty{-v}).
+  for the two alternative formats, interval notation also known as
+  lcp-interval tree (\ty{-i}, Figure~\ref{fig:stInt}), and Newick
+  notation (\ty{-n}, Figure~\ref{fig:stNwk}A). The user can also print
+  the node depth (\ty{-d}), label the nodes (\ty{-l}), change the
+  default x- and y-units (\ty{-x} \& \ty{-y}), add a sentinel character
+  (\ty{-w}), write a \LaTeX{} wrapper (\ty{-w}), and print the program
+  version (\ty{-v}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:dst}>>=
-  var optI = flag.Bool("i", false, "interval notation, LaTeX")
+  var optI = flag.Bool("i", false, "interval notation " +
+	  "(lcp-interval tree), LaTeX")
   var optN = flag.Bool("n", false, "Newick notation, plain text")
   var optD = flag.Bool("d", false, "show node depth")
   var optL = flag.Bool("l", false, "label nodes")

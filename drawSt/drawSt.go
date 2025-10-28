@@ -294,9 +294,10 @@ func main() {
 	util.PrepLog("drawSt")
 	m := "drawSt [-h] [options] [files]"
 	p := "Draw suffix tree."
-	e := "drawSt foo.fasta"
+	e := "drawSt -w wrapper.tex foo.fasta > st.tex"
 	clio.Usage(m, p, e)
-	var optI = flag.Bool("i", false, "interval notation, LaTeX")
+	var optI = flag.Bool("i", false, "interval notation "+
+		"(lcp-interval tree), LaTeX")
 	var optN = flag.Bool("n", false, "Newick notation, plain text")
 	var optD = flag.Bool("d", false, "show node depth")
 	var optL = flag.Bool("l", false, "label nodes")
