@@ -50,12 +50,13 @@
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  Apart from the default help option, \texttt{-h}, we declare three
+  Apart from the default help option, \texttt{-h}, we declare five
   additional options:
   \begin{enumerate}
   \item \texttt{-f}: file containing patterns
   \item \texttt{-r}: include reverse strand
   \item \texttt{-i}: ignore case
+  \item \texttt{-o}: omit outut sets for didactical purposes
   \item \texttt{-v}: program version
   \end{enumerate}
 #+end_src
@@ -64,6 +65,7 @@
   var optP = flag.String("p", "", m)
   var optR = flag.Bool("r", false, "include reverse strand")
   var optI = flag.Bool("i", false, "ignore case")
+  var optO = flag.Bool("o", false, "omit output sets")
   var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
@@ -81,17 +83,17 @@
   if *optV {
 	  util.PrintInfo("keyMat")
   }
-  //<<Collec patterns, Ch.~\ref{ch:km}>>
+  //<<Collect patterns, Ch.~\ref{ch:km}>>
   //<<Check patterns, Ch.~\ref{ch:km}>>
 #+end_src
 #+begin_src latex
   The patterns are collected from the command line or a file. Since the
   file contains FASTA-formatted sequences, all patterns are stored in
   this format. If no pattern file is given, the first token on the
-  command line is assumed to contain the patterns and is lopped of the
+  command line is assumed to contain the patterns and is lopped off the
   beginning of the list of input files.
 #+end_src
-#+begin_src go <<Collec patterns, Ch.~\ref{ch:km}>>=
+#+begin_src go <<Collect patterns, Ch.~\ref{ch:km}>>=
   var patterns []*fasta.Sequence
   files := flag.Args()
   if *optP != "" {
@@ -165,26 +167,64 @@
   "fmt"
 #+end_src
 #+begin_src latex
-  When running the search, we iterate over the input files, which are
-  the remaining command line arguments. We apply the function
-  \texttt{scan} to each file. This function takes as argument the
-  keyword tree constructed from the patterns, the patterns in sequence
-  and string format, the \texttt{-r} flag, and the \ty{-i} flag. If the
-  user opted to ignore case (\ty{-i}), we set all patterns in the
-  keyword tree to upper case, and later do the same thing with the
-  sequences.
+  When running the search, we first construct the slice of pattern
+  strings and then the keyword tree from them. Then we iterate over the
+  input files, which are the remaining command line arguments. We apply
+  the function \texttt{scan} to each file. This function takes as
+  argument the keyword tree constructed from the patterns, the patterns
+  in the sequence format as we just stored them and in string format,
+  the \texttt{-r} flag, and the \ty{-i} flag. If the user opted to
+  ignore case (\ty{-i}), we set all patterns in the keyword tree to
+  upper case, and later do the same thing with the sequences.
 #+end_src
 #+begin_src go <<Run search, Ch.~\ref{ch:km}>>=
-  var sp []string
+  var tree *kt.Node
+  var pStrings []string
+  //<<Construct slice of pattern strings, Ch.~\ref{ch:km}>>
+  //<<Construct keyword tree, Ch.~\ref{ch:km}>>
+  clio.ParseFiles(files, scan, tree, patterns, pStrings, *optR,
+	  (*optI))
+#+end_src
+#+begin_export latex
+When constructing the slice of patterns, we set them to upper case if
+the user decided to ignore case.
+#+end_export
+#+begin_src go <<Construct slice of pattern strings, Ch.~\ref{ch:km}>>=
   for _, s := range patterns {
 	  seq := string(s.Data())
 	  if *optI {
 		  seq = strings.ToUpper(seq)
 	  }
-	  sp = append(sp, seq)
+	  pStrings = append(pStrings, seq)
   }
-  tree := kt.NewKeywordTree(sp)
-  clio.ParseFiles(files, scan, tree, patterns, sp, *optR, *optI)
+#+end_src
+#+begin_export latex
+We construct a new keyword tree by calling the corresponding function
+in \ty{kt}. If the user opted to omit the output sets, we also call
+the function \ty{omit\-Output\-Sets}, which we still need to write.
+#+end_export
+#+begin_src go <<Construct keyword tree, Ch.~\ref{ch:km}>>=
+  tree = kt.NewKeywordTree(pStrings)
+  if *optO {
+	  omitOutputSets(tree)
+  }
+#+end_src
+#+begin_export latex
+In the function \ty{omitOutputSets} we recursively traverse the
+keyword tree. Any non-empty output set we find on the way is reduced
+to its first entry. This recovers the state of the keyword tree before
+the output sets were constructed.
+#+end_export
+#+begin_src go <<Functions, Ch.~\ref{ch:km}>>=
+  func omitOutputSets(v *kt.Node) {
+	  if v != nil {
+		  if len(v.Output) > 0 {
+			  v.Output = v.Output[:1]
+		  }
+		  omitOutputSets(v.Sib)
+		  omitOutputSets(v.Child)
+	  }
+  }
 #+end_src
 #+begin_src latex
   We import \texttt{kt}.
@@ -350,6 +390,8 @@ p_{\rm f} = \ell_{\rm s} - p_{\rm r} - \ell_{\rm m}.
   c = exec.Command(r, "-i", p, i)
   commands = append(commands, c)
   c = exec.Command(r, "-p", f, "-r", "-i", i)
+  commands = append(commands, c)
+  c = exec.Command(r, "-p", f, "-o", i)
   commands = append(commands, c)
 #+end_src
 #+begin_src latex

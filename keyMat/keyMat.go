@@ -14,6 +14,15 @@ import (
 	"strings"
 )
 
+func omitOutputSets(v *kt.Node) {
+	if v != nil {
+		if len(v.Output) > 0 {
+			v.Output = v.Output[:1]
+		}
+		omitOutputSets(v.Sib)
+		omitOutputSets(v.Child)
+	}
+}
 func scan(r io.Reader, args ...interface{}) {
 	tree := args[0].(*kt.Node)
 	pseq := args[1].([]*fasta.Sequence)
@@ -65,6 +74,7 @@ func main() {
 	var optP = flag.String("p", "", m)
 	var optR = flag.Bool("r", false, "include reverse strand")
 	var optI = flag.Bool("i", false, "ignore case")
+	var optO = flag.Bool("o", false, "omit output sets")
 	var optV = flag.Bool("v", false, "version")
 	flag.Parse()
 	if *optV {
@@ -95,14 +105,19 @@ func main() {
 		fmt.Fprintf(os.Stderr, m)
 		os.Exit(-1)
 	}
-	var sp []string
+	var tree *kt.Node
+	var pStrings []string
 	for _, s := range patterns {
 		seq := string(s.Data())
 		if *optI {
 			seq = strings.ToUpper(seq)
 		}
-		sp = append(sp, seq)
+		pStrings = append(pStrings, seq)
 	}
-	tree := kt.NewKeywordTree(sp)
-	clio.ParseFiles(files, scan, tree, patterns, sp, *optR, *optI)
+	tree = kt.NewKeywordTree(pStrings)
+	if *optO {
+		omitOutputSets(tree)
+	}
+	clio.ParseFiles(files, scan, tree, patterns, pStrings, *optR,
+		(*optI))
 }

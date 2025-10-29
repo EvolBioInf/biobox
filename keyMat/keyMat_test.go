@@ -11,7 +11,7 @@ import (
 func TestKeyMat(t *testing.T) {
 	var commands []*exec.Cmd
 	r := "./keyMat"
-	p := "ATTT,ATTC,AT,TG,TT"
+	p := "ATTT,attc,AT,TG,TT"
 	f := "patterns.fasta"
 	i := "test.fasta"
 	c := exec.Command(r, p, i)
@@ -20,7 +20,11 @@ func TestKeyMat(t *testing.T) {
 	commands = append(commands, c)
 	c = exec.Command(r, "-p", f, i)
 	commands = append(commands, c)
-	c = exec.Command(r, "-p", f, "-r", i)
+	c = exec.Command(r, "-i", p, i)
+	commands = append(commands, c)
+	c = exec.Command(r, "-p", f, "-r", "-i", i)
+	commands = append(commands, c)
+	c = exec.Command(r, "-p", f, "-o", i)
 	commands = append(commands, c)
 	var files []string
 	for i, _ := range commands {
