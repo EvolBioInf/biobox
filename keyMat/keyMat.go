@@ -14,15 +14,6 @@ import (
 	"strings"
 )
 
-func omitOutputSets(v *kt.Node) {
-	if v != nil {
-		if len(v.Output) > 0 {
-			v.Output = v.Output[:1]
-		}
-		omitOutputSets(v.Sib)
-		omitOutputSets(v.Child)
-	}
-}
 func scan(r io.Reader, args ...interface{}) {
 	tree := args[0].(*kt.Node)
 	pseq := args[1].([]*fasta.Sequence)
@@ -114,9 +105,10 @@ func main() {
 		}
 		pStrings = append(pStrings, seq)
 	}
-	tree = kt.NewKeywordTree(pStrings)
 	if *optO {
-		omitOutputSets(tree)
+		tree = kt.NewKTnoOutputSets(pStrings)
+	} else {
+		tree = kt.NewKeywordTree(pStrings)
 	}
 	clio.ParseFiles(files, scan, tree, patterns, pStrings, *optR,
 		(*optI))

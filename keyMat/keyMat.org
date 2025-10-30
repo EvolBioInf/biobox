@@ -200,35 +200,18 @@ the user decided to ignore case.
 #+end_src
 #+begin_export latex
 We construct a new keyword tree by calling the corresponding function
-in \ty{kt}. If the user opted to omit the output sets, we also call
-the function \ty{omit\-Output\-Sets}, which we still need to write.
+in \ty{kt}.
 #+end_export
 #+begin_src go <<Construct keyword tree, Ch.~\ref{ch:km}>>=
-  tree = kt.NewKeywordTree(pStrings)
   if *optO {
-	  omitOutputSets(tree)
+	  tree = kt.NewKTnoOutputSets(pStrings)
+  } else {
+	  tree = kt.NewKeywordTree(pStrings)
   }
 #+end_src
 #+begin_export latex
-In the function \ty{omitOutputSets} we recursively traverse the
-keyword tree. Any non-empty output set we find on the way is reduced
-to its first entry. This recovers the state of the keyword tree before
-the output sets were constructed.
+We import \ty{kt}.
 #+end_export
-#+begin_src go <<Functions, Ch.~\ref{ch:km}>>=
-  func omitOutputSets(v *kt.Node) {
-	  if v != nil {
-		  if len(v.Output) > 0 {
-			  v.Output = v.Output[:1]
-		  }
-		  omitOutputSets(v.Sib)
-		  omitOutputSets(v.Child)
-	  }
-  }
-#+end_src
-#+begin_src latex
-  We import \texttt{kt}.
-#+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:km}>>=
   "github.com/evolbioinf/kt"
 #+end_src
