@@ -1,4 +1,4 @@
-src = al.tex blast2dot.tex bwt.tex clac.tex cres.tex cutSeq.tex dnaDist.tex \
+src = al.tex blast2dot.tex bwt.tex clac.tex coat.tex cres.tex cutSeq.tex dnaDist.tex \
 drag.tex drawf.tex drawGenes.tex drawKt.tex drawSt.tex fasta2tab.tex \
 geco.tex genTree.tex getSeq.tex histogram.tex huff.tex hut.tex \
 kerror.tex keyMat.tex maf.tex midRoot.tex mtf.tex mum2plot.tex mutator.tex \

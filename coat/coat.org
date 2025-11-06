@@ -1,0 +1,264 @@
+#+begin_export latex
+\section*{Introduction}
+The program \ty{coat} generates random coalescence times. Consider a
+Wright-Fisher population of size $N$, in which we trace $i$ lineages
+back in time. The waiting time for a collision, or coalescence, among
+these $i$ lineages, $T_i$, is exponentially distributed with
+expectation
+\[
+E(T_i) = \frac{N}{{i\choose 2}}
+\]
+generations~\cite[p. 8]{hud90:gen}. If we now apply the customary
+simplification of measuring time in units of $N$ generations, this
+reduces to
+\[
+E(T_i) = \frac{1}{{i\choose 2}}.
+\]
+To draw a random value from this exponential distribution, we
+use
+\begin{equation}\label{eq:exp}
+T_i=-\mu\ln U,
+\end{equation}
+where $U$ is a uniform random number~\cite[p. 132f]{knu98:ar2}.
+
+\section*{Implementation}
+The outline of \ty{coat} contains hooks for imports, variables, and
+the logic of the main function.
+#+end_export
+#+begin_src go <<coat.go>>=
+  package main
+
+  import (
+	  //<<Imports, Ch. \ref{ch:coa}>>
+  )
+  //<<Variables, Ch. \ref{ch:coa}>>
+  func main() {
+	  //<<Main function, Ch. \ref{ch:coa}>>
+  }
+#+end_src
+#+begin_export latex
+In the main function we prepare the \ty{log} package to log errors
+from \ty{coat}, set the usage, parse the options, and the coalescence
+times.
+#+end_export
+#+begin_src go <<Main function, Ch. \ref{ch:coa}>>=
+  util.PrepLog("coat")
+  //<<Set usage, Ch. \ref{ch:coa}>>
+  //<<Parse options, Ch. \ref{ch:coa}>>
+  //<<Compute coalescence times, Ch. \ref{ch:coa}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:coa}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_export latex
+The usage consists of three parts, the actual usage message, an
+explanation of the purpose of \ty{coat}, and an example command.
+#+end_export
+#+begin_src go <<Set usage, Ch. \ref{ch:coa}>>=
+  u := "coat [-h] [options]"
+  p := "Calculate coalescence times."
+  e := "coat -n 4"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_export latex
+We import \texttt{clio}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:coa}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_export latex
+Apart from asking for the version \ty{-v}, the user can set the sample
+size \ty{-n}, the number of iterations, \ty{-i}, and a seed for the
+random number generator, \ty{-s}.
+#+end_export
+#+begin_src go <<Variables, Ch. \ref{ch:coa}>>=
+  var optV = flag.Bool("v", false, "version")
+  var optN = flag.Int("n", 10, "sample size")
+  var optI = flag.Int("i", 1, "iterations")
+  var optS = flag.Int("s", 0, "seed for random number generator")
+#+end_src
+#+begin_export latex
+We import \texttt{flag}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:coa}>>=
+  "flag"
+#+end_src
+#+begin_export latex
+We parse the options and respond to them.
+#+end_export
+#+begin_src go <<Parse options, Ch. \ref{ch:coa}>>=
+  flag.Parse()
+  //<<Respond to \ty{-v}, Ch. \ref{ch:coa}>>
+  //<<Respond to \ty{-n}, Ch. \ref{ch:coa}>>
+  //<<Respond to \ty{-i}, Ch. \ref{ch:coa}>>
+  //<<Respond to \ty{-s}, Ch. \ref{ch:coa}>>
+#+end_src
+#+begin_export latex
+If the user asked for the version, we print the program info, which
+contains the version.
+#+end_export
+#+begin_src go <<Respond to \ty{-v}, Ch. \ref{ch:coa}>>=
+  if *optV {
+	  util.PrintInfo("coat")
+  }
+#+end_src
+#+begin_export latex
+If the user set a sample size less than 2, something's wrong and we
+bail with a friendly message.
+#+end_export
+#+begin_src go <<Respond to \ty{-n}, Ch. \ref{ch:coa}>>=
+  n := *optN
+  if n < 2 {
+	  log.Fatalf("please set the sample " +
+		  "size (-n) to at least 2")
+  }
+#+end_src
+#+begin_export latex
+We import \ty{log}.
+#+end_export
+#+begin_src sh <<Imports, Ch. \ref{ch:coa}>>=
+  "log"
+#+end_src
+#+begin_export latex
+If the user set a number of iterations less than 1, again something's
+wrong and we abort with message.
+#+end_export
+#+begin_src go <<Respond to \ty{-i}, Ch. \ref{ch:coa}>>=
+  it := *optI
+  if it < 1 {
+	  log.Fatalf("please set the number " +
+		  "of iterations to at least 1\n")
+  }
+#+end_src
+#+begin_export latex
+If the user picked a seed for the random number generator, we set
+it. Otherwise, we seed with the current time.
+#+end_export
+#+begin_src go <<Respond to \ty{-s}, Ch. \ref{ch:coa}>>=
+  seed := int64(*optS)
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  ran := rand.New(rand.NewSource(seed))
+#+end_src
+#+begin_export latex
+We import \ty{time} and \ty{rand}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:coa}>>=
+  "time"
+  "math/rand"
+#+end_src
+#+begin_export latex
+For the number of iterations requested, we print a header followed by
+the table of coalescence times. The table is arranged in the same
+top-down order we write coalescent trees, that is, it starts at the
+root with $T_2$ and ends with $T_n$.
+#+end_export
+#+begin_src go <<Compute coalescence times, Ch. \ref{ch:coa}>>=
+  for i := 0; i < it; i++ {
+	  fmt.Printf("#i\tT_i\n")
+	  for i := 2; i <= n; i++ {
+		  Ti := 0.0
+		  //<<Calculate $T_i$, Ch. \ref{ch:coa}>>
+		  fmt.Printf("%d\t%.4f\n", int(i), Ti)
+	  }
+  }
+#+end_src
+#+begin_export latex
+We import \ty{fmt}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:coa}>>=
+  "fmt"
+#+end_src
+#+begin_export latex
+We calculate $T_i$ using equation~(\ref{eq:exp}).
+#+end_export
+#+begin_src go <<Calculate $T_i$, Ch. \ref{ch:coa}>>=
+  m := 2.0 / float64(i) / float64(i-1)
+  U := ran.Float64()
+  Ti = -m * math.Log(U)
+#+end_src
+#+begin_export latex
+We import \ty{math}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:coa}>>=
+  "math"
+#+end_src
+#+begin_export latex
+We have finished writing \ty{coat}, let's test it.
+\section*{Testing}
+The outline of our testing code contains hooks for imports and the
+testing logic.
+#+end_export
+#+begin_src go <<coat_test.go>>=
+  package main
+
+  import (
+	  "testing"
+	  //<<Testing imports, Ch. \ref{ch:coa}>>
+  )
+
+  func TestCoa(t *testing.T) {
+	  //<<Testing, Ch. \ref{ch:coa}>>
+  }
+#+end_src
+#+begin_export latex
+We construct a set of tests and then run each one.
+#+end_export
+#+begin_src go <<Testing, Ch. \ref{ch:coa}>>=
+  tests := []*exec.Cmd{}
+  //<<Construct tests, Ch. \ref{ch:coa}>>
+  for i, test := range tests {
+	  //<<Run test, Ch. \ref{ch:coa}>>
+  }
+#+end_src
+#+begin_export latex
+We import \ty{exec}.
+#+end_export
+#+begin_src go <<Testing imports, Ch. \ref{ch:coa}>>=
+  "os/exec"
+#+end_src
+#+begin_export latex
+Each of our tests is run with the same seed for the random number
+generator. In our first test we leave the other options
+unchanged. In the next test we set the sample size to 4, then the
+iterations to 2.
+#+end_export
+#+begin_src go <<Construct tests, Ch. \ref{ch:coa}>>=
+  s := "3"
+  test := exec.Command("./coat", "-s", s)
+  tests = append(tests, test)
+  test = exec.Command("./coat", "-s", s, "-n", "4")
+  tests = append(tests, test)
+  test = exec.Command("./coat", "-s", s, "-i", "2")
+  tests = append(tests, test)
+#+end_src
+#+begin_export latex
+When we run a test, we compare what we get with what we want, which is
+stored in the files \ty{r[123].txt}.
+#+end_export
+#+begin_src go <<Run test, Ch. \ref{ch:coa}>>=
+  get, err := test.Output()
+  if err != nil {
+	  t.Error(err)
+  }
+  f := "r" + strconv.Itoa(i+1) + ".txt"
+  want, err := os.ReadFile(f)
+  if err != nil {
+	  t.Errorf("couldn't open %q", f)
+  }
+  if !bytes.Equal(get, want) {
+	  t.Errorf("get:\n%s\nwant:\n%s\n", get, want)
+  }
+#+end_src
+#+begin_export latex
+We import \ty{strconv}, \ty{os}, and \ty{bytes}.
+#+end_export
+#+begin_src go <<Testing imports, Ch. \ref{ch:coa}>>=
+  "strconv"
+  "os"
+  "bytes"
+#+end_src
