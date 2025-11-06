@@ -75,7 +75,7 @@ We import \ty{util}.
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_src latex
-  Apart from the standard \emph{version} option, we declarealgorithm
+  Apart from the standard \emph{version} option, we declare algorithm
   options and output options.
 #+end_src
 #+begin_src go <<Variables, Ch.~\ref{ch:al}>>=
