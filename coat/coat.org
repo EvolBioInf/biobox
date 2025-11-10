@@ -22,8 +22,8 @@ T_i=-\mu\ln U,
 where $U$ is a uniform random number~\cite[p. 132f]{knu98:ar2}.
 
 \section*{Implementation}
-The outline of \ty{coat} contains hooks for imports, variables, and
-the logic of the main function.
+The outline of \ty{coat} contains hooks for imports and the logic of
+the main function.
 #+end_export
 #+begin_src go <<coat.go>>=
   package main
@@ -31,19 +31,19 @@ the logic of the main function.
   import (
 	  //<<Imports, Ch. \ref{ch:coa}>>
   )
-  //<<Variables, Ch. \ref{ch:coa}>>
   func main() {
 	  //<<Main function, Ch. \ref{ch:coa}>>
   }
 #+end_src
 #+begin_export latex
 In the main function we prepare the \ty{log} package to log errors
-from \ty{coat}, set the usage, parse the options, and the coalescence
-times.
+from \ty{coat}, set the usage, declare the options, parse the options,
+and the coalescence times.
 #+end_export
 #+begin_src go <<Main function, Ch. \ref{ch:coa}>>=
   util.PrepLog("coat")
   //<<Set usage, Ch. \ref{ch:coa}>>
+  //<<Declare options, Ch. \ref{ch:coa}>>
   //<<Parse options, Ch. \ref{ch:coa}>>
   //<<Compute coalescence times, Ch. \ref{ch:coa}>>
 #+end_src
@@ -70,11 +70,11 @@ We import \texttt{clio}.
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_export latex
-Apart from asking for the version \ty{-v}, the user can set the sample
-size \ty{-n}, the number of iterations, \ty{-i}, and a seed for the
-random number generator, \ty{-s}.
+Apart from asking for the version \ty{-v}, we declare options for
+setting the sample size \ty{-n}, the number of iterations, \ty{-i},
+and a seed for the random number generator, \ty{-s}.
 #+end_export
-#+begin_src go <<Variables, Ch. \ref{ch:coa}>>=
+#+begin_src go <<Declare options, Ch. \ref{ch:coa}>>=
   var optV = flag.Bool("v", false, "version")
   var optN = flag.Int("n", 10, "sample size")
   var optI = flag.Int("i", 1, "iterations")

@@ -11,17 +11,16 @@ import (
 	"time"
 )
 
-var optV = flag.Bool("v", false, "version")
-var optN = flag.Int("n", 10, "sample size")
-var optI = flag.Int("i", 1, "iterations")
-var optS = flag.Int("s", 0, "seed for random number generator")
-
 func main() {
 	util.PrepLog("coat")
 	u := "coat [-h] [options]"
 	p := "Calculate coalescence times."
 	e := "coat -n 4"
 	clio.Usage(u, p, e)
+	var optV = flag.Bool("v", false, "version")
+	var optN = flag.Int("n", 10, "sample size")
+	var optI = flag.Int("i", 1, "iterations")
+	var optS = flag.Int("s", 0, "seed for random number generator")
 	flag.Parse()
 	if *optV {
 		util.PrintInfo("coat")
