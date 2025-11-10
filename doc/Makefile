@@ -2,7 +2,7 @@ src = al.tex blast2dot.tex bwt.tex clac.tex coat.tex cres.tex cutSeq.tex dnaDist
 drag.tex drawf.tex drawGenes.tex drawKt.tex drawSt.tex fasta2tab.tex \
 geco.tex genTree.tex getSeq.tex histogram.tex huff.tex hut.tex \
 kerror.tex keyMat.tex maf.tex midRoot.tex mtf.tex mum2plot.tex mutator.tex \
-naiveMatcher.tex nj.tex num2char.tex numAl.tex olga.tex pam.tex plotLine.tex \
+naiveMatcher.tex nj.tex num2char.tex numAl.tex olga.tex pam.tex pickChildren.tex plotLine.tex \
 plotSeg.tex plotTree.tex pps.tex ranseq.tex randomizeSeq.tex ranDot.tex \
 rep2plot.tex rpois.tex sass.tex sblast.tex sequencer.tex shustring.tex \
 simNorm.tex simOrf.tex sops.tex sw.tex testMeans.tex translate.tex travTree.tex \

@@ -48,6 +48,7 @@ doc/num2char.tex
 doc/numAl.tex
 doc/olga.tex
 doc/pam.tex
+doc/pickChildren.tex
 doc/plotLine.tex
 doc/plotSeg.tex
 doc/plotTree.tex
@@ -110,6 +111,7 @@ num2char/num2char
 numAl/numAl
 olga/olga
 pam/pam
+pickChildren/pickChildren
 plotLine/plotLine
 plotSeg/plotSeg
 plotTree/plotTree
