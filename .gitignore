@@ -24,6 +24,7 @@ doc/coat.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
 doc/drag.tex
+doc/drawChildren.tex
 doc/drawf.tex
 doc/drawGenes.tex
 doc/drawKt.tex
@@ -87,6 +88,7 @@ cres/cres
 cutSeq/cutSeq
 dnaDist/dnaDist
 drag/drag
+drawChildren/drawChildren
 drawf/drawf
 drawGenes/drawGenes
 drawKt/drawKt

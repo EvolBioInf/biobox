@@ -1,5 +1,5 @@
 src = al.tex blast2dot.tex bwt.tex clac.tex coat.tex cres.tex cutSeq.tex dnaDist.tex \
-drag.tex drawf.tex drawGenes.tex drawKt.tex drawSt.tex fasta2tab.tex \
+drag.tex drawChildren.tex drawf.tex drawGenes.tex drawKt.tex drawSt.tex fasta2tab.tex \
 geco.tex genTree.tex getSeq.tex histogram.tex huff.tex hut.tex \
 kerror.tex keyMat.tex maf.tex midRoot.tex mtf.tex mum2plot.tex mutator.tex \
 naiveMatcher.tex nj.tex num2char.tex numAl.tex olga.tex pam.tex pickChildren.tex plotLine.tex \

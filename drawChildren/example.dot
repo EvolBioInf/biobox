@@ -1,0 +1,10 @@
+digraph g {
+	node [fontsize=20]
+	edge [arrowhead="none"]
+	5 -> 2
+	5 -> 1
+	6 -> 3
+	6 -> 4
+	7 -> 5
+	7 -> 6
+}
