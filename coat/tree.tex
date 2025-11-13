@@ -1,0 +1,29 @@
+\begin{pspicture}(0,0)(1.2,2)
+  %% tree
+  \cnode(0.6,1.5){1pt}{7}
+  \cnode(1,1){1pt}{6}
+  \cnode(0.2,0.5){1pt}{5}
+  \cnode(0,0){1pt}{1}\cnode(0.4,0){1pt}{2}\cnode(0.8,0){1pt}{3}\cnode(1.2,0){1pt}{4}
+  \ncline{1}{5}
+  \ncline{2}{5}
+  \ncline{3}{6}
+  \ncline{4}{6}
+  \ncline{5}{7}
+  \ncline{6}{7}
+  %% annotations
+  \pnode(2,0){8}
+  \pnode(2,0.5){9}
+  \pnode(2,1.0){10}
+  \pnode(2,1.5){11}
+  \pnode(0.4,1){12}
+
+  \psset{linestyle=dotted}
+  \ncline{1}{8}
+  \ncline{5}{9}
+  \ncline{12}{10}
+  \ncline{7}{11}
+
+  \rput(2,0.2){$T_4$}
+  \rput(2,0.7){$T_3$}
+  \rput(2,1.2){$T_2$}
+\end{pspicture}

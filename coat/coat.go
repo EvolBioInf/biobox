@@ -14,7 +14,7 @@ import (
 func main() {
 	util.PrepLog("coat")
 	u := "coat [-h] [options]"
-	p := "Calculate coalescence times."
+	p := "Calculate coalescence times and their cumulative sum."
 	e := "coat -n 4"
 	clio.Usage(u, p, e)
 	var optV = flag.Bool("v", false, "version")
@@ -40,14 +40,23 @@ func main() {
 		seed = time.Now().UnixNano()
 	}
 	ran := rand.New(rand.NewSource(seed))
+	ti := make([]float64, n+1)
+	cs := make([]float64, n+1)
 	for i := 0; i < it; i++ {
-		fmt.Printf("#i\tT_i\n")
+		fmt.Printf("#i\tT_i\tcs(T_i)\n")
 		for i := 2; i <= n; i++ {
-			Ti := 0.0
 			m := 2.0 / float64(i) / float64(i-1)
 			U := ran.Float64()
-			Ti = -m * math.Log(U)
-			fmt.Printf("%d\t%.4f\n", int(i), Ti)
+			Ti := -m * math.Log(U)
+			ti[i] = Ti
+		}
+		cs[n] = ti[n]
+		for i := n - 1; i > 1; i-- {
+			cs[i] = cs[i+1] + ti[i]
+		}
+		for i := 2; i <= n; i++ {
+			fmt.Printf("%d\t%.4f\t%.4f\n",
+				i, ti[i], cs[i])
 		}
 	}
 }

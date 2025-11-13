@@ -21,6 +21,34 @@ T_i=-\mu\ln U,
 \end{equation}
 where $U$ is a uniform random number~\cite[p. 132f]{knu98:ar2}.
 
+The output of \ty{coat} should reflect the structure of the
+coalescent. Figure~\ref{fig:coat}A shows some sample output and
+Figure~\ref{fig:coat}B the corresponding coalescent (not drawn to
+scale).
+
+\begin{figure}[hb]
+  \begin{center}
+  \psset{fillstyle=solid,fillcolor=black}
+    \begin{tabular}{cc}
+      \textbf{A} & \textbf{B}\\
+      \raisebox{0.7cm}{
+      \begin{tabular}{lll}
+        \hline
+        $i$ & $T_i$ & $\mbox{cs}(T_i)$\\\hline
+        2 & 1.35 & 1.80\\
+        3 & 0.25 & 0.45\\
+        4 & 0.20 & 0.20\\\hline
+      \end{tabular}
+      }
+      &
+      \input{../coat/tree}
+    \end{tabular}
+  \end{center}
+  \caption{Example output of \ty{coat} with times to coalescence,
+    $T_i$, and their cumulative sum, cs (\textbf{A}); these times are
+    marked on the example coalescent (\textbf{B}).}\label{fig:coat}
+\end{figure}
+
 \section*{Implementation}
 The outline of \ty{coat} contains hooks for imports and the logic of
 the main function.
@@ -38,7 +66,7 @@ the main function.
 #+begin_export latex
 In the main function we prepare the \ty{log} package to log errors
 from \ty{coat}, set the usage, declare the options, parse the options,
-and the coalescence times.
+and compute the coalescence times.
 #+end_export
 #+begin_src go <<Main function, Ch. \ref{ch:coa}>>=
   util.PrepLog("coat")
@@ -59,7 +87,7 @@ explanation of the purpose of \ty{coat}, and an example command.
 #+end_export
 #+begin_src go <<Set usage, Ch. \ref{ch:coa}>>=
   u := "coat [-h] [options]"
-  p := "Calculate coalescence times."
+  p := "Calculate coalescence times and their cumulative sum."
   e := "coat -n 4"
   clio.Usage(u, p, e)
 #+end_src
@@ -70,8 +98,8 @@ We import \texttt{clio}.
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_export latex
-Apart from asking for the version \ty{-v}, we declare options for
-setting the sample size \ty{-n}, the number of iterations, \ty{-i},
+Apart from asking for the version, \ty{-v}, we declare options for
+setting the sample size, \ty{-n}, the number of iterations, \ty{-i},
 and a seed for the random number generator, \ty{-s}.
 #+end_export
 #+begin_src go <<Declare options, Ch. \ref{ch:coa}>>=
@@ -153,18 +181,22 @@ We import \ty{time} and \ty{rand}.
 #+end_src
 #+begin_export latex
 For the number of iterations requested, we print a header followed by
-the table of coalescence times. The table is arranged in the same
-top-down order we write coalescent trees, that is, it starts at the
-root with $T_2$ and ends with $T_n$.
+the table of coalescence times and their cumulative sum. As shown in
+Figure~\ref{fig:coat}, we'd like to arranged the table in the same
+top-down order we write coalescent trees, that is, starting at the
+root with $T_2$ and ending with $T_n$. Similarly, we'd like to write
+the cumulative coalesence times such that the final sum is written
+next to $T_2$. To do this, we first store the coalescence times and
+cumulative sums in slices we prepare before we enter the loop, and
+then print them.
 #+end_export
 #+begin_src go <<Compute coalescence times, Ch. \ref{ch:coa}>>=
+  ti := make([]float64, n+1)
+  cs := make([]float64, n+1)
   for i := 0; i < it; i++ {
-	  fmt.Printf("#i\tT_i\n")
-	  for i := 2; i <= n; i++ {
-		  Ti := 0.0
-		  //<<Calculate $T_i$, Ch. \ref{ch:coa}>>
-		  fmt.Printf("%d\t%.4f\n", int(i), Ti)
-	  }
+	  fmt.Printf("#i\tT_i\tcs(T_i)\n")
+	  //<<Store coalescence times, Ch. \ref{ch:coa}>>
+	  //<<Print coalescence times, Ch. \ref{ch:coa}>>
   }
 #+end_src
 #+begin_export latex
@@ -174,18 +206,36 @@ We import \ty{fmt}.
   "fmt"
 #+end_src
 #+begin_export latex
-We calculate $T_i$ using equation~(\ref{eq:exp}).
+To store the coalescence times, we iterate over the sample and
+calculate $T_i$ according to equation~(\ref{eq:exp}).
 #+end_export
-#+begin_src go <<Calculate $T_i$, Ch. \ref{ch:coa}>>=
-  m := 2.0 / float64(i) / float64(i-1)
-  U := ran.Float64()
-  Ti = -m * math.Log(U)
+#+begin_src go <<Store coalescence times, Ch. \ref{ch:coa}>>=
+  for i := 2; i <= n; i++ {
+	  m := 2.0 / float64(i) / float64(i-1)
+	  U := ran.Float64()
+	  Ti := -m * math.Log(U)
+	  ti[i] = Ti
+  }
 #+end_src
 #+begin_export latex
 We import \ty{math}.
 #+end_export
 #+begin_src go <<Imports, Ch. \ref{ch:coa}>>=
   "math"
+#+end_src
+#+begin_export latex
+Before we print the times, we calculate the cumulative sum starting at
+the leaves of the tree.
+#+end_export
+#+begin_src go <<Print coalescence times, Ch. \ref{ch:coa}>>=
+  cs[n] = ti[n]
+  for i := n-1; i > 1; i-- {
+	  cs[i] = cs[i+1] + ti[i]
+  }
+  for i := 2; i <= n; i++ {
+	  fmt.Printf("%d\t%.4f\t%.4f\n",
+		  i, ti[i], cs[i])
+  }
 #+end_src
 #+begin_export latex
 We have finished writing \ty{coat}, let's test it.
