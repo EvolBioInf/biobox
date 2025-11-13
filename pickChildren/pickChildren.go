@@ -18,8 +18,8 @@ func main() {
 	util.PrepLog("pickChildren")
 	u := "pickChildren [-h] [option]"
 	p := "Demo the construction of a coalescent topology."
-	e := "pickChildren -n 4 | tee pc.txt | drawChildren |" +
-		"dot -T x11"
+	e := "pickChildren -n 4 | tee pc.txt | drawChildren | " +
+		"dot -T x11 &"
 	clio.Usage(u, p, e)
 	optV := flag.Bool("v", false, "version")
 	optN := flag.Int("n", 10, "sample size")

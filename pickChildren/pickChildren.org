@@ -105,8 +105,8 @@ purpose of \ty{pickChildren}, and an example command.
 #+begin_src go <<Set usage, Ch. \ref{ch:pc}>>=
   u := "pickChildren [-h] [option]"
   p := "Demo the construction of a coalescent topology."
-  e := "pickChildren -n 4 | tee pc.txt | drawChildren |" +
-	  "dot -T x11"
+  e := "pickChildren -n 4 | tee pc.txt | drawChildren | " +
+	  "dot -T x11 &"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_export latex

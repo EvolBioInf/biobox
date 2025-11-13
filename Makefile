@@ -1,7 +1,7 @@
 packs = util
 progs = al blast2dot bwt clac coat cres cutSeq dnaDist drag drawChildren drawf drawGenes drawKt \
 drawSt fasta2tab geco genTree getSeq huff hut histogram kerror keyMat midRoot maf mtf \
-mum2plot mutator naiveMatcher nj num2char numAl olga pam plotLine plotSeg plotTree pps \
+mum2plot mutator naiveMatcher nj num2char numAl olga pam pickChildren plotLine plotSeg plotTree pps \
 randomizeSeq ranDot ranseq rep2plot \
 repeater revComp rpois sass sblast sequencer shustring simNorm simOrf sops sw \
 testMeans translate travTree upgma var watterson wrapSeq

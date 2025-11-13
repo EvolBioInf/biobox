@@ -7,13 +7,15 @@ DF = -X github.com/evolbioinf/biobox/util.date=$(DATE)
 BUILD = go build -ldflags "$(VF) $(DF)" $(EXE).go
 NW = $(shell which noweb)
 
-$(EXE): $(EXE).go
+$(EXE): $(EXE).go top.ps
 	$(BUILD)
 tangle: $(EXE).go $(EXE)_test.go
 $(EXE).go: $(EXE).org
 	if [ "$(NW)" != "" ]; then\
 		bash ../scripts/org2nw $(EXE).org | notangle -R$(EXE).go | gofmt > $(EXE).go;\
 	fi
+top.ps: top.dot
+	dot -T ps top.dot > top.ps
 test: $(EXE) $(EXE)_test.go
 	go test -v
 $(EXE)_test.go: $(EXE).org

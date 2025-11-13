@@ -69,8 +69,9 @@ func parse(r io.Reader, args ...interface{}) {
 func main() {
 	util.PrepLog("drawChildren")
 	u := "drawChildren [-h] [option] [foo.txt]..."
-	p := "Draw the coalescent implied by the output of pickChildren."
-	e := "pickChildren | tee pc.out | drawChildren | dot -T x11"
+	p := "Draw the coalescent implied by the output of " +
+		"pickChildren."
+	e := "pickChildren | tee pc.out | drawChildren | dot -T x11 &"
 	clio.Usage(u, p, e)
 	optV := flag.Bool("v", false, "version")
 	flag.Parse()

@@ -1,5 +1,6 @@
 digraph g {
    node [fontsize=20]
+   edge [arrowhead="none"]
    5 -> 1
    5 -> 2
    6 -> 5

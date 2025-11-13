@@ -29,7 +29,7 @@ The pairs of children from these triplets are used to construct a
 coalescent tree according to Algorithm~\ref{alg:chi}. This is a
 variant on Algorithm~\ref{alg:coa} used to construct the coalescent
 tree in \ty{pickChildren}. Figure~\ref{fig:dc}B shows the tree
-constructed by \ty{drawChildren} from the input on the left. The tree
+constructed by \ty{draw\-Chil\-dren} from the input on the left. The tree
 is written in the dot notation, which can be visualized using the
 program \ty{dot} available as part of the free graphviz package.
 
@@ -82,7 +82,7 @@ command.
   u := "drawChildren [-h] [option] [foo.txt]..."
   p := "Draw the coalescent implied by the output of " +
 	  "pickChildren."
-  e := "pickChildren | tee pc.out | drawChildren | dot -T x11"
+  e := "pickChildren | tee pc.out | drawChildren | dot -T x11 &"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_export latex
@@ -92,8 +92,7 @@ We import \ty{clio}.
   "github.com/evolbioinf/clio"
 #+end_src
 #+begin_export latex
-There are no options to declare apart from the usual version option
-(\ty{-v}).
+There are no options to declare apart from the version, \ty{-v}.
 #+end_export
 #+begin_src go <<Declare options, Ch. \ref{ch:dc}>>=
   optV := flag.Bool("v", false, "version")
