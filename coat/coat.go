@@ -43,7 +43,7 @@ func main() {
 	ti := make([]float64, n+1)
 	cs := make([]float64, n+1)
 	for i := 0; i < it; i++ {
-		fmt.Printf("#i\tT_i\tcs(T_i)\n")
+		fmt.Printf("#i\tT_i\tcumSum(T_i)\n")
 		for i := 2; i <= n; i++ {
 			m := 2.0 / float64(i) / float64(i-1)
 			U := ran.Float64()

@@ -194,7 +194,7 @@ then print them.
   ti := make([]float64, n+1)
   cs := make([]float64, n+1)
   for i := 0; i < it; i++ {
-	  fmt.Printf("#i\tT_i\tcs(T_i)\n")
+	  fmt.Printf("#i\tT_i\tcumSum(T_i)\n")
 	  //<<Store coalescence times, Ch. \ref{ch:coa}>>
 	  //<<Print coalescence times, Ch. \ref{ch:coa}>>
   }
