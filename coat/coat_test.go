@@ -8,12 +8,12 @@ import (
 	"testing"
 )
 
-func TestCoa(t *testing.T) {
+func TestCoat(t *testing.T) {
 	tests := []*exec.Cmd{}
 	s := "3"
 	test := exec.Command("./coat", "-s", s)
 	tests = append(tests, test)
-	test = exec.Command("./coat", "-s", s, "-n", "4")
+	test = exec.Command("./coat", "-s", s, "-n", "5")
 	tests = append(tests, test)
 	test = exec.Command("./coat", "-s", s, "-i", "2")
 	tests = append(tests, test)

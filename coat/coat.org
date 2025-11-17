@@ -88,7 +88,7 @@ explanation of the purpose of \ty{coat}, and an example command.
 #+begin_src go <<Set usage, Ch. \ref{ch:coa}>>=
   u := "coat [-h] [options]"
   p := "Calculate coalescence times and their cumulative sum."
-  e := "coat -n 4"
+  e := "coat -n 5"
   clio.Usage(u, p, e)
 #+end_src
 #+begin_export latex
@@ -104,7 +104,7 @@ and a seed for the random number generator, \ty{-s}.
 #+end_export
 #+begin_src go <<Declare options, Ch. \ref{ch:coa}>>=
   var optV = flag.Bool("v", false, "version")
-  var optN = flag.Int("n", 10, "sample size")
+  var optN = flag.Int("n", 4, "sample size")
   var optI = flag.Int("i", 1, "iterations")
   var optS = flag.Int("s", 0, "seed for random number generator")
 #+end_src
@@ -251,7 +251,7 @@ testing logic.
 	  //<<Testing imports, Ch. \ref{ch:coa}>>
   )
 
-  func TestCoa(t *testing.T) {
+  func TestCoat(t *testing.T) {
 	  //<<Testing, Ch. \ref{ch:coa}>>
   }
 #+end_src
@@ -274,14 +274,14 @@ We import \ty{exec}.
 #+begin_export latex
 Each of our tests is run with the same seed for the random number
 generator. In our first test we leave the other options
-unchanged. In the next test we set the sample size to 4, then the
+unchanged. In the next test we set the sample size to 5, then the
 iterations to 2.
 #+end_export
 #+begin_src go <<Construct tests, Ch. \ref{ch:coa}>>=
   s := "3"
   test := exec.Command("./coat", "-s", s)
   tests = append(tests, test)
-  test = exec.Command("./coat", "-s", s, "-n", "4")
+  test = exec.Command("./coat", "-s", s, "-n", "5")
   tests = append(tests, test)
   test = exec.Command("./coat", "-s", s, "-i", "2")
   tests = append(tests, test)
