@@ -14,8 +14,8 @@ $(EXE).go: $(EXE).org
 	if [ "$(NW)" != "" ]; then\
 		bash ../scripts/org2nw $(EXE).org | notangle -R$(EXE).go | gofmt > $(EXE).go;\
 	fi
-top.ps: top.dot
-	dot -T ps top.dot > top.ps
+top.ps: top.gp
+	gnuplot top.gp
 test: $(EXE) $(EXE)_test.go
 	go test -v
 $(EXE)_test.go: $(EXE).org

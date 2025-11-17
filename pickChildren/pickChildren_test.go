@@ -10,10 +10,13 @@ import (
 
 func TestPickChildren(t *testing.T) {
 	tests := make([]*exec.Cmd, 0)
-	s := "3"
+	s := "1"
 	test := exec.Command("./pickChildren", "-s", s)
 	tests = append(tests, test)
-	test = exec.Command("./pickChildren", "-s", s, "-n", "4")
+	test = exec.Command("./pickChildren", "-s", s, "-n", "5",
+		"-t", "test.nwk")
+	tests = append(tests, test)
+	test = exec.Command("cat", "test.nwk")
 	tests = append(tests, test)
 	for i, test := range tests {
 		get, err := test.Output()

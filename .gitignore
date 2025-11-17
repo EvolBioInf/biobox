@@ -24,7 +24,6 @@ doc/coat.tex
 doc/cutSeq.tex
 doc/dnaDist.tex
 doc/drag.tex
-doc/drawChildren.tex
 doc/drawf.tex
 doc/drawGenes.tex
 doc/drawKt.tex
@@ -88,7 +87,6 @@ cres/cres
 cutSeq/cutSeq
 dnaDist/dnaDist
 drag/drag
-drawChildren/drawChildren
 drawf/drawf
 drawGenes/drawGenes
 drawKt/drawKt
@@ -149,6 +147,7 @@ drawKt/kt.tex
 drawKt/ktWrapper*
 genTree/makeTests.sh
 keyMat/makeRes.sh
+pickChildren/test.nwk
 plotLine/lineTmpl.txt
 plotLine/makeRes.sh
 plotSeg/makeRes.sh
