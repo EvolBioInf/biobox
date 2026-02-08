@@ -274,18 +274,29 @@
 #+end_src
 #+begin_src latex
   In the function \ty{cpTree} we copy each node. We begin by copying the
-  label and the branch length, then we copy the tree topology.
+  label. Now, \ty{gnuplot} renders a character preceded by an underscore
+  as a subscript, which often looks confusing in the final tree. To
+  preserve any underscores our label may contain, we prefix them with
+  double backslashes, which we denote by their hexadecimal value. Then
+  we copy the branch length and the tree topology.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
   func cpTree(v *nwk.Node, n *node) {
 	  if v == nil { return }
-	  n.label = v.Label
+	  n.label = strings.ReplaceAll(v.Label,
+		  "_", "\x5c\x5c_")
 	  n.length = v.Length
 	  n.hasLength = v.HasLength
 	  //<<Copy tree topology, Ch.~\ref{ch:pt}>>
 	  cpTree(v.Child, n.child)
 	  cpTree(v.Sib, n.sib)
   }
+#+end_src
+#+begin_src latex
+  We import \ty{strings}.
+#+end_src
+#+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
+  "strings"
 #+end_src
 #+begin_src latex
   The tree topology consists of references to child, sib, and parent.
@@ -776,10 +787,9 @@ We import \ty{runtime}.
   }
 #+end_src
 #+begin_src latex
-  We import \ty{strings} and \ty{path}.
+  We import \ty{path}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:pt}>>=
-  "strings"
   "path"
 #+end_src
 #+begin_src latex
