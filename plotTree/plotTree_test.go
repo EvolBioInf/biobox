@@ -17,7 +17,7 @@ func TestPlotTree(t *testing.T) {
 		t.Error("can't open temp file")
 	}
 	g := gf.Name()
-	f := "newick.nwk"
+	f := "newick1.nwk"
 	test := exec.Command("./plotTree", "-r", "-s", g, f)
 	tests = append(tests, test)
 	test = exec.Command("./plotTree", "-u", "-s", g, f)
@@ -25,6 +25,11 @@ func TestPlotTree(t *testing.T) {
 	test = exec.Command("./plotTree", "-r", "-s", g, "-n", f)
 	tests = append(tests, test)
 	test = exec.Command("./plotTree", "-u", "-s", g, "-n", f)
+	tests = append(tests, test)
+	test = exec.Command("./plotTree", "-t", "dumb", "-s", g, f)
+	tests = append(tests, test)
+	f = "newick2.nwk"
+	test = exec.Command("./plotTree", "-s", g, f)
 	tests = append(tests, test)
 	test = exec.Command("./plotTree", "-t", "dumb", "-s", g, f)
 	tests = append(tests, test)

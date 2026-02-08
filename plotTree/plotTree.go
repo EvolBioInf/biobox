@@ -220,7 +220,8 @@ func cpTree(v *nwk.Node, n *node) {
 	if v == nil {
 		return
 	}
-	n.label = strings.ReplaceAll(v.Label, "_", "\x5c\x5c_")
+	n.label = strings.ReplaceAll(v.Label,
+		"_", "\x5c\x5c_")
 	n.length = v.Length
 	n.hasLength = v.HasLength
 	if v.Child != nil {

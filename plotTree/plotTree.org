@@ -464,7 +464,8 @@
   root separately from all other nodes.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:pt}>>=
-  func collectBranchesR(v *node, segments []segment, o *opts) []segment {
+  func collectBranchesR(v *node, segments []segment,
+	  o *opts) []segment {
 	  if v == nil { return segments }
 	  if v.parent == nil {
 		  //<<Treat root in rooted tree, Ch.~\ref{ch:pt}>>
@@ -1056,12 +1057,20 @@ We import \ty{runtime}.
   "os"
 #+end_src
 #+begin_src latex
-  Our tests run on the Newick tree shown in Figure~\ref{fig:phy}A, which
-  is stored in \ty{newick.nwk}. We draw rooted and unrooted versions of
-  it, with and without node labels.
+  We run tests on a tree where the labels don't contain underscores and
+  on a tree where they do.
 #+end_src
 #+begin_src go <<Construct tests, Ch.~\ref{ch:pt}>>=
-  f := "newick.nwk"
+  //<<Tree without underscores, Ch.~\ref{ch:pt}>>
+  //<<Tree with underscores, Ch.~\ref{ch:pt}>>
+#+end_src
+#+begin_src latex
+  Our tests without underscores run on the Newick tree shown in
+  Figure~\ref{fig:phy}A, which is stored in \ty{newick1.nwk}. We draw
+  rooted and unrooted versions of it, with and without node labels.
+#+end_src
+#+begin_src go <<Tree without underscores, Ch.~\ref{ch:pt}>>=
+  f := "newick1.nwk"
   test := exec.Command("./plotTree", "-r", "-s", g, f)
   tests = append(tests, test)
   test = exec.Command("./plotTree", "-u", "-s", g, f)
@@ -1069,6 +1078,29 @@ We import \ty{runtime}.
   test = exec.Command("./plotTree", "-r", "-s", g, "-n", f)
   tests = append(tests, test)
   test = exec.Command("./plotTree", "-u", "-s", g, "-n", f)
+  tests = append(tests, test)
+  test = exec.Command("./plotTree", "-t", "dumb", "-s", g, f)
+  tests = append(tests, test)
+#+end_src
+#+begin_src latex
+  File \ty{newick2.nwk} contains the tree \verb+('A_1',B_2);+, where
+  both labels contain an underscore. We expect that in the quoted label
+  the underscore is rendered as underscore---not subscripting the next
+  character---removed, while in the unquoted label the underscore is
+  removed as specified by the Newick format. The result is shown in
+  Figure~\ref{fig:nwk2}. For our test we plot the tree on the default
+  terminal and on the ``dumb'' terminal. This
+  \begin{figure}
+    \begin{center}
+      \includegraphics{../plotTree/newick2.ps}
+    \end{center}
+    \caption{Rendering the tree \ty{('A\_1',B\_2);} with a quoted and an
+      unquoted label, both containing an underscore.}\label{fig:nwk2}
+  \end{figure}
+#+end_src
+#+begin_src go <<Tree with underscores, Ch.~\ref{ch:pt}>>=
+  f = "newick2.nwk"
+  test = exec.Command("./plotTree", "-s", g, f)
   tests = append(tests, test)
   test = exec.Command("./plotTree", "-t", "dumb", "-s", g, f)
   tests = append(tests, test)

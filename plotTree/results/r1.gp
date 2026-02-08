@@ -11,7 +11,7 @@ set label " Three" l rotate by 0 at 1,2 front
 set label " Four" l rotate by 0 at 0.8,3 front
 set label " Five" l rotate by 0 at 0.7,4 front
 set label "0.1" c rotate by 0 at 0.95,4.6 front
-set title "newick_1"
+set title "newick1_1"
 plot "-" t "" w l lc "black"
 0 2.75
 0 1.5

@@ -4,7 +4,7 @@ unset xtics
 unset ytics
 unset border
 set label "0.1" c rotate by 0 at 0.4474,1.017 front
-set title "newick_1"
+set title "newick1_1"
 plot "-" t "" w l lc "black"
 0.01725 0.2995
 0 0

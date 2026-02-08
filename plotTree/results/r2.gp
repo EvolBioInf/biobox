@@ -12,7 +12,7 @@ set label "Three " r rotate by 303 at -0.4392,0.7929 front
 set label "Four " r rotate by 375 at -0.4593,0.296 front
 set label "Five " r rotate by 447 at -0.04024,-0.6988 front
 set label "0.1" c rotate by 0 at 0.4474,1.017 front
-set title "newick_1"
+set title "newick1_1"
 plot "-" t "" w l lc "black"
 0.01725 0.2995
 0 0
