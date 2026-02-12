@@ -272,7 +272,8 @@ func setYcoords(v *node, y float64) float64 {
 	y = setYcoords(v.sib, y)
 	return y
 }
-func collectBranchesR(v *node, segments []segment, o *opts) []segment {
+func collectBranchesR(v *node, segments []segment,
+	o *opts) []segment {
 	if v == nil {
 		return segments
 	}
