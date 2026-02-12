@@ -20,11 +20,11 @@
   \end{center}
   When visited inorder, its nodes are visited
   \begin{center}
-  H, I, B, D, F, G, E, C, A.
+  H, B, I, A, D, C, F, E, G.
   \end{center}
   Finally, when visited postorder, its nodes are visited
   \begin{center}
-  I, H, G, F, E, D, C, B, A.
+  H, I, B, D, F, G, E, C, A.
   \end{center}
 
   \begin{figure}
@@ -119,8 +119,8 @@ We import \ty{util}.
   version (\ty{-v}).
 #+end_src
 #+begin_src go <<Declare options, Ch.~\ref{ch:tt}>>=
-  var optI = flag.Bool("i", false, "inorder")
-  var optO = flag.Bool("o", false, "postorder")
+  var optI = flag.Bool("i", false, "inorder (default preorder)")
+  var optO = flag.Bool("o", false, "postorder (default preorder)")
   var optV = flag.Bool("v", false, "version")
 #+end_src
 #+begin_src latex
@@ -244,7 +244,9 @@ We import \ty{util}.
 	  inorder(v.Child, w)
 	  //<<Determine node type, Ch.~\ref{ch:tt}>>
 	  //<<Print row in node table, Ch.~\ref{ch:tt}>>
-	  inorder(v.Sib, w)
+	  if v.Child != nil {
+		  inorder(v.Child.Sib, w)
+	  }
   }
 #+end_src
 #+begin_src latex
@@ -277,7 +279,9 @@ We import \ty{util}.
   func postorder(v *nwk.Node, w *tabwriter.Writer) {
 	  if v == nil { return }
 	  postorder(v.Child, w)
-	  postorder(v.Sib, w)
+	  if v.Child != nil {
+		  postorder(v.Child.Sib, w)
+	  }
 	  //<<Determine node type, Ch.~\ref{ch:tt}>>
 	  //<<Print row in node table, Ch.~\ref{ch:tt}>>
   }
@@ -291,7 +295,9 @@ We import \ty{util}.
 	  //<<Determine node type, Ch.~\ref{ch:tt}>>
 	  //<<Print row in node table, Ch.~\ref{ch:tt}>>
 	  preorder(v.Child, w)
-	  preorder(v.Sib, w)
+	  if v.Child != nil {
+		  preorder(v.Child.Sib, w)
+	  }
   }
 #+end_src
 #+begin_src latex

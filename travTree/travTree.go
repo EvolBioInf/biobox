@@ -53,14 +53,18 @@ func inorder(v *nwk.Node, w *tabwriter.Writer) {
 	}
 	fmt.Fprintf(w, "%s\t%s\t%.3g\t%s\n",
 		v.Label, p, v.Length, typ)
-	inorder(v.Sib, w)
+	if v.Child != nil {
+		inorder(v.Child.Sib, w)
+	}
 }
 func postorder(v *nwk.Node, w *tabwriter.Writer) {
 	if v == nil {
 		return
 	}
 	postorder(v.Child, w)
-	postorder(v.Sib, w)
+	if v.Child != nil {
+		postorder(v.Child.Sib, w)
+	}
 	typ := "leaf"
 	if v.Parent == nil {
 		typ = "root"
@@ -91,7 +95,9 @@ func preorder(v *nwk.Node, w *tabwriter.Writer) {
 	fmt.Fprintf(w, "%s\t%s\t%.3g\t%s\n",
 		v.Label, p, v.Length, typ)
 	preorder(v.Child, w)
-	preorder(v.Sib, w)
+	if v.Child != nil {
+		preorder(v.Child.Sib, w)
+	}
 }
 func main() {
 	util.PrepLog("travTree")
@@ -99,8 +105,8 @@ func main() {
 	p := "Traverse a tree given in Newick format."
 	e := "travTree -i foo.nwk"
 	clio.Usage(u, p, e)
-	var optI = flag.Bool("i", false, "inorder")
-	var optO = flag.Bool("o", false, "postorder")
+	var optI = flag.Bool("i", false, "inorder (default preorder)")
+	var optO = flag.Bool("o", false, "postorder (default preorder)")
 	var optV = flag.Bool("v", false, "version")
 	flag.Parse()
 	if *optV {
