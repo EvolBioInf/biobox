@@ -1,0 +1,165 @@
+#+begin_export latex
+\section*{Introduction}
+When comparing two phylogenetic trees, $t_1$ and $t_2$, we can
+calculate their distance, $d(t_1,t_2), using measures like the
+symmetric difference~\cite{rob81:com}, the branch score
+distance~\cite{kuh94:sim}, or the toplological
+distance~\cite{whi13:fix}. Given such an observed distance, $d_{\rm
+  o}=d(t_1,t_2)$, we might ask, is it significantly different from
+random? For this we need a way of generating the null distribution of
+our difference measure. A simple way to do this is to shuffle the leaf
+labels of one of the trees, say $t_2$, to generate $t'_2$ and to
+recalculate $d_i=d(t_1,t'_2)$. Repeated rounds of shuffling and
+distance calculation would allow us to calculate the frequency with
+which the simulated distance is less or equal to the observed
+distance. This frequency would be the desired error probability when
+rejecting the null hypothesis that the observed distance is typical of
+random trees, $P=d_i\le d_{\rm o}$.
+
+The program \ty{shuphyl} shuffles the leaf labels of a phylogeny. It
+takes as input a phylogeny, shuffles its labels, and prints the tree
+with shuffled labels. This may be iterated, and the user can also set
+the seed for the random number generator to generate reproducible
+output.
+
+\section*{Implementation}
+Our implementation of \ty{shuphyl} has hooks for imports, functions,
+and the logic of the main function.
+#+end_export
+#+begin_src go <<shuphyl.go>>=
+  package main
+
+  imports (
+	  //<<Imports, Ch. \ref{ch:sp}>>
+  )
+  //<<Functions, Ch. \ref{ch:sp}>>
+  func main() {
+	  //<<Main function, Ch. \ref{ch:sp}>>
+  }
+#+end_src
+#+begin_export latex
+Inside the main function, we prepare the \ty{log} package for error
+messages from \ty{shuphyl}, set the usage, declare the options, parse
+the options, and parse the input.
+#+end_export
+#+begin_src go <<Main function, Ch. \ref{ch:sp}>>=
+  util.PrepLog("shuphyl")
+  //<<Set usage, Ch. \ref{ch:sp}>>
+  //<<Declare options, Ch. \ref{ch:sp}>>
+  //<<Parse options, Ch. \ref{ch:sp}>>
+  //<<Parse input, Ch. \ref{ch:sp}>>
+#+end_src
+#+begin_export latex
+We import \ty{util}.
+#+end_export
+#+begin_src go <<Import, Ch. \ref{ch:sp}>>=
+  "github.com/evolbioinf/biobox/util"
+#+end_src
+#+begin_export latex
+The usage consists of three parts, the actual usage message, an
+explanation of the purpose of \ty{shuphyl}, and an example command.
+#+end_export
+#+begin_src go <<Set usage, Ch. \ref{ch:sp}>>=
+  u := "shuphyl [-h] [options] [trees]"
+  p := "The phogram shuphyl shuffles the leaf labels of phylogenies"
+  e := "shuphyl -n 10 foo.nwk"
+  clio.Usage(u, p, e)
+#+end_src
+#+begin_export latex
+We import \ty{clio}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sp}>>=
+  "github.com/evolbioinf/clio"
+#+end_src
+#+begin_export latex
+Apart from the obligatory version, we declare two options, the number
+of iterations, \ty{-n}, and the seed of the random number generator,
+\ty{-s}.
+#+end_export
+#+begin_src go <<Declare options, Ch. \ref{ch:sp}>>=
+  optV := flag.Bool("v", false, "version")
+  optN := flag.Int("n", 1, "number of iterations")
+  optS := flag.Int("s", 0, "seed of random number generator (default internal)")
+#+end_src
+#+begin_export latex
+We import \ty{flag}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sp}>>=
+  "flag"
+#+end_src
+#+begin_export latex
+We parse the options. If the user requested the version, we print
+that. If the user set a seed, we take that to seed the random number
+generator, otherwise we use the current Unix time.
+#+end_export
+#+begin_src go <<Parse options, Ch. \ref{ch:sp}>>=
+  if *optV {
+	  util.PrintInfo("shuphyl")
+  }
+  seed := int64(*optS)
+  if seed == 0 {
+	  seed = time.Now().UnixNano()
+  }
+  ran := rand.New(rand.NewSource(seed))
+
+#+end_src
+#+begin_export latex
+We import \ty{time} and \ty{rand}.
+#+end_export
+#+begin_src go <<Imports, Ch. \ref{ch:sp}>>=
+  "time"
+  "math/rand"
+#+end_src
+#+begin_export latex
+The remaining tokens on the input line are interpreted as file
+names. They are parsed using the function \ty{parse}, which in turn
+takes as arguments the number of iterations and the random number
+generator.
+#+end_export
+#+begin_src go <<Parse input, Ch. \ref{ch:sp}>>=
+  files := flag.Args()
+  clio.ParseFiles(files, parse, files, *optN, ran)
+#+end_src
+#+begin_export latex
+Inside \ty{parse}, we retrieve the arguments passed, construct a tree
+scanner, and iterate over the trees in the input. From a given tree we
+extract the leaf labels by calling \ty{extractLabels} and shuffle
+them.
+#+end_export
+#+begin_src go 
+  func parse(r io.Reader, args ...interface{}) {
+	  //<<Retrieve arguments, Ch.~\ref{ch:pt}>>
+	  sc := nwk.NewScanner(r)
+	  for sc.Scan() {
+		  tree := sc.Tree()
+		  labels := []string{}
+		  labels := extractLabels(tree, labels)
+		  //<<Shuffle leaf labels, Ch. \ref{ch:sp}>>
+	  }
+  }
+#+end_src
+#+begin_export latex
+The function \ty{extractLabels} recursively iterates over the
+tree. Whenever we encounter a leaf, we store its label.
+#+end_export
+#+begin_src go <<Functions, Ch. \ref{ch:sp}>>=
+  func extractLabels(v *nwk.Node, labels []string) []string {
+	  if v != nil {
+		  if v.Child == nil {
+			  labels = append(labels, v.Label)
+		  }
+		  labels = extractLabels(v.Child, labels)
+		  labels = extractLabels(v.Sib, labels)
+	  }
+	  return labels
+  }
+#+end_src
+		  //<<Shuffle leaf labels, Ch. \ref{ch:sp}>>
+
+
+
+		for i := 0; i < n; i++ {
+			//<<Relabel leaves, Ch. \ref{ch:sp}>>
+			fmt.Println(tree)
+		}
+	}
