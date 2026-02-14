@@ -18,4 +18,6 @@ github.com/evolbioinf/nwk v0.0.0-20230908094403-ee6b2455ac72 h1:rU+miJpQFOTPUow9
 github.com/evolbioinf/nwk v0.0.0-20230908094403-ee6b2455ac72/go.mod h1:AduknVpv3xviFarKiTVjKI73aA5fje7tY3k8ILXwB8I=
 github.com/evolbioinf/pal v0.0.0-20220704163646-8994e5ba84d9 h1:EUwWYTMk8Z91RrAUKGXQdMxzD+Wx0wUfM0rbDAJr3Po=
 github.com/evolbioinf/pal v0.0.0-20220704163646-8994e5ba84d9/go.mod h1:VzU3V2L2+XH52cL0nInruh0OKP6TsK8nUqXp3J0YUHI=
+github.com/evolbioinf/pal v0.0.0-20260214115358-867e97787e7c h1:GbVax+2xt42U3Qe7YuOfT5yVbxaK03OEZKv/Fb651eo=
+github.com/evolbioinf/pal v0.0.0-20260214115358-867e97787e7c/go.mod h1:VzU3V2L2+XH52cL0nInruh0OKP6TsK8nUqXp3J0YUHI=
 github.com/evolbioinf/sus v0.0.0-20230123102713-cc3fd6887965/go.mod h1:SaiLF93OldWIG3wdOZ+aZSNoklGESyYLi5yGQRXONLs=

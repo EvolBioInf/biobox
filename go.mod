@@ -9,7 +9,7 @@ require (
 	github.com/evolbioinf/fasta v0.0.0-20220329100526-fa625fa59b5d
 	github.com/evolbioinf/kt v0.0.0-20251030091237-3b8607100649
 	github.com/evolbioinf/nwk v0.0.0-20230908094403-ee6b2455ac72
-	github.com/evolbioinf/pal v0.0.0-20220704163646-8994e5ba84d9
+	github.com/evolbioinf/pal v0.0.0-20260214115358-867e97787e7c
 )
 
 replace github.com/evolbioinf/biobox/util => ../util
