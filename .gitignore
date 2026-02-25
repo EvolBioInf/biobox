@@ -63,6 +63,7 @@ doc/rpois.tex
 doc/sass.tex
 doc/sblast.tex
 doc/sequencer.tex
+doc/shuphyl.tex
 doc/shustring.tex
 doc/simNorm.tex
 doc/simOrf.tex
@@ -126,6 +127,7 @@ rpois/rpois
 sass/sass
 sblast/sblast
 sequencer/sequencer
+shuphyl/shuphyl
 shustring/shustring
 simNorm/simNorm
 simOrf/simOrf

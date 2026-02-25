@@ -4,7 +4,7 @@ geco.tex genTree.tex getSeq.tex histogram.tex huff.tex hut.tex \
 kerror.tex keyMat.tex maf.tex midRoot.tex mtf.tex mum2plot.tex mutator.tex \
 naiveMatcher.tex nj.tex num2char.tex numAl.tex olga.tex pam.tex pickChildren.tex plotLine.tex \
 plotSeg.tex plotTree.tex pps.tex ranseq.tex randomizeSeq.tex ranDot.tex \
-rep2plot.tex rpois.tex sass.tex sblast.tex sequencer.tex shustring.tex \
+rep2plot.tex rpois.tex sass.tex sblast.tex sequencer.tex shuphyl.tex shustring.tex \
 simNorm.tex simOrf.tex sops.tex sw.tex testMeans.tex translate.tex travTree.tex \
 repeater.tex revComp.tex upgma.tex util.tex var.tex watterson.tex wrapSeq.tex
 
