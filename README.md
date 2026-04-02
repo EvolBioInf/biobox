@@ -10,32 +10,49 @@ by [Bernhard Haubold](http://guanine.evolbio.mpg.de/) and Angelika Börsch-Haubo
 - [Install Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install)
 - Clone repo and install additional packages
 
-  `git clone https://github.com/evolbioinf/biobox`  
-  `cd biobox`  
-  `bash scripts/setup.sh`
-
+```
+git clone https://github.com/evolbioinf/biobox
+cd biobox
+bash scripts/setup.sh
+```
 - Make package
 
-  `make`
+```
+make
+```
 
-  The directory `bin` should now contain the programs listed in `progs.txt`
+The directory `bin` should now contain the programs listed in `progs.txt`
 ## macOS
 - Install X-Code
-
-  `xcode-select --install`
+```
+xcode-select --install
+```
 - Install [Homebrew](https://brew.sh)
 - Install packages
-
-  `brew tap brewsci/bio`  
-  `brew install brewsci/bio/libdivsufsort git gnuplot golang
-  graphviz gsl tcl-tk xquartz`  
-  `git clone https://github.com/evolbioinf/biobox`  
-  `cd biobox`
-  
+```
+brew tap brewsci/bio
+brew install brewsci/bio/libdivsufsort git gnuplot golang
+graphviz gsl tcl-tk xquartz
+git clone https://github.com/evolbioinf/biobox
+cd biobox
+```
+- Make package
+```
+make
+```
+The directory `bin` should now contain the programs listed in `progs.txt`
+## Archlinux
+```
+git clone https://github.com/evolbioinf/biobox
+cd biobox
+bash scripts/setupArch.sh
+```
 - Make package
 
-  `make`
+```
+make
+```
 
-  The directory `bin` should now contain the programs listed in `progs.txt`
+The directory `bin` should now contain the programs listed in `progs.txt`
 ## License
 [GNU General Public License](https://www.gnu.org/licenses/gpl.html)
