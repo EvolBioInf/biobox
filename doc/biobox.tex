@@ -1,162 +1,170 @@
-\documentclass[a4paper]{report}
+\documentclass[a4paper]{book}
 \usepackage{answers}
 \input{header}
 \begin{document}
-\pagestyle{noweb}
 
 \title{\texttt{biobox}: Tools for Molecular Biology\\
 \small\texttt{github.com/evolbioinf/biobox}}
 \author{Bernhard Haubold}
-\date{\input{date.txt}\!\!, \input{version.txt}}
+\date{\input{date.txt}\!\!, \input{version.txt}
+  \vspace{1cm}
+  \begin{center}
+    \small
+    \resizebox{12cm}{!}{
+      \input{cov}
+    }
+  \end{center}
+}
 \maketitle
+
 \tableofcontents
 
 \chapter{Introduction}
 \input{intro}
-\chapter{Program \texttt{al}: Align Sequences}\label{ch:al}
+\chapter{\texttt{al}: Align Sequences}\label{ch:al}
 \input{al}
-\chapter{Program \texttt{blast2dot}: Convert BLAST Output to dot Code
+\chapter{\texttt{blast2dot}: Convert BLAST Output to dot Code
   for Plotting}\label{ch:b2d}
 \input{blast2dot}
-\chapter{Program \ty{bwt}: Burrows-Wheeler Transform}\label{ch:bw}
+\chapter{\ty{bwt}: Burrows-Wheeler Transform}\label{ch:bw}
 \input{bwt}
-\chapter{Program \ty{clac}: Clade Counter}\label{ch:clac}
+\chapter{\ty{clac}: Clade Counter}\label{ch:clac}
 \input{clac}
-\chapter{Program \ty{coat}: Coalescence Times}\label{ch:coa}
+\chapter{\ty{coat}: Coalescence Times}\label{ch:coa}
 \input{coat}
-\chapter{Program \texttt{cres}: Count Residues}\label{ch:cr}
+\chapter{\texttt{cres}: Count Residues}\label{ch:cr}
 \input{cres}
-\chapter{Program \texttt{cutSeq}: Cut Sequence Regions}\label{ch:cut}
+\chapter{\texttt{cutSeq}: Cut Sequence Regions}\label{ch:cut}
 \input{cutSeq}
-\chapter{Program \texttt{dnaDist}: Distances between DNA Sequences}\label{ch:dna}
+\chapter{\texttt{dnaDist}: Distances between DNA Sequences}\label{ch:dna}
 \input{dnaDist}
-\chapter{Program \ty{drag}: Draw Genealogies}\label{ch:dgn}
+\chapter{\ty{drag}: Draw Genealogies}\label{ch:dgn}
 \input{drag}
-\chapter{Program \ty{drawf}: Draw Wright-Fisher
+\chapter{\ty{drawf}: Draw Wright-Fisher
   Population}\label{ch:dw}
 \input{drawf}
-\chapter{Program \ty{drawGenes}: Convert Gene Coordinates to x/y
+\chapter{\ty{drawGenes}: Convert Gene Coordinates to x/y
   Coordinates}\label{ch:dg}
 \input{drawGenes}
-\chapter{Program \texttt{drawKt}: Draw Keyword Tree}\label{ch:dkt}
+\chapter{\texttt{drawKt}: Draw Keyword Tree}\label{ch:dkt}
 \input{drawKt}
-\chapter{Program \texttt{drawSt}: Draw Suffix Tree}\label{ch:dst}
+\chapter{\texttt{drawSt}: Draw Suffix Tree}\label{ch:dst}
 \input{drawSt}
-\chapter{Program \ty{fasta2tab}: Convert FASTA to Tabular
+\chapter{\ty{fasta2tab}: Convert FASTA to Tabular
   Format}\label{ch:f2t}
 \input{fasta2tab}
-\chapter{Program \ty{geco}: Explore the Genetic Code}\label{ch:gc}
+\chapter{\ty{geco}: Explore the Genetic Code}\label{ch:gc}
 \input{geco}
-\chapter{Program \ty{genTree}: Generate Random Tree}\label{ch:gt}
+\chapter{\ty{genTree}: Generate Random Tree}\label{ch:gt}
 \input{genTree}
-\chapter{Program \texttt{getSeq}: Get Sequence}\label{ch:get}
+\chapter{\texttt{getSeq}: Get Sequence}\label{ch:get}
 \input{getSeq}
-\chapter{Program \ty{histogram}: Compute Histogram}\label{ch:his}
+\chapter{\ty{histogram}: Compute Histogram}\label{ch:his}
 \input{histogram}
-\chapter{Program \ty{huff}: Huffman Encoding}\label{ch:huf}
+\chapter{\ty{huff}: Huffman Encoding}\label{ch:huf}
 \input{huff}
-\chapter{Program \ty{hut}: Calculate Huffman tree}\label{ch:hut}
+\chapter{\ty{hut}: Calculate Huffman tree}\label{ch:hut}
 \input{hut}
-\chapter{Program \ty{kerror}: $k$-Error Alignment}\label{ch:ke}
+\chapter{\ty{kerror}: $k$-Error Alignment}\label{ch:ke}
 \input{kerror}
-\chapter{Program \texttt{keyMat}: Matching Keywords}\label{ch:km}
+\chapter{\texttt{keyMat}: Matching Keywords}\label{ch:km}
 \input{keyMat}
-\chapter{Program \ty{maf}: Calculate Match Factors}\label{ch:ma}
+\chapter{\ty{maf}: Calculate Match Factors}\label{ch:ma}
 \input{maf}
-\chapter{Program \ty{midRoot}: Midpoint Rooting of
+\chapter{\ty{midRoot}: Midpoint Rooting of
   Phylogenies}\label{ch:mr}
 \input{midRoot}
-\chapter{Program \ty{mtf}: Move to Front}\label{ch:mt}
+\chapter{\ty{mtf}: Move to Front}\label{ch:mt}
 \input{mtf}
-\chapter{Program \ty{mum2plot}: Transform MUMmer Output for
+\chapter{\ty{mum2plot}: Transform MUMmer Output for
   Plotting}\label{ch:m2p}
 \input{mum2plot}
-\chapter{Program \texttt{mutator}: Mutate Sequences}\label{ch:mut}
+\chapter{\texttt{mutator}: Mutate Sequences}\label{ch:mut}
 \input{mutator}
-\chapter{Program \texttt{naiveMatcher}: Match Pattern in
+\chapter{\texttt{naiveMatcher}: Match Pattern in
   Text}\label{ch:nm}
 \input{naiveMatcher}
-\chapter{Program \ty{num2char}: Convert Numbers to Characters}\label{ch:n2c}
+\chapter{\ty{num2char}: Convert Numbers to Characters}\label{ch:n2c}
 \input{num2char}
-\chapter{Program \texttt{numAl}: Number of Global
+\chapter{\texttt{numAl}: Number of Global
   Alignments}\label{ch:num}
 \input{numAl}
-\chapter{Program \ty{nj}: Compute Neighbor-Joining Tree}\label{ch:nj}
+\chapter{\ty{nj}: Compute Neighbor-Joining Tree}\label{ch:nj}
 \input{nj}
-\chapter{Program \ty{olga}: Compute Overlap Graph}\label{ch:olga}
+\chapter{\ty{olga}: Compute Overlap Graph}\label{ch:olga}
 \input{olga}
-\chapter{Program \texttt{pam}: Compute PAM Score
+\chapter{\texttt{pam}: Compute PAM Score
   Matrices}\label{ch:pam}
 \input{pam}
-\chapter{Program \ty{pickChildren}: Pick the Children of Coalescent
+\chapter{\ty{pickChildren}: Pick the Children of Coalescent
   Nodes}\label{ch:pc}
 \input{pickChildren}
-\chapter{Program \ty{plotLine}: Plotting Lines}\label{ch:pl}
+\chapter{\ty{plotLine}: Plotting Lines}\label{ch:pl}
 \input{plotLine}
-\chapter{Program \ty{plotSeg}: Plotting Segments}\label{ch:ps}
+\chapter{\ty{plotSeg}: Plotting Segments}\label{ch:ps}
 \input{plotSeg}
-\chapter{Program \ty{plotTree}: Plotting Trees}\label{ch:pt}
+\chapter{\ty{plotTree}: Plotting Trees}\label{ch:pt}
 \input{plotTree}
-\chapter{Program \ty{pps}: Print Polymorphic Sites}\label{ch:pp}
+\chapter{\ty{pps}: Print Polymorphic Sites}\label{ch:pp}
 \input{pps}
-\chapter{Program \texttt{randomizeSeq}: Shuffle DNA
+\chapter{\texttt{randomizeSeq}: Shuffle DNA
   Sequence}\label{ch:rs}
 \input{randomizeSeq}
-\chapter{Program \texttt{ranDot}: Random Graph in dot Notation}\label{ch:rd}
+\chapter{\texttt{ranDot}: Random Graph in dot Notation}\label{ch:rd}
 \input{ranDot}
-\chapter{Program \texttt{ranseq}: Random DNA Sequence}\label{ch:ran}
+\chapter{\texttt{ranseq}: Random DNA Sequence}\label{ch:ran}
 \input{ranseq}
-\chapter{Program \texttt{repeater}: Find Maximal
+\chapter{\texttt{repeater}: Find Maximal
   Repeats}\label{ch:rep}
 \input{repeater}
-\chapter{Program \ty{rep2plot}: Plot \ty{repeater}
+\chapter{\ty{rep2plot}: Plot \ty{repeater}
   Output}\label{ch:r2p}
 \input{rep2plot}
-\chapter{Program \texttt{revComp}: Reverse-Complement DNA
+\chapter{\texttt{revComp}: Reverse-Complement DNA
   Sequence}\label{ch:rev}
 \input{revComp}
-\chapter{Program \ty{rpois}: Draw Poisson-Distributed Random
+\chapter{\ty{rpois}: Draw Poisson-Distributed Random
   Variable}\label{ch:rpo}
 \input{rpois}
-\chapter{Program \ty{sass}: Simple Assembly}\label{ch:sas}
+\chapter{\ty{sass}: Simple Assembly}\label{ch:sas}
 \input{sass}
-\chapter{Program \texttt{sblast}: Simple BLAST}\label{ch:sb}
+\chapter{\texttt{sblast}: Simple BLAST}\label{ch:sb}
 \input{sblast}
-\chapter{Program \ty{sequencer}: Sequence DNA Sequences}\label{ch:seq}
+\chapter{\ty{sequencer}: Sequence DNA Sequences}\label{ch:seq}
 \input{sequencer}
-\chapter{Program \ty{shuphyl}: Shuffle phylogeny labels}\label{ch:sp}
+\chapter{\ty{shuphyl}: Shuffle phylogeny labels}\label{ch:sp}
 \input{shuphyl}
-\chapter{Program \texttt{shustring}: Find Shortest Unique Substrings}\label{ch:shu}
+\chapter{\texttt{shustring}: Find Shortest Unique Substrings}\label{ch:shu}
 \input{shustring}
-\chapter{Program \texttt{simNorm}: Simulate Samples under the Normal
+\chapter{\texttt{simNorm}: Simulate Samples under the Normal
   Distribution}\label{ch:sn}
 \input{simNorm}
-\chapter{Program \ty{simOrf}: Simulate Open Reading
+\chapter{\ty{simOrf}: Simulate Open Reading
   Frames}\label{ch:so}
 \input{simOrf}
-\chapter{Program \ty{sops}: Sum-of-Pairs Score for Multiple Sequence
+\chapter{\ty{sops}: Sum-of-Pairs Score for Multiple Sequence
   Alignment}\label{ch:sops}
 \input{sops}
-\chapter{Program \ty{splitSeq}: Split a Sequence into Fragments}\label{ch:ss}
+\chapter{\ty{splitSeq}: Split a Sequence into Fragments}\label{ch:ss}
 \input{splitSeq}
-\chapter{Program \texttt{sw}: Sliding Window Analysis}\label{ch:sw}
+\chapter{\texttt{sw}: Sliding Window Analysis}\label{ch:sw}
 \input{sw}
-\chapter{Program \texttt{testMeans}: Statistical Test of two Means}\label{ch:tm}
+\chapter{\texttt{testMeans}: Statistical Test of two Means}\label{ch:tm}
 \input{testMeans}
-\chapter{Program \texttt{translate}: Translate DNA to
+\chapter{\texttt{translate}: Translate DNA to
   Protein}\label{ch:tr}
 \input{translate}
-\chapter{Program \texttt{travTree}: Traverse Phylogeny}\label{ch:tt}
+\chapter{\texttt{travTree}: Traverse Phylogeny}\label{ch:tt}
 \input{travTree}
-\chapter{Program \texttt{upgma}: Compute UPGMA Tree}\label{ch:upgma}
+\chapter{\texttt{upgma}: Compute UPGMA Tree}\label{ch:upgma}
 \input{upgma}
-\chapter{Package \texttt{util}: Utilities}\label{ch:uti}
+\chapter{\texttt{util}: Utilities}\label{ch:uti}
 \input{util}
-\chapter{Program \texttt{var}: Variance}\label{ch:var}
+\chapter{\texttt{var}: Variance}\label{ch:var}
 \input{var}
-\chapter{Program \texttt{watterson}: Estimating the Number of Mutations}\label{ch:wat}
+\chapter{\texttt{watterson}: Estimating the Number of Mutations}\label{ch:wat}
 \input{watterson}
-\chapter{Program \texttt{wrapSeq}: Wrap Sequence}\label{ch:wra}
+\chapter{\texttt{wrapSeq}: Wrap Sequence}\label{ch:wra}
 \input{wrapSeq}
 
 %\section{List of code chunks}

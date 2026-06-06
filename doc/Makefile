@@ -22,8 +22,7 @@ biobox.pdf: $(src) rd1.ps rd2.ps
 	latex biobox
 	latex biobox
 	latex biobox
-	dvips biobox -o -q
-	ps2pdf -dALLOWPSTRANSPARENCY biobox.ps
+	dvipdf -dALLOWPSTRANSPARENCY biobox
 publish: biobox.pdf
 	if [ -d ~/WinHome/ownCloud/ ]; then \
 		cp biobox.pdf ~/WinHome/ownCloud/docs/; \
