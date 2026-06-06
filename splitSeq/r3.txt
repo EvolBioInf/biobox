@@ -1,0 +1,10 @@
+>Rand1 1..3
+CGC
+>Rand1 3..5
+CAC
+>Rand1 5..7
+CAA
+>Rand1 7..9
+ACG
+>Rand1 9..10
+GA

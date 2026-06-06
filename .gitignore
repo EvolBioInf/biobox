@@ -68,6 +68,7 @@ doc/shustring.tex
 doc/simNorm.tex
 doc/simOrf.tex
 doc/sops.tex
+doc/splitSeq.tex
 doc/sw.tex
 doc/testMeans.tex
 doc/translate.tex
@@ -132,6 +133,7 @@ shustring/shustring
 simNorm/simNorm
 simOrf/simOrf
 sops/sops
+splitSeq/splitSeq
 sw/sw
 testMeans/testMeans
 translate/translate
@@ -157,4 +159,5 @@ plotTree/makePlots.sh
 release
 ranDot/*.sh
 sequencer/makeRes.sh
+splitSeq/makeRes.sh
 sw/makeRes.sh
