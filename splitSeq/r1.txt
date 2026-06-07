@@ -1,2 +1,2 @@
->Rand1 1..10
+>Rand1|1..10
 CGCACAACGA

@@ -209,7 +209,7 @@ with start and end coordinates appended.
 #+end_export
 #+begin_src go <<Print fragment, Ch. \ref{ch:ss}>>=
   e := s + *optL
-  h := header + " "
+  h := header + "|"
   h += strconv.Itoa(s+1) +
 	  ".." +
 	  strconv.Itoa(e)
@@ -231,7 +231,7 @@ unless it is empty.
 #+begin_src go <<Print last fragment, Ch. \ref{ch:ss}>>=
   e := n
   if s < e {
-	  h := header + " "
+	  h := header + "|"
 	  h += strconv.Itoa(s+1) +
 		  ".." +
 		  strconv.Itoa(e)

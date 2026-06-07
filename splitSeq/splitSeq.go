@@ -24,7 +24,7 @@ func parse(r io.Reader, args ...interface{}) {
 		s := 0
 		for ; s < m; s += *optS {
 			e := s + *optL
-			h := header + " "
+			h := header + "|"
 			h += strconv.Itoa(s+1) +
 				".." +
 				strconv.Itoa(e)
@@ -34,7 +34,7 @@ func parse(r io.Reader, args ...interface{}) {
 		}
 		e := n
 		if s < e {
-			h := header + " "
+			h := header + "|"
 			h += strconv.Itoa(s+1) +
 				".." +
 				strconv.Itoa(e)
