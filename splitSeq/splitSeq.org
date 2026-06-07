@@ -4,11 +4,11 @@ The program \ty{splitSeq} takes as input a set of sequences and splits
 them in fragments of a given length. For example, Figure~\ref{fig:ss}A
 shows the input sequence \ty{CGCACAACGA}, and Figure~\ref{fig:ss}B its
 split into fragments of length 3. Each fragment is a FASTA sequence
-where the header consists of the header of the input sequence
-followed by the interval. Notice that the last fragment consists of
-the remainder after all full-length fragments have been printed, a
-single nucleotide in our example. This imitates the behavior of the
-Unix utility \ty{split}.
+where the header consists of the header of the input sequence followed
+by the interval separated by the pipe symbol. Notice that the last
+fragment consists of the remainder after all full-length fragments
+have been printed, a single nucleotide in our example. This imitates
+the behavior of the Unix utility \ty{split}.
 
 \begin{figure}
   \begin{center}
