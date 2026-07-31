@@ -1,6 +1,3 @@
-version="no_version"
-g=$(which git)
-if [[ $g != "" ]]; then
-    version=$(git describe)
-fi
-echo $version
+git describe |
+    tr '-' ' ' |
+    awk '{printf "%s", $1; if($2)printf "-%s", $2; printf "\n"}'
