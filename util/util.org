@@ -343,18 +343,23 @@ st2 := a.start2
   !\texttt{biobox} package. Then it exits. To achieve this, we wrap the
   !generic function for printing program information from the package
   !\texttt{clio}.
+
+  The injected date contains underscores, which we replace by blanks to
+  make the date look more ``natural''.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:uti}>>=
   func PrintInfo(name string) {
-	  clio.PrintInfo(name, version, date, author, email,
-		  license)
-	  os.Exit(0)
+  	date = strings.ReplaceAll(date, "_", " ")
+  	clio.PrintInfo(name, version, date, author, email,
+  		license)
+  	os.Exit(0)
   }
 #+end_src
 #+begin_src latex
-  We import \texttt{clio} and \texttt{os}.
+  We import \texttt{strings}, \texttt{clio}, and \texttt{os}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:uti}>>=
+  "strings"
   "github.com/evolbioinf/clio"
   "os"
 #+end_src
@@ -1148,12 +1153,6 @@ field, the terminal.
 		  terms[arr[0]] = true
 	  }
   }
-#+end_src
-#+begin_export latex
-We import \ty{strings}.
-#+end_export
-#+begin_src go <<Imports, Ch.~\ref{ch:uti}>>=
-  "strings"
 #+end_src
 #+begin_export latex
 We iterate over five interactive terminals, \ty{x11}, \ty{qt},

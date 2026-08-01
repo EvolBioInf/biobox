@@ -187,6 +187,7 @@ func MeanVar(data []float64) (float64, float64) {
 
 // PrintInfo prints a program's name, version, and compilation date. It also prints the author, email address, and license of the biobox package. Then it exits. To achieve this, we wrap the generic function for printing program information from the package clio.
 func PrintInfo(name string) {
+	date = strings.ReplaceAll(date, "_", " ")
 	clio.PrintInfo(name, version, date, author, email,
 		license)
 	os.Exit(0)
