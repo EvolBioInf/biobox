@@ -50,12 +50,12 @@ func main() {
 	e := "getSeq \"coli*\" *.fasta"
 	clio.Usage(u, p, e)
 	flag.Parse()
+	if *optV {
+		util.PrintInfo("getSeq")
+	}
 	if len(flag.Args()) < 1 {
 		fmt.Fprintf(os.Stderr, "please provide a regular expression\n")
 		os.Exit(0)
-	}
-	if *optV {
-		util.PrintInfo("getSeq")
 	}
 	rs := flag.Args()[0]
 	r, err := regexp.Compile(rs)

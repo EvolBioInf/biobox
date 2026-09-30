@@ -68,17 +68,18 @@ We import \ty{util}.
   "flag"
 #+end_src
 #+begin_src latex
-  After parsing the options, we make sure a regular expression was
-  provided, and test for \texttt{-v}.
+  After parsing the options, we first test for \ty{-v} as this might
+  terminate the program. Then we make sure a regular expression was
+  provided.
 #+end_src
 #+begin_src go <<Parse options, Ch.~\ref{ch:get}>>=
   flag.Parse()
+  if *optV {
+	  util.PrintInfo("getSeq")
+  }
   if len(flag.Args()) < 1 {
 	  fmt.Fprintf(os.Stderr, "please provide a regular expression\n")
 	  os.Exit(0)
-  }
-  if *optV {
-	  util.PrintInfo("getSeq")
   }
 #+end_src
 #+begin_src latex
