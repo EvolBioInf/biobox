@@ -188,13 +188,13 @@
 #+begin_src go <<Parse input files, Ch.~\ref{ch:sb}>>=
   files := flag.Args()
   if len(files) == 0 {
-	  log.Fatal("please provide a query")
+  	log.Fatal("please provide a query")
   }
   out := tabwriter.NewWriter(os.Stdout, 2, 1, 2, ' ' ,0)
-  if !opts.l {
-	  fmt.Fprintf(out, "#qa\tsa\tqs\tqe\tss\tse\tscore\n")
+  if opts.l {
+  	fmt.Fprintf(out, "#qa\tn\tword\n")
   } else {
-	  fmt.Fprintf(out, "#qa\tn\tword\n")
+  	fmt.Fprintf(out, "#qa\tsa\tqs\tqe\tss\tse\tscore\n")
   }
   clio.ParseFiles(files[1:], scan, opts, files[0], out)
   out.Flush()
@@ -207,38 +207,40 @@
   "fmt"
 #+end_src
 #+begin_src latex
-  Inside \ty{scan}, we retrieve the arguments, iterate across the
-  subject sequences, and for each one iterate across the queries.
+  Inside \ty{scan}, we first retrieve the arguments. Then we print the
+  query words if the user opted for that, otherwise we iterate over the
+  subject sequences.
 #+end_src
 #+begin_src go <<Functions, Ch.~\ref{ch:sb}>>=
   func scan(r io.Reader, args ...interface{}) {
-	  //<<Retrieve arguments, Ch.~\ref{ch:sb}>>
-	  sScanner := fasta.NewScanner(r)
-	  for sScanner.ScanSequence() {
-		  subject := sScanner.Sequence()
-		  //<<Iterate across queries, Ch.~\ref{ch:sb}>>
-	  }
+  	var opts *Opts
+  	//<<Retrieve arguments, Ch.~\ref{ch:sb}>>
+  	if opts.l {
+  		//<<Print query words, Ch.~\ref{ch:sb}>>
+  	} else {
+  		//<<Iterate over subjects, Ch.~\ref{ch:sb}>>
+  	}
   }
 #+end_src
 #+begin_src latex
-  We import \ty{io} and \ty{fasta}.
+  We import \ty{io}.
 #+end_src
 #+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
   "io"
-  "github.com/evolbioinf/fasta"
 #+end_src
 #+begin_src latex
   The options and the queries are retrieved by type assertion.
 #+end_src
 #+begin_src go <<Retrieve arguments, Ch.~\ref{ch:sb}>>=
-  opts := args[0].(*Opts)
+  opts = args[0].(*Opts)
   qName := args[1].(string)
   out := args[2].(*tabwriter.Writer)
 #+end_src
 #+begin_src latex
-  We open the query file and analyze each sequence it contains.
+  To print the query words, we iterate over the queries and print a word
+  list for each one.
 #+end_src
-#+begin_src go <<Iterate across queries, Ch.~\ref{ch:sb}>>=
+#+begin_src go <<Print query words, Ch.~\ref{ch:sb}>>=
   qFile, err := os.Open(qName)
   if err != nil {
 	  log.Fatalf("couldn't open %s\n", qName)
@@ -247,33 +249,21 @@
   qScanner := fasta.NewScanner(qFile)
   for qScanner.ScanSequence() {
 	  query := qScanner.Sequence()
-	  //<<Analyze query, Ch.~\ref{ch:sb}>>
+	  //<<Print word list, Ch.~\ref{ch:sb}>>
   }
 #+end_src
-#+begin_src latex
-  We import \ty{os} and \ty{log}.
-#+end_src
+#+begin_export latex
+We import \ty{os}, \ty{log}, and \ty{fasta}.
+#+end_export
 #+begin_src go <<Imports, Ch.~\ref{ch:sb}>>=
   "os"
   "log"
+  "github.com/evolbioinf/fasta"
 #+end_src
 #+begin_src latex
-  A query either gets its word list printed or is aligned to the
-  subject.
-#+end_src
-#+begin_src go <<Analyze query, Ch.~\ref{ch:sb}>>=
-  if opts.l {
-	  //<<Print word list, Ch.~\ref{ch:sb}>>
-  } else {
-	  //<<Align query, Ch.~\ref{ch:sb}>>
-  }
-#+end_src
-#+begin_src latex
-  A word list is started by the header of the sequence. The list itself
-  consists of numbered words, one per line. We only write the words on
-  the forward strand. Since we might write the word lists for more than
-  one query, we extract the query accession as the first token on the
-  command line.
+  The word list consists of three columns, query name, word number, and
+  word sequence. To keep the list compact, we only write the words on
+  the forward strand.
 #+end_src
 #+begin_src go <<Print word list, Ch.~\ref{ch:sb}>>=
   words := getWords(query, opts.w)
@@ -304,9 +294,37 @@
 	  return words
   }
 #+end_src
+#+begin_export latex
+If instead of writing query words, we iterate over the subject
+sequence, we also iterate over the queries for each subject.
+#+end_export
+#+begin_src go <<Iterate over subjects, Ch.~\ref{ch:sb}>>=
+  sScanner := fasta.NewScanner(r)
+  for sScanner.ScanSequence() {
+  	subject := sScanner.Sequence()
+  	//<<Iterate over queries, Ch.~\ref{ch:sb}>>
+  }
+#+end_src
+#+begin_export latex
+We open the query file and align each sequence it contains, and print
+its alignments.
+#+end_export
+#+begin_src go <<Iterate over queries, Ch.~\ref{ch:sb}>>=
+  qFile, err := os.Open(qName)
+  if err != nil {
+  	log.Fatalf("couldn't open %s\n", qName)
+  }
+  defer qFile.Close()
+  qScanner := fasta.NewScanner(qFile)
+  for qScanner.ScanSequence() {
+  	query := qScanner.Sequence()
+  	//<<Align query, Ch.~\ref{ch:sb}>>
+  	//<<Print alignments, Ch.~\ref{ch:sb}>>
+  }
+#+end_src
 #+begin_src latex
   We align the query first along its forward strand, then along its
-  reverse strand. We print the resulting alignments.
+  reverse strand.
 #+end_src
 #+begin_src go <<Align query, Ch.~\ref{ch:sb}>>=
   forward := true
@@ -315,7 +333,6 @@
   forward = false
   a := align(query, subject, opts, forward)
   alignments = append(alignments, a...)
-  //<<Print alignments, Ch.~\ref{ch:sb}>>
 #+end_src
 #+begin_src latex
   Inside the function \ty{align}, we calculate the alignments and return
@@ -352,43 +369,40 @@
   //<<Sort alignments by score, Ch.~\ref{ch:sb}>>
 #+end_src
 #+begin_src latex
-  As shown in Figure~\ref{fig:blast}, in the exact matching phase of the
-  algorithm query words are located in the subject. We store these
-  matches as mini alignments, which we either find by na\"ive matching
-  or by matching with a keyword tree.
+  In the exact matching phase, query words are located in the subject
+  (Figure~\ref{fig:blast}). We find these matches either by na\"ive
+  matching or by matching with a keyword tree.
 #+end_src
 #+begin_src go <<Exact matching, Ch.~\ref{ch:sb}>>=
+  words := getWords(query, opts.w)
   if opts.n {
-	  //<<Na\"ive exact matching, Ch.~\ref{ch:sb}>>
+  	  //<<Na\"ive exact matching, Ch.~\ref{ch:sb}>>
   } else {
-	  //<<Exact match with keyword tree, Ch.~\ref{ch:sb}>>
+  	  //<<Exact match with keyword tree, Ch.~\ref{ch:sb}>>
   }
 #+end_src
 #+begin_src latex
-  In na\"ive exact matching, we iterate over the query to generate the
-  patterns and then look for them in the subject.
+  In na\"ive exact matching, we iterate over the words and look for each
+  one individually in the subject. Notice that the index of a word, $i$,
+  is also its starting position in the query.
 #+end_src
 #+begin_src go <<Na\"ive exact matching, Ch.~\ref{ch:sb}>>=
-  q := query.Data()
-  m := len(q)
   s := subject.Data()
   n := len(s)
   w := opts.w
-  for i := 0; i < m - w; i++ {
-	  p := q[i:i+w]
-	  for j := 0; j < n - w; j++ {
-		  //<<Look for pattern, Ch.~\ref{ch:sb}>>
-	  }
+  for i, word := range words {
+  	  for j := 0; j < n - w; j++ {
+  		  //<<Look for word, Ch.~\ref{ch:sb}>>
+  	  }
   }
 #+end_src
 #+begin_src latex
-  We break off the search for a pattern at the first mismatch we
-  encounter.
+  We stop the search for a word at the first mismatch.
 #+end_src
-#+begin_src go <<Look for pattern, Ch.~\ref{ch:sb}>>=
+#+begin_src go <<Look for word, Ch.~\ref{ch:sb}>>=
   var k int
   for k = 0; k < w; k++ {
-	  if s[j+k] != p[k] {
+	  if s[j+k] != word[k] {
 		  break
 	  }
   }
@@ -399,34 +413,15 @@
   }
 #+end_src
 #+begin_src latex
-  With a keyword tree, we look for all patterns at the same time. So we
-  construct the patterns and their keyword tree, search for matches in
-  the subject, and store the matches as alignments.
+  With a keyword tree, we look for all words at the same time. We
+  construct the keyword tree from the query words, search for their
+  matches in the subject, and convert the matches to alignments, the
+  initial proto alignments.
 #+end_src
 #+begin_src go <<Exact match with keyword tree, Ch.~\ref{ch:sb}>>=
-  //<<Construct patterns, Ch.~\ref{ch:sb}>>
-  //<<Construct keyword tree, Ch.~\ref{ch:sb}>>
-  //<<Search with keyword tree, Ch.~\ref{ch:sb}>>
+  tree := kt.NewKeywordTree(words)
+  matches := tree.Search(subject.Data(), words)
   //<<Convert matches to alignments, Ch.~\ref{ch:sb}>>
-#+end_src
-#+begin_src latex
-  We store the patterns as a string slice.
-#+end_src
-#+begin_src go <<Construct patterns, Ch.~\ref{ch:sb}>>=
-  var patterns []string
-  q := query.Data()
-  m := len(q)
-  w := opts.w
-  for i := 0; i <= m-w; i++ {
-	  p := string(q[i:i+w])
-	  patterns = append(patterns, p)
-  }
-#+end_src
-#+begin_src latex
-  The keyword tree is constructed by a function call.
-#+end_src
-#+begin_src go <<Construct keyword tree, Ch.~\ref{ch:sb}>>=
-tree := kt.NewKeywordTree(patterns)
 #+end_src
 #+begin_src latex
   We import \ty{kt}.
@@ -435,24 +430,18 @@ tree := kt.NewKeywordTree(patterns)
   "github.com/evolbioinf/kt"
 #+end_src
 #+begin_src latex
-  The search with the keyword tree is also a single function call.
-#+end_src
-#+begin_src go <<Search with keyword tree, Ch.~\ref{ch:sb}>>=
-  matches := tree.Search(subject.Data(), patterns)
-#+end_src
-#+begin_src latex
   We iterate over the matches and convert them to our proto alignments.
 #+end_src
 #+begin_src go <<Convert matches to alignments, Ch.~\ref{ch:sb}>>=
   for _, m := range matches {
-	  qs := m.Pattern
-	  ss := m.Position
-	  qe := qs + w - 1
-	  se := ss + w - 1
-	  sc := float64(w) * opts.a
-	  a := Alignment{qs: qs, ss: ss, qe: qe,
-		  se: se, score: sc, forward: forward}
-	  alignments = append(alignments, a)
+  	  qs := m.Pattern
+  	  ss := m.Position
+  	  qe := qs + opts.w - 1
+  	  se := ss + opts.w - 1
+  	  sc := float64(opts.w) * opts.a
+  	  a := Alignment{qs: qs, ss: ss, qe: qe,
+  		  se: se, score: sc, forward: forward}
+  	  alignments = append(alignments, a)
   }
 #+end_src
 #+begin_src latex

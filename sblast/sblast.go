@@ -65,12 +65,11 @@ func (a AlSliceScore) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 func scan(r io.Reader, args ...interface{}) {
-	opts := args[0].(*Opts)
+	var opts *Opts
+	opts = args[0].(*Opts)
 	qName := args[1].(string)
 	out := args[2].(*tabwriter.Writer)
-	sScanner := fasta.NewScanner(r)
-	for sScanner.ScanSequence() {
-		subject := sScanner.Sequence()
+	if opts.l {
 		qFile, err := os.Open(qName)
 		if err != nil {
 			log.Fatalf("couldn't open %s\n", qName)
@@ -79,13 +78,24 @@ func scan(r io.Reader, args ...interface{}) {
 		qScanner := fasta.NewScanner(qFile)
 		for qScanner.ScanSequence() {
 			query := qScanner.Sequence()
-			if opts.l {
-				words := getWords(query, opts.w)
-				qa := strings.Fields(query.Header())[0]
-				for i, word := range words {
-					fmt.Fprintf(out, "%s\t%d\t%s\n", qa, i+1, word)
-				}
-			} else {
+			words := getWords(query, opts.w)
+			qa := strings.Fields(query.Header())[0]
+			for i, word := range words {
+				fmt.Fprintf(out, "%s\t%d\t%s\n", qa, i+1, word)
+			}
+		}
+	} else {
+		sScanner := fasta.NewScanner(r)
+		for sScanner.ScanSequence() {
+			subject := sScanner.Sequence()
+			qFile, err := os.Open(qName)
+			if err != nil {
+				log.Fatalf("couldn't open %s\n", qName)
+			}
+			defer qFile.Close()
+			qScanner := fasta.NewScanner(qFile)
+			for qScanner.ScanSequence() {
+				query := qScanner.Sequence()
 				forward := true
 				alignments := align(query, subject, opts, forward)
 				query.ReverseComplement()
@@ -118,18 +128,16 @@ func getWords(seq *fasta.Sequence, w int) []string {
 func align(query, subject *fasta.Sequence,
 	opts *Opts, forward bool) []Alignment {
 	var alignments []Alignment
+	words := getWords(query, opts.w)
 	if opts.n {
-		q := query.Data()
-		m := len(q)
 		s := subject.Data()
 		n := len(s)
 		w := opts.w
-		for i := 0; i < m-w; i++ {
-			p := q[i : i+w]
+		for i, word := range words {
 			for j := 0; j < n-w; j++ {
 				var k int
 				for k = 0; k < w; k++ {
-					if s[j+k] != p[k] {
+					if s[j+k] != word[k] {
 						break
 					}
 				}
@@ -141,22 +149,14 @@ func align(query, subject *fasta.Sequence,
 			}
 		}
 	} else {
-		var patterns []string
-		q := query.Data()
-		m := len(q)
-		w := opts.w
-		for i := 0; i <= m-w; i++ {
-			p := string(q[i : i+w])
-			patterns = append(patterns, p)
-		}
-		tree := kt.NewKeywordTree(patterns)
-		matches := tree.Search(subject.Data(), patterns)
+		tree := kt.NewKeywordTree(words)
+		matches := tree.Search(subject.Data(), words)
 		for _, m := range matches {
 			qs := m.Pattern
 			ss := m.Position
-			qe := qs + w - 1
-			se := ss + w - 1
-			sc := float64(w) * opts.a
+			qe := qs + opts.w - 1
+			se := ss + opts.w - 1
+			sc := float64(opts.w) * opts.a
 			a := Alignment{qs: qs, ss: ss, qe: qe,
 				se: se, score: sc, forward: forward}
 			alignments = append(alignments, a)
@@ -281,10 +281,10 @@ func main() {
 		log.Fatal("please provide a query")
 	}
 	out := tabwriter.NewWriter(os.Stdout, 2, 1, 2, ' ', 0)
-	if !opts.l {
-		fmt.Fprintf(out, "#qa\tsa\tqs\tqe\tss\tse\tscore\n")
-	} else {
+	if opts.l {
 		fmt.Fprintf(out, "#qa\tn\tword\n")
+	} else {
+		fmt.Fprintf(out, "#qa\tsa\tqs\tqe\tss\tse\tscore\n")
 	}
 	clio.ParseFiles(files[1:], scan, opts, files[0], out)
 	out.Flush()
